@@ -1,0 +1,72 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Codex 号池",
+        "description": "将 Home Assistant 接入 Codex 风格的反代号池（OpenAI Responses API）。可以手填 base_url + 模型，也可以直接把 Codex CLI 的 config.toml 整段粘进来。",
+        "data": {
+          "api_key": "API Key",
+          "base_url": "反代基础 URL",
+          "model": "默认模型",
+          "toml_config": "粘贴 Codex CLI config.toml（可选）"
+        },
+        "data_description": {
+          "base_url": "反代根地址，集成会自动拼接 /v1/responses。",
+          "model": "初始模型 ID，安装后可在对话代理选项里随时切换。",
+          "toml_config": "如果你已经在用 Codex CLI，把整段 config.toml 贴进来，base_url / model / 推理强度 / 存储开关会自动填好。"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接反代，请检查地址与网络。",
+      "invalid_auth": "API Key 被反代拒绝。",
+      "unknown_model": "反代不识别该模型，可改用 gpt-5.5 或 /v1/models 列出的其它模型。",
+      "unknown": "调用反代时出现未知错误。",
+      "bad_toml": "TOML 解析失败，请检查格式。",
+      "required": "必填。"
+    },
+    "abort": {
+      "already_configured": "该反代已经配置过。"
+    }
+  },
+  "config_subentries": {
+    "conversation": {
+      "initiate_flow": {
+        "user": "新增对话代理",
+        "reconfigure": "调整对话代理"
+      },
+      "entry_type": "对话代理",
+      "step": {
+        "user": {
+          "title": "新增对话代理",
+          "data": {
+            "chat_model": "模型",
+            "reasoning_effort": "推理强度",
+            "store_responses": "在反代上保留响应",
+            "prompt": "系统提示词"
+          },
+          "data_description": {
+            "store_responses": "关闭等同 Codex CLI 的 disable_response_storage = true。",
+            "reasoning_effort": "xhigh 为 Codex 支持的最高推理强度；medium 更快。"
+          }
+        },
+        "reconfigure": {
+          "title": "调整对话代理",
+          "data": {
+            "chat_model": "模型",
+            "reasoning_effort": "推理强度",
+            "store_responses": "在反代上保留响应",
+            "prompt": "系统提示词"
+          }
+        }
+      }
+    }
+  },
+  "entity": {
+    "update": {
+      "model_update": {
+        "name": "反代最新模型"
+      }
+    }
+  }
+}

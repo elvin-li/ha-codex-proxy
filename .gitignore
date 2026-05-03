@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code session state
+.claude/
+*.lock
+
+# Local secrets — never commit
+.env
+secrets.yaml
+*.pem
+*.key

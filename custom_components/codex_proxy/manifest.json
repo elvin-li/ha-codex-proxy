@@ -1,0 +1,14 @@
+{
+  "domain": "codex_proxy",
+  "name": "Codex Token Pool",
+  "codeowners": [],
+  "config_flow": true,
+  "after_dependencies": ["openai_conversation"],
+  "dependencies": [],
+  "documentation": "https://github.com/your-username/codex_proxy",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/your-username/codex_proxy/issues",
+  "requirements": [],
+  "version": "0.1.0",
+  "integration_type": "service"
+}

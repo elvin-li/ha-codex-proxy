@@ -1,0 +1,105 @@
+"""Periodic /v1/models polling for the Codex Token Pool integration.
+
+We bypass `openai.AsyncOpenAI.models.list()` and call the endpoint with raw
+httpx because the openai SDK 2.x cursor-page parser fails on this proxy's
+response (`'str' object has no attribute '_set_private_attributes'`).
+"""
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING, Any
+
+import httpx
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.httpx_client import get_async_client
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
+
+from .const import (
+    CODEX_OPENAI_BETA,
+    CODEX_ORIGINATOR,
+    CODEX_USER_AGENT,
+    CONF_API_KEY,
+    CONF_BASE_URL,
+    DOMAIN,
+    MODEL_REFRESH_INTERVAL,
+)
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Poll the proxy's /v1/models endpoint and surface the result."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: "ConfigEntry",
+        installation_id: str,
+    ) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=f"{DOMAIN}_models_{entry.entry_id}",
+            update_interval=MODEL_REFRESH_INTERVAL,
+        )
+        self._api_key: str = entry.data[CONF_API_KEY]
+        self._base_url: str = entry.data[CONF_BASE_URL].rstrip("/")
+        self._installation_id = installation_id
+        self._http: httpx.AsyncClient = get_async_client(hass)
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        url = f"{self._base_url}/v1/models"
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "User-Agent": CODEX_USER_AGENT,
+            "OpenAI-Beta": CODEX_OPENAI_BETA,
+            "originator": CODEX_ORIGINATOR,
+            "x-codex-installation-id": self._installation_id,
+            "Accept": "application/json",
+        }
+        try:
+            r = await self._http.get(url, headers=headers, timeout=15.0)
+            r.raise_for_status()
+            payload = r.json()
+        except httpx.HTTPError as err:
+            raise UpdateFailed(f"Failed to fetch /v1/models: {err}") from err
+        except ValueError as err:
+            raise UpdateFailed(f"Bad JSON from /v1/models: {err}") from err
+
+        models: list[dict[str, Any]] = []
+        for m in payload.get("data", []):
+            mid = m.get("id")
+            if not mid:
+                continue
+            models.append(
+                {
+                    "id": mid,
+                    "created": int(m.get("created") or 0),
+                    "owned_by": str(m.get("owned_by") or ""),
+                    "display_name": str(m.get("display_name") or mid),
+                }
+            )
+        models.sort(key=lambda x: x["created"], reverse=True)
+        return {"models": models}
+
+    @property
+    def chat_models(self) -> list[dict[str, Any]]:
+        """Chat-capable models (filter out image-only), newest first."""
+        if not self.data:
+            return []
+        return [
+            m
+            for m in self.data.get("models", [])
+            if not m["id"].startswith("gpt-image")
+        ]
+
+    @property
+    def latest_chat_model_id(self) -> str | None:
+        chat = self.chat_models
+        return chat[0]["id"] if chat else None
