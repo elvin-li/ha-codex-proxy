@@ -19,3 +19,7 @@ Thumbs.db
 secrets.yaml
 *.pem
 *.key
+
+# Stray PNG dumps from chat uploads
+image.png
+*.upload.png
