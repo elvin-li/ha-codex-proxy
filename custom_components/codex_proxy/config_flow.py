@@ -277,36 +277,55 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class ConversationSubentryFlowHandler(ConfigSubentryFlow):
-    """Add or reconfigure a conversation subentry."""
+    """Add or reconfigure a conversation subentry.
+
+    The two paths use distinct step ids so HA's flow framework routes the
+    submit back to the right handler — re-using `step_id="user"` for both
+    add and reconfigure caused HA to call `async_step_user` on submit even
+    when `self.source == "reconfigure"`, and `async_create_entry` then
+    raised `Source is reconfigure, expected user`.
+    """
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        return await self._handle(user_input, defaults=None)
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user", data_schema=self._build_schema(None)
+            )
+        return self.async_create_entry(
+            title="Codex 号池对话", data=_enrich_subentry_data(user_input)
+        )
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
         subentry = self._get_reconfigure_subentry()
-        return await self._handle(user_input, defaults=dict(subentry.data))
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=self._build_schema(dict(subentry.data)),
+            )
+        return self.async_update_and_abort(
+            self._get_entry(),
+            subentry,
+            data=_enrich_subentry_data(user_input, base=dict(subentry.data)),
+        )
 
-    async def _handle(
-        self,
-        user_input: dict[str, Any] | None,
-        defaults: dict[str, Any] | None,
-    ) -> SubentryFlowResult:
+    def _build_schema(self, defaults: dict[str, Any] | None) -> vol.Schema:
         keys = _upstream_keys()
         existing = defaults or {}
-
         entry = self._get_entry()
         coordinator = (
             self.hass.data.get(DOMAIN, {})
             .get(entry.entry_id, {})
             .get(DATA_COORDINATOR)
         )
-        model_choices = _model_select_options(coordinator, existing.get(keys["chat_model"]))
+        model_choices = _model_select_options(
+            coordinator, existing.get(keys["chat_model"])
+        )
 
-        schema = vol.Schema(
+        return vol.Schema(
             {
                 vol.Required(
                     keys["chat_model"],
@@ -345,18 +364,19 @@ class ConversationSubentryFlowHandler(ConfigSubentryFlow):
             }
         )
 
-        if user_input is None:
-            return self.async_show_form(step_id="user", data_schema=schema)
 
-        title = "Codex 号池对话"
-        if defaults is None:
-            return self.async_create_entry(title=title, data=user_input)
-
-        return self.async_update_and_abort(
-            self._get_entry(),
-            self._get_reconfigure_subentry(),
-            data=user_input,
-        )
+def _enrich_subentry_data(
+    user_input: dict[str, Any], base: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Merge form input with the keys upstream needs but our form doesn't
+    expose. Critically pins `service_tier=None` so the proxy doesn't 502
+    on the upstream default of "auto"."""
+    keys = _upstream_keys()
+    out: dict[str, Any] = dict(base) if base else {}
+    out.update(user_input)
+    out[keys["service_tier"]] = None
+    out.setdefault(CONF_LLM_HASS_API, [])
+    return out
 
 
 def _model_select_options(
