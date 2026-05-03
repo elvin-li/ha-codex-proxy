@@ -1,5 +1,9 @@
 # Codex Token Pool — Home Assistant 集成
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
+[![HA Core ≥ 2024.10](https://img.shields.io/badge/HA-≥2024.10-03a9f4.svg)](https://www.home-assistant.io/)
+
 把 Home Assistant 接入 **Codex 风格的反代号池**（OpenAI Responses API），
 让对话代理 / 语音助手用上号池里的 GPT-5 系列模型。
 
@@ -15,7 +19,7 @@
 ## 安装
 
 ### 通过 HACS（推荐）
-1. HACS → 自定义存储库 → 添加 `https://github.com/<your-username>/codex_proxy`，类型 `Integration`。
+1. HACS → 自定义存储库 → 添加 `https://github.com/elvin-li/ha-codex-proxy`，类型 `Integration`。
 2. 在 HACS 的集成列表里安装 **Codex Token Pool**。
 3. 重启 Home Assistant。
 
@@ -79,4 +83,4 @@ curl -sS https://your-codex-pool.example.com/v1/models \
 
 ## 协议
 
-MIT.
+[AGPL-3.0](LICENSE)。可以自用、改、分发；如果你 fork 修改后**重新分发或对外提供服务**（含云服务），必须把改动也以 AGPL 开源回来。
