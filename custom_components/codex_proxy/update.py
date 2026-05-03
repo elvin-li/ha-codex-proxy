@@ -1,20 +1,24 @@
 """Update entity that surfaces newer chat models from the proxy.
 
-When the reverse proxy starts advertising a model newer than the one currently
-configured on a `conversation` subentry (e.g. `gpt-5.6` shows up while we're
-still on `gpt-5.5`), this entity becomes "update available" and a one-click
-install rewrites the subentry data to the latest model and reloads the entry.
+When the reverse proxy starts advertising a model newer than the one
+currently configured on a `conversation` or `ai_task_data` subentry
+(e.g. `gpt-5.6` shows up while we're still on `gpt-5.5`), this entity
+becomes "update available" and a one-click install rewrites the
+subentry data to the latest model and reloads the config entry.
+
+One update entity per LLM-bearing subentry — both conversation agents
+and AI Task entities get tracked.
 """
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from homeassistant.components.update import (
-    UpdateEntity,
-    UpdateEntityFeature,
+from homeassistant.components.openai_conversation.const import (
+    CONF_CHAT_MODEL as UPSTREAM_CONF_CHAT_MODEL,
 )
-from homeassistant.config_entries import ConfigSubentry
+from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
+from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
@@ -25,45 +29,33 @@ from .const import (
     DATA_COORDINATOR,
     DEFAULT_MODEL,
     DOMAIN,
+    SUBENTRY_TYPE_AI_TASK,
     SUBENTRY_TYPE_CONVERSATION,
 )
 from .coordinator import CodexModelCoordinator
 
-if TYPE_CHECKING:
-    from . import CodexConfigEntry
-
 _LOGGER = logging.getLogger(__name__)
 
-
-def _conf_chat_model_key() -> str:
-    """Late-import upstream's CONF_CHAT_MODEL so we don't break load if it is
-    ever renamed; we'll just degrade to the literal default."""
-    try:
-        from homeassistant.components.openai_conversation.const import (
-            CONF_CHAT_MODEL,
-        )
-
-        return CONF_CHAT_MODEL
-    except ImportError:  # pragma: no cover
-        return "chat_model"
+_LLM_BEARING_SUBENTRY_TYPES = (
+    SUBENTRY_TYPE_CONVERSATION,
+    SUBENTRY_TYPE_AI_TASK,
+)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: "CodexConfigEntry",
+    entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Create one update entity per conversation subentry."""
+    """Create one update entity per conversation/ai_task subentry."""
     coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
         DATA_COORDINATOR
     ]
-    chat_model_key = _conf_chat_model_key()
-
     for subentry in entry.subentries.values():
-        if subentry.subentry_type != SUBENTRY_TYPE_CONVERSATION:
+        if subentry.subentry_type not in _LLM_BEARING_SUBENTRY_TYPES:
             continue
         async_add_entities(
-            [CodexModelUpdate(coordinator, entry, subentry, chat_model_key)],
+            [CodexModelUpdate(coordinator, entry, subentry)],
             config_subentry_id=subentry.subentry_id,
         )
 
@@ -81,14 +73,12 @@ class CodexModelUpdate(
     def __init__(
         self,
         coordinator: CodexModelCoordinator,
-        entry: "CodexConfigEntry",
+        entry: ConfigEntry,
         subentry: ConfigSubentry,
-        chat_model_key: str,
     ) -> None:
         super().__init__(coordinator)
         self._entry = entry
         self._subentry = subentry
-        self._chat_model_key = chat_model_key
         self._attr_unique_id = f"{subentry.subentry_id}_model_update"
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, subentry.subentry_id)},
@@ -96,12 +86,14 @@ class CodexModelUpdate(
 
     @property
     def installed_version(self) -> str | None:
-        return self._subentry.data.get(self._chat_model_key, DEFAULT_MODEL)
+        return self._subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL)
 
     @property
     def latest_version(self) -> str | None:
-        latest = self.coordinator.latest_chat_model_id
-        return latest or self.installed_version
+        # When the coordinator hasn't returned data yet (or proxy is down),
+        # report installed_version so HA doesn't render "update available"
+        # against a phantom None.
+        return self.coordinator.latest_chat_model_id or self.installed_version
 
     @property
     def title(self) -> str | None:
@@ -111,7 +103,9 @@ class CodexModelUpdate(
     def release_summary(self) -> str | None:
         latest = self.coordinator.latest_chat_model_id
         installed = self.installed_version
-        if not latest or latest == installed:
+        if not latest:
+            return "尚未从反代取得模型列表（首次刷新最长 6h，可手动 update_entity）。"
+        if latest == installed:
             return "已经是反代上的最新模型。"
         return (
             f"反代发现新模型 {latest}（当前：{installed}）。"
@@ -124,9 +118,9 @@ class CodexModelUpdate(
         """Switch the subentry's model to the requested (or latest) version
         and reload the config entry."""
         target = version or self.coordinator.latest_chat_model_id
-        if not target:
+        if not target or target == self.installed_version:
             return
-        new_data = {**self._subentry.data, self._chat_model_key: target}
+        new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: target}
         self.hass.config_entries.async_update_subentry(
             self._entry, self._subentry, data=new_data
         )
