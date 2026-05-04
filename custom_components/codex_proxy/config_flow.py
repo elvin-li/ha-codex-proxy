@@ -1,6 +1,6 @@
 """Config flow for the Codex Token Pool integration.
 
-Two flows live here:
+Three flows live here:
 
 * `CodexConfigFlow` — handles initial setup. Either fill the form (api_key +
   base_url + model) or paste your existing Codex CLI `config.toml` and we'll
@@ -10,6 +10,8 @@ Two flows live here:
   post-install, exposing the Codex-flavored knobs (model, reasoning effort,
   store, system prompt). Multiple subentries let you wire several conversation
   agents (e.g. one with `xhigh` reasoning, one with `medium` for low latency).
+* `AITaskSubentryFlowHandler` — same knobs as conversation but for AI Task
+  data-generation / image-generation subentries.
 """
 from __future__ import annotations
 
@@ -30,7 +32,7 @@ from homeassistant.config_entries import (
     SubentryFlowResult,
 )
 from homeassistant.const import CONF_LLM_HASS_API
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.helpers.selector import (
     BooleanSelector,
@@ -66,6 +68,10 @@ CONF_TOML_CONFIG = "toml_config"
 
 _LOGGER = logging.getLogger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# Cached upstream key imports
+# ---------------------------------------------------------------------------
 
 _UPSTREAM_KEYS_CACHE: dict[str, str] | None = None
 
@@ -106,6 +112,12 @@ def _upstream_keys() -> dict[str, str]:
     return _UPSTREAM_KEYS_CACHE
 
 
+# ---------------------------------------------------------------------------
+# Pure-Python wrappers (implementations live in _pure_helpers.py so tests
+# can import and exercise them without the HA runtime)
+# ---------------------------------------------------------------------------
+
+
 def _parse_codex_toml(text: str) -> dict[str, Any]:
     """Pull the values we care about out of a Codex CLI config.toml."""
     return _parse_codex_toml_impl(text)
@@ -115,6 +127,10 @@ def _validate_base_url(url: str) -> str | None:
     """Return an error key if *url* is not a valid http/https base URL."""
     return _validate_base_url_impl(url)
 
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
 
 STEP_USER_SCHEMA = vol.Schema(
     {
@@ -132,6 +148,97 @@ STEP_USER_SCHEMA = vol.Schema(
 )
 
 
+async def _probe_proxy(
+    hass: HomeAssistant,
+    api_key: str,
+    base_url: str,
+    model: str,
+) -> dict[str, str]:
+    """Send a minimal request to the proxy and return an errors dict.
+
+    Returns an empty dict on success, or a dict with a ``"base"`` error key
+    matching one of the ``config.error.*`` strings defined in strings.json.
+
+    Do NOT call ``client.close()`` after the probe — the http_client is HA's
+    shared httpx client; closing it would tear down all HA network I/O.
+    """
+    errors: dict[str, str] = {}
+    client = openai.AsyncOpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        http_client=get_async_client(hass),
+        default_headers={
+            "User-Agent": CODEX_USER_AGENT,
+            "OpenAI-Beta": CODEX_OPENAI_BETA,
+            "originator": CODEX_ORIGINATOR,
+        },
+    )
+    try:
+        await client.with_options(timeout=PROBE_TIMEOUT_S).responses.create(
+            model=model,
+            input="ping",
+            max_output_tokens=16,
+            store=False,
+        )
+    except openai.AuthenticationError:
+        errors["base"] = "invalid_auth"
+    except openai.NotFoundError:
+        errors["base"] = "unknown_model"
+    except openai.BadRequestError as err:
+        errors["base"] = "unknown_model" if "model" in str(err).lower() else "unknown"
+    except openai.APIConnectionError:
+        errors["base"] = "cannot_connect"
+    except (TimeoutError, OSError) as err:
+        _LOGGER.warning("Unexpected error during proxy probe: %s", err)
+        errors["base"] = "cannot_connect"
+    return errors
+
+
+def _enrich_subentry_data(
+    user_input: dict[str, Any], base: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Merge form input with the keys upstream needs but our form doesn't
+    expose. Critically pins ``service_tier=None`` so the proxy doesn't 502
+    on the upstream default of "auto"."""
+    keys = _upstream_keys()
+    out: dict[str, Any] = dict(base) if base else {}
+    out.update(user_input)
+    out[keys["service_tier"]] = None
+    out.setdefault(CONF_LLM_HASS_API, [])
+    return out
+
+
+def _model_select_options(
+    coordinator: Any, current: str | None
+) -> list[SelectOptionDict]:
+    """Build the model dropdown — proxy-discovered models first, current model
+    always present even if the proxy hasn't seen it."""
+    seen: set[str] = set()
+    out: list[SelectOptionDict] = []
+
+    if coordinator is not None:
+        for m in coordinator.chat_models:
+            mid = m["id"]
+            if mid in seen:
+                continue
+            seen.add(mid)
+            label = m.get("display_name") or mid
+            out.append(SelectOptionDict(value=mid, label=label))
+
+    if current and current not in seen:
+        out.insert(0, SelectOptionDict(value=current, label=current))
+
+    if not out:
+        out.append(SelectOptionDict(value=DEFAULT_MODEL, label=DEFAULT_MODEL))
+
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Main config flow
+# ---------------------------------------------------------------------------
+
+
 class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
     """Initial setup flow."""
 
@@ -145,42 +252,9 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 step_id="user", data_schema=STEP_USER_SCHEMA
             )
 
-        errors: dict[str, str] = {}
-        api_key = user_input[CONF_API_KEY]
-        base_url = (user_input.get(CONF_BASE_URL) or "").strip().rstrip("/")
-        model = (user_input.get("model") or "").strip() or DEFAULT_MODEL
-        reasoning_effort = DEFAULT_REASONING_EFFORT
-        store_responses = DEFAULT_STORE
-
-        toml_text = (user_input.get(CONF_TOML_CONFIG) or "").strip()
-        if toml_text:
-            try:
-                parsed = _parse_codex_toml(toml_text)
-            except tomllib.TOMLDecodeError as err:
-                _LOGGER.warning("Bad TOML in config flow: %s", err)
-                errors["base"] = "bad_toml"
-            else:
-                # TOML wins for fields it provides — that's the user's intent
-                # when they paste a config: "use these values."
-                if "base_url" in parsed:
-                    base_url = parsed["base_url"]
-                if "model" in parsed:
-                    model = parsed["model"]
-                if "reasoning_effort" in parsed:
-                    reasoning_effort = parsed["reasoning_effort"]
-                if "store_responses" in parsed:
-                    store_responses = parsed["store_responses"]
-                if not base_url:
-                    # TOML was valid but contained no model_providers.*.base_url
-                    errors["base"] = "toml_no_base_url"
-
-        if not errors and not base_url:
-            errors[CONF_BASE_URL] = "required"
-
-        if not errors:
-            url_err = _validate_base_url(base_url)
-            if url_err:
-                errors[CONF_BASE_URL] = url_err
+        errors, api_key, base_url, model, reasoning_effort, store_responses = (
+            _parse_toml_and_validate(user_input)
+        )
 
         if errors:
             return self.async_show_form(
@@ -191,42 +265,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors=errors,
             )
 
-        client = openai.AsyncOpenAI(
-            api_key=api_key,
-            base_url=base_url,
-            http_client=get_async_client(self.hass),
-            default_headers={
-                "User-Agent": CODEX_USER_AGENT,
-                "OpenAI-Beta": CODEX_OPENAI_BETA,
-                "originator": CODEX_ORIGINATOR,
-            },
-        )
-        try:
-            await client.with_options(
-                timeout=PROBE_TIMEOUT_S
-            ).responses.create(
-                model=model,
-                input="ping",
-                max_output_tokens=16,
-                store=False,
-            )
-        except openai.AuthenticationError:
-            errors["base"] = "invalid_auth"
-        except openai.NotFoundError:
-            errors["base"] = "unknown_model"
-        except openai.BadRequestError as err:
-            if "model" in str(err).lower():
-                errors["base"] = "unknown_model"
-            else:
-                errors["base"] = "unknown"
-        except openai.APIConnectionError:
-            errors["base"] = "cannot_connect"
-        except (TimeoutError, OSError) as err:
-            _LOGGER.warning("Unexpected error during proxy probe: %s", err)
-            errors["base"] = "cannot_connect"
-        # Do NOT call client.close() — http_client is HA's shared httpx
-        # client; closing it would tear down all HA network I/O.
-
+        errors = await _probe_proxy(self.hass, api_key, base_url, model)
         if errors:
             return self.async_show_form(
                 step_id="user",
@@ -291,33 +330,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             )
 
-        errors: dict[str, str] = {}
-        api_key = user_input[CONF_API_KEY]
-        base_url = (user_input.get(CONF_BASE_URL) or "").strip().rstrip("/")
-        model = (user_input.get("model") or "").strip() or DEFAULT_MODEL
-
-        toml_text = (user_input.get(CONF_TOML_CONFIG) or "").strip()
-        if toml_text:
-            try:
-                parsed = _parse_codex_toml(toml_text)
-            except tomllib.TOMLDecodeError as err:
-                _LOGGER.warning("Bad TOML in reconfigure flow: %s", err)
-                errors["base"] = "bad_toml"
-            else:
-                if "base_url" in parsed:
-                    base_url = parsed["base_url"]
-                if "model" in parsed:
-                    model = parsed["model"]
-                if not base_url:
-                    errors["base"] = "toml_no_base_url"
-
-        if not errors and not base_url:
-            errors[CONF_BASE_URL] = "required"
-
-        if not errors:
-            url_err = _validate_base_url(base_url)
-            if url_err:
-                errors[CONF_BASE_URL] = url_err
+        errors, api_key, base_url, model, _, _ = _parse_toml_and_validate(user_input)
 
         if errors:
             return self.async_show_form(
@@ -328,40 +341,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors=errors,
             )
 
-        client = openai.AsyncOpenAI(
-            api_key=api_key,
-            base_url=base_url,
-            http_client=get_async_client(self.hass),
-            default_headers={
-                "User-Agent": CODEX_USER_AGENT,
-                "OpenAI-Beta": CODEX_OPENAI_BETA,
-                "originator": CODEX_ORIGINATOR,
-            },
-        )
-        try:
-            await client.with_options(
-                timeout=PROBE_TIMEOUT_S
-            ).responses.create(
-                model=model,
-                input="ping",
-                max_output_tokens=16,
-                store=False,
-            )
-        except openai.AuthenticationError:
-            errors["base"] = "invalid_auth"
-        except openai.NotFoundError:
-            errors["base"] = "unknown_model"
-        except openai.BadRequestError as err:
-            if "model" in str(err).lower():
-                errors["base"] = "unknown_model"
-            else:
-                errors["base"] = "unknown"
-        except openai.APIConnectionError:
-            errors["base"] = "cannot_connect"
-        except (TimeoutError, OSError) as err:
-            _LOGGER.warning("Unexpected error during proxy probe: %s", err)
-            errors["base"] = "cannot_connect"
-
+        errors = await _probe_proxy(self.hass, api_key, base_url, model)
         if errors:
             return self.async_show_form(
                 step_id="reconfigure",
@@ -383,18 +363,25 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_supported_subentry_types(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
-        return {SUBENTRY_TYPE_CONVERSATION: ConversationSubentryFlowHandler}
+        return {
+            SUBENTRY_TYPE_CONVERSATION: ConversationSubentryFlowHandler,
+            SUBENTRY_TYPE_AI_TASK: AITaskSubentryFlowHandler,
+        }
 
 
-class ConversationSubentryFlowHandler(ConfigSubentryFlow):
-    """Add or reconfigure a conversation subentry.
+# ---------------------------------------------------------------------------
+# Subentry flows
+# ---------------------------------------------------------------------------
 
-    The two paths use distinct step ids so HA's flow framework routes the
-    submit back to the right handler — re-using `step_id="user"` for both
-    add and reconfigure caused HA to call `async_step_user` on submit even
-    when `self.source == "reconfigure"`, and `async_create_entry` then
-    raised `Source is reconfigure, expected user`.
+
+class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
+    """Shared logic for conversation and AI-task subentry flows.
+
+    Subclasses override ``_default_title`` and set ``_subentry_type`` so the
+    two concrete handlers are just one-liner declarations.
     """
+
+    _default_title: str = "Codex 号池代理"
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -404,7 +391,8 @@ class ConversationSubentryFlowHandler(ConfigSubentryFlow):
                 step_id="user", data_schema=self._build_schema(None)
             )
         return self.async_create_entry(
-            title="Codex 号池对话", data=_enrich_subentry_data(user_input)
+            title=self._default_title,
+            data=_enrich_subentry_data(user_input),
         )
 
     async def async_step_reconfigure(
@@ -475,41 +463,71 @@ class ConversationSubentryFlowHandler(ConfigSubentryFlow):
         )
 
 
-def _enrich_subentry_data(
-    user_input: dict[str, Any], base: dict[str, Any] | None = None
-) -> dict[str, Any]:
-    """Merge form input with the keys upstream needs but our form doesn't
-    expose. Critically pins `service_tier=None` so the proxy doesn't 502
-    on the upstream default of "auto"."""
-    keys = _upstream_keys()
-    out: dict[str, Any] = dict(base) if base else {}
-    out.update(user_input)
-    out[keys["service_tier"]] = None
-    out.setdefault(CONF_LLM_HASS_API, [])
-    return out
+class ConversationSubentryFlowHandler(_LLMSubentryFlowHandlerBase):
+    """Add or reconfigure a conversation subentry.
+
+    The two paths use distinct step ids so HA's flow framework routes the
+    submit back to the right handler — re-using ``step_id="user"`` for both
+    add and reconfigure caused HA to call ``async_step_user`` on submit even
+    when ``self.source == "reconfigure"``, raising ``Source is reconfigure,
+    expected user``.
+    """
+
+    _default_title = "Codex 号池对话"
 
 
-def _model_select_options(
-    coordinator: Any, current: str | None
-) -> list[SelectOptionDict]:
-    """Build the model dropdown — proxy-discovered models first, current model
-    always present even if the proxy hasn't seen it."""
-    seen: set[str] = set()
-    out: list[SelectOptionDict] = []
+class AITaskSubentryFlowHandler(_LLMSubentryFlowHandlerBase):
+    """Add or reconfigure an AI Task data-generation subentry."""
 
-    if coordinator is not None:
-        for m in coordinator.chat_models:
-            mid = m["id"]
-            if mid in seen:
-                continue
-            seen.add(mid)
-            label = m.get("display_name") or mid
-            out.append(SelectOptionDict(value=mid, label=label))
+    _default_title = "Codex 号池 AI Task"
 
-    if current and current not in seen:
-        out.insert(0, SelectOptionDict(value=current, label=current))
 
-    if not out:
-        out.append(SelectOptionDict(value=DEFAULT_MODEL, label=DEFAULT_MODEL))
+# ---------------------------------------------------------------------------
+# Private helpers
+# ---------------------------------------------------------------------------
 
-    return out
+
+def _parse_toml_and_validate(
+    user_input: dict[str, Any],
+) -> tuple[dict[str, str], str, str, str, str, bool]:
+    """Extract, TOML-merge, and validate fields from form input.
+
+    Returns ``(errors, api_key, base_url, model, reasoning_effort,
+    store_responses)``.  If *errors* is non-empty the caller should re-show
+    the form without attempting a probe.
+    """
+    errors: dict[str, str] = {}
+    api_key: str = user_input[CONF_API_KEY]
+    base_url: str = (user_input.get(CONF_BASE_URL) or "").strip().rstrip("/")
+    model: str = (user_input.get("model") or "").strip() or DEFAULT_MODEL
+    reasoning_effort: str = DEFAULT_REASONING_EFFORT
+    store_responses: bool = DEFAULT_STORE
+
+    toml_text = (user_input.get(CONF_TOML_CONFIG) or "").strip()
+    if toml_text:
+        try:
+            parsed = _parse_codex_toml(toml_text)
+        except tomllib.TOMLDecodeError as err:
+            _LOGGER.warning("Bad TOML in config flow: %s", err)
+            errors["base"] = "bad_toml"
+        else:
+            if "base_url" in parsed:
+                base_url = parsed["base_url"]
+            if "model" in parsed:
+                model = parsed["model"]
+            if "reasoning_effort" in parsed:
+                reasoning_effort = parsed["reasoning_effort"]
+            if "store_responses" in parsed:
+                store_responses = parsed["store_responses"]
+            if not base_url:
+                errors["base"] = "toml_no_base_url"
+
+    if not errors and not base_url:
+        errors[CONF_BASE_URL] = "required"
+
+    if not errors:
+        url_err = _validate_base_url(base_url)
+        if url_err:
+            errors[CONF_BASE_URL] = url_err
+
+    return errors, api_key, base_url, model, reasoning_effort, store_responses

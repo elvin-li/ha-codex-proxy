@@ -84,9 +84,52 @@
           }
         }
       }
+    },
+    "ai_task_data": {
+      "initiate_flow": {
+        "user": "Add AI Task agent",
+        "reconfigure": "Reconfigure AI Task agent"
+      },
+      "entry_type": "AI Task agent",
+      "step": {
+        "user": {
+          "title": "Add AI Task agent",
+          "data": {
+            "chat_model": "Model",
+            "reasoning_effort": "Reasoning effort",
+            "store_responses": "Store responses on the proxy",
+            "prompt": "System prompt"
+          },
+          "data_description": {
+            "store_responses": "Off mirrors Codex CLI's disable_response_storage = true.",
+            "reasoning_effort": "xhigh = the deepest reasoning Codex supports; medium is faster."
+          }
+        },
+        "reconfigure": {
+          "title": "Reconfigure AI Task agent",
+          "data": {
+            "chat_model": "Model",
+            "reasoning_effort": "Reasoning effort",
+            "store_responses": "Store responses on the proxy",
+            "prompt": "System prompt"
+          },
+          "data_description": {
+            "store_responses": "Off mirrors Codex CLI's disable_response_storage = true.",
+            "reasoning_effort": "xhigh = the deepest reasoning Codex supports; medium is faster."
+          }
+        }
+      }
     }
   },
   "entity": {
+    "sensor": {
+      "chat_model_count": {
+        "name": "Chat model count"
+      },
+      "last_model_refresh": {
+        "name": "Last model refresh"
+      }
+    },
     "update": {
       "model_update": {
         "name": "Latest model from proxy"
