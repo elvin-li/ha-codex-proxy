@@ -33,9 +33,15 @@ REASONING_EFFORTS: tuple[str, ...] = ("none", "medium", "high", "xhigh")
 
 MODEL_REFRESH_INTERVAL = timedelta(hours=6)
 PROBE_TIMEOUT_S = 10.0
+COORDINATOR_TIMEOUT_S = 15.0
+COORDINATOR_MAX_RETRIES = 3
+COORDINATOR_RETRY_DELAYS: tuple[int, ...] = (5, 30)
+
+# Model IDs starting with any of these prefixes are image-only and excluded
+# from the chat-model list surfaced in conversation-agent dropdowns.
+IMAGE_MODEL_ID_PREFIXES: tuple[str, ...] = ("gpt-image", "dall-e", "image-")
 
 DATA_COORDINATOR = "coordinator"
-DATA_INSTALLATION_ID = "installation_id"
 
 CODEX_USER_AGENT = "codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)"
 CODEX_OPENAI_BETA = "responses=experimental"

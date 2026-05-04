@@ -15,6 +15,21 @@
           "model": "Initial model id; you can switch later in the conversation agent options.",
           "toml_config": "If you already use Codex CLI, paste the entire config.toml here and base_url, model, reasoning effort and store flag will be filled in for you."
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure proxy connection",
+        "description": "Update the API key or proxy URL. All existing conversation agents are preserved.",
+        "data": {
+          "api_key": "API key",
+          "base_url": "Reverse proxy base URL",
+          "model": "Validation model",
+          "toml_config": "Paste your Codex CLI config.toml (optional)"
+        },
+        "data_description": {
+          "base_url": "Root URL of the proxy. The integration will append /v1/responses automatically.",
+          "model": "Model used only to validate the new connection. Your agents keep their own model settings.",
+          "toml_config": "Paste your Codex CLI config.toml to auto-fill base_url and model."
+        }
       }
     },
     "error": {
@@ -23,10 +38,15 @@
       "unknown_model": "The proxy does not recognize this model. Try gpt-5.5 or another value from /v1/models.",
       "unknown": "Unexpected error talking to the proxy.",
       "bad_toml": "Could not parse the pasted TOML.",
-      "required": "Required."
+      "required": "Required.",
+      "invalid_url_scheme": "URL must start with http:// or https://.",
+      "invalid_url": "Enter a valid URL including the scheme (e.g. https://your-proxy.example.com).",
+      "toml_no_base_url": "TOML parsed OK but no base_url was found. Enter the proxy URL manually."
     },
     "abort": {
-      "already_configured": "This proxy is already configured."
+      "already_configured": "This proxy is already configured.",
+      "reauth_successful": "Re-authentication was successful.",
+      "reconfigure_successful": "Proxy connection updated."
     }
   },
   "config_subentries": {
@@ -57,6 +77,10 @@
             "reasoning_effort": "Reasoning effort",
             "store_responses": "Store responses on the proxy",
             "prompt": "System prompt"
+          },
+          "data_description": {
+            "store_responses": "Off mirrors Codex CLI's disable_response_storage = true.",
+            "reasoning_effort": "xhigh = the deepest reasoning Codex supports; medium is faster."
           }
         }
       }

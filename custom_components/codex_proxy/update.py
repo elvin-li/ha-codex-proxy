@@ -112,6 +112,13 @@ class CodexModelUpdate(
             "点击安装可一键切换。"
         )
 
+    @property
+    def release_url(self) -> str | None:
+        latest = self.coordinator.latest_chat_model_id
+        if not latest:
+            return None
+        return f"https://platform.openai.com/docs/models/{latest}"
+
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:

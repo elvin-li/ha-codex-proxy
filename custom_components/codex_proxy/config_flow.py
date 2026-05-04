@@ -17,6 +17,9 @@ import logging
 import tomllib
 from typing import Any
 
+from ._pure_helpers import parse_codex_toml as _parse_codex_toml_impl
+from ._pure_helpers import validate_base_url as _validate_base_url_impl
+
 import openai
 import voluptuous as vol
 from homeassistant.config_entries import (
@@ -64,8 +67,18 @@ CONF_TOML_CONFIG = "toml_config"
 _LOGGER = logging.getLogger(__name__)
 
 
+_UPSTREAM_KEYS_CACHE: dict[str, str] | None = None
+
+
 def _upstream_keys() -> dict[str, str]:
-    """Late-import upstream conf keys, with literal fallbacks."""
+    """Late-import upstream conf keys, with literal fallbacks.
+
+    Result is cached at module level — the upstream const module never changes
+    within a HA session, so repeated dynamic imports are unnecessary.
+    """
+    global _UPSTREAM_KEYS_CACHE
+    if _UPSTREAM_KEYS_CACHE is not None:
+        return _UPSTREAM_KEYS_CACHE
     try:
         from homeassistant.components.openai_conversation.const import (
             CONF_CHAT_MODEL,
@@ -75,7 +88,7 @@ def _upstream_keys() -> dict[str, str]:
             CONF_STORE_RESPONSES,
         )
 
-        return {
+        _UPSTREAM_KEYS_CACHE = {
             "chat_model": CONF_CHAT_MODEL,
             "prompt": CONF_PROMPT,
             "reasoning_effort": CONF_REASONING_EFFORT,
@@ -83,39 +96,24 @@ def _upstream_keys() -> dict[str, str]:
             "service_tier": CONF_SERVICE_TIER,
         }
     except ImportError:  # pragma: no cover
-        return {
+        _UPSTREAM_KEYS_CACHE = {
             "chat_model": "chat_model",
             "prompt": "prompt",
             "reasoning_effort": "reasoning_effort",
             "store_responses": "store_responses",
             "service_tier": "service_tier",
         }
+    return _UPSTREAM_KEYS_CACHE
 
 
 def _parse_codex_toml(text: str) -> dict[str, Any]:
-    """Pull the values we care about out of a Codex CLI config.toml.
+    """Pull the values we care about out of a Codex CLI config.toml."""
+    return _parse_codex_toml_impl(text)
 
-    Looks at top-level `model`, `model_reasoning_effort`,
-    `disable_response_storage`, and the first `[model_providers.*]` table that
-    has a `base_url`. Returns a dict with the keys we use; missing values are
-    omitted.
-    """
-    cfg = tomllib.loads(text)
-    out: dict[str, Any] = {}
-    if isinstance(cfg.get("model"), str):
-        out["model"] = cfg["model"].strip()
-    if isinstance(cfg.get("model_reasoning_effort"), str):
-        out["reasoning_effort"] = cfg["model_reasoning_effort"].strip()
-    if "disable_response_storage" in cfg:
-        # Codex CLI's `disable_response_storage = true` ↔ store_responses=False
-        out["store_responses"] = not bool(cfg["disable_response_storage"])
-    providers = cfg.get("model_providers")
-    if isinstance(providers, dict):
-        for provider in providers.values():
-            if isinstance(provider, dict) and provider.get("base_url"):
-                out["base_url"] = str(provider["base_url"]).rstrip("/")
-                break
-    return out
+
+def _validate_base_url(url: str) -> str | None:
+    """Return an error key if *url* is not a valid http/https base URL."""
+    return _validate_base_url_impl(url)
 
 
 STEP_USER_SCHEMA = vol.Schema(
@@ -172,9 +170,17 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                     reasoning_effort = parsed["reasoning_effort"]
                 if "store_responses" in parsed:
                     store_responses = parsed["store_responses"]
+                if not base_url:
+                    # TOML was valid but contained no model_providers.*.base_url
+                    errors["base"] = "toml_no_base_url"
 
         if not errors and not base_url:
             errors[CONF_BASE_URL] = "required"
+
+        if not errors:
+            url_err = _validate_base_url(base_url)
+            if url_err:
+                errors[CONF_BASE_URL] = url_err
 
         if errors:
             return self.async_show_form(
@@ -215,9 +221,9 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
         except openai.APIConnectionError:
             errors["base"] = "cannot_connect"
-        except Exception:  # noqa: BLE001
-            _LOGGER.exception("Unexpected error during proxy probe")
-            errors["base"] = "unknown"
+        except (TimeoutError, OSError) as err:
+            _LOGGER.warning("Unexpected error during proxy probe: %s", err)
+            errors["base"] = "cannot_connect"
         # Do NOT call client.close() — http_client is HA's shared httpx
         # client; closing it would tear down all HA network I/O.
 
@@ -266,6 +272,110 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                     "data": dict(common_data),
                 },
             ],
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Allow changing the API key or proxy URL without losing subentries."""
+        entry = self._get_reconfigure_entry()
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=self.add_suggested_values_to_schema(
+                    STEP_USER_SCHEMA,
+                    {
+                        CONF_API_KEY: entry.data.get(CONF_API_KEY, ""),
+                        CONF_BASE_URL: entry.data.get(CONF_BASE_URL, ""),
+                    },
+                ),
+            )
+
+        errors: dict[str, str] = {}
+        api_key = user_input[CONF_API_KEY]
+        base_url = (user_input.get(CONF_BASE_URL) or "").strip().rstrip("/")
+        model = (user_input.get("model") or "").strip() or DEFAULT_MODEL
+
+        toml_text = (user_input.get(CONF_TOML_CONFIG) or "").strip()
+        if toml_text:
+            try:
+                parsed = _parse_codex_toml(toml_text)
+            except tomllib.TOMLDecodeError as err:
+                _LOGGER.warning("Bad TOML in reconfigure flow: %s", err)
+                errors["base"] = "bad_toml"
+            else:
+                if "base_url" in parsed:
+                    base_url = parsed["base_url"]
+                if "model" in parsed:
+                    model = parsed["model"]
+                if not base_url:
+                    errors["base"] = "toml_no_base_url"
+
+        if not errors and not base_url:
+            errors[CONF_BASE_URL] = "required"
+
+        if not errors:
+            url_err = _validate_base_url(base_url)
+            if url_err:
+                errors[CONF_BASE_URL] = url_err
+
+        if errors:
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=self.add_suggested_values_to_schema(
+                    STEP_USER_SCHEMA, user_input
+                ),
+                errors=errors,
+            )
+
+        client = openai.AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            http_client=get_async_client(self.hass),
+            default_headers={
+                "User-Agent": CODEX_USER_AGENT,
+                "OpenAI-Beta": CODEX_OPENAI_BETA,
+                "originator": CODEX_ORIGINATOR,
+            },
+        )
+        try:
+            await client.with_options(
+                timeout=PROBE_TIMEOUT_S
+            ).responses.create(
+                model=model,
+                input="ping",
+                max_output_tokens=16,
+                store=False,
+            )
+        except openai.AuthenticationError:
+            errors["base"] = "invalid_auth"
+        except openai.NotFoundError:
+            errors["base"] = "unknown_model"
+        except openai.BadRequestError as err:
+            if "model" in str(err).lower():
+                errors["base"] = "unknown_model"
+            else:
+                errors["base"] = "unknown"
+        except openai.APIConnectionError:
+            errors["base"] = "cannot_connect"
+        except (TimeoutError, OSError) as err:
+            _LOGGER.warning("Unexpected error during proxy probe: %s", err)
+            errors["base"] = "cannot_connect"
+
+        if errors:
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=self.add_suggested_values_to_schema(
+                    STEP_USER_SCHEMA, user_input
+                ),
+                errors=errors,
+            )
+
+        await self.async_set_unique_id(base_url)
+        self._abort_if_unique_id_mismatch()
+        return self.async_update_reload_and_abort(
+            entry,
+            data={CONF_API_KEY: api_key, CONF_BASE_URL: base_url},
         )
 
     @classmethod

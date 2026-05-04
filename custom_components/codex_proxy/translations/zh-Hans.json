@@ -15,6 +15,21 @@
           "model": "初始模型 ID，安装后可在对话代理选项里随时切换。",
           "toml_config": "如果你已经在用 Codex CLI，把整段 config.toml 贴进来，base_url / model / 推理强度 / 存储开关会自动填好。"
         }
+      },
+      "reconfigure": {
+        "title": "重新配置反代连接",
+        "description": "更新 API Key 或反代地址。所有已有的对话代理配置会完整保留。",
+        "data": {
+          "api_key": "API Key",
+          "base_url": "反代基础 URL",
+          "model": "校验用模型",
+          "toml_config": "粘贴 Codex CLI config.toml（可选）"
+        },
+        "data_description": {
+          "base_url": "反代根地址，集成会自动拼接 /v1/responses。",
+          "model": "仅用于测试新连接是否正常，对话代理仍使用各自配置的模型。",
+          "toml_config": "粘贴 config.toml 可自动填写 base_url 和模型。"
+        }
       }
     },
     "error": {
@@ -23,10 +38,15 @@
       "unknown_model": "反代不识别该模型，可改用 gpt-5.5 或 /v1/models 列出的其它模型。",
       "unknown": "调用反代时出现未知错误。",
       "bad_toml": "TOML 解析失败，请检查格式。",
-      "required": "必填。"
+      "required": "必填。",
+      "invalid_url_scheme": "URL 必须以 http:// 或 https:// 开头。",
+      "invalid_url": "请输入包含协议头的完整 URL（例如 https://your-proxy.example.com）。",
+      "toml_no_base_url": "TOML 解析成功但未找到 base_url，请手动填写反代地址。"
     },
     "abort": {
-      "already_configured": "该反代已经配置过。"
+      "already_configured": "该反代已经配置过。",
+      "reauth_successful": "重新验证成功。",
+      "reconfigure_successful": "反代连接已更新。"
     }
   },
   "config_subentries": {
@@ -57,6 +77,10 @@
             "reasoning_effort": "推理强度",
             "store_responses": "在反代上保留响应",
             "prompt": "系统提示词"
+          },
+          "data_description": {
+            "store_responses": "关闭等同 Codex CLI 的 disable_response_storage = true。",
+            "reasoning_effort": "xhigh 为 Codex 支持的最高推理强度；medium 更快。"
           }
         }
       }

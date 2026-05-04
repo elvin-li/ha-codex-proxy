@@ -16,12 +16,14 @@ import logging
 import uuid
 from typing import TYPE_CHECKING
 
+import httpx
 import openai
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.httpx_client import get_async_client
+from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .const import (
     CODEX_OPENAI_BETA,
@@ -93,7 +95,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> boo
     coordinator = CodexModelCoordinator(hass, entry, installation_id)
     try:
         await coordinator.async_config_entry_first_refresh()
-    except Exception as err:  # noqa: BLE001 — coordinator failure is non-fatal
+    except (httpx.HTTPError, UpdateFailed) as err:
+        # Coordinator failure is non-fatal — the entry still loads and polls
+        # again at the next MODEL_REFRESH_INTERVAL tick.
         _LOGGER.warning("Initial model refresh failed: %s", err)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {

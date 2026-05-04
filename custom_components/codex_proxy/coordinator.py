@@ -6,6 +6,7 @@ response (`'str' object has no attribute '_set_private_attributes'`).
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -23,7 +24,11 @@ from .const import (
     CODEX_USER_AGENT,
     CONF_API_KEY,
     CONF_BASE_URL,
+    COORDINATOR_MAX_RETRIES,
+    COORDINATOR_RETRY_DELAYS,
+    COORDINATOR_TIMEOUT_S,
     DOMAIN,
+    IMAGE_MODEL_ID_PREFIXES,
     MODEL_REFRESH_INTERVAL,
 )
 
@@ -63,20 +68,37 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "x-codex-installation-id": self._installation_id,
             "Accept": "application/json",
         }
-        try:
-            r = await self._http.get(url, headers=headers, timeout=15.0)
-            r.raise_for_status()
-            payload = r.json()
-        except httpx.HTTPError as err:
-            raise UpdateFailed(f"Failed to fetch /v1/models: {err}") from err
-        except ValueError as err:
-            raise UpdateFailed(f"Bad JSON from /v1/models: {err}") from err
+        last_err: Exception | None = None
+        for attempt in range(COORDINATOR_MAX_RETRIES):
+            try:
+                r = await self._http.get(
+                    url, headers=headers, timeout=COORDINATOR_TIMEOUT_S
+                )
+                r.raise_for_status()
+                payload = r.json()
+                break  # success
+            except (httpx.HTTPStatusError, httpx.TimeoutException) as err:
+                # Transient errors (5xx, timeout) — retry with back-off
+                last_err = err
+                if attempt < COORDINATOR_MAX_RETRIES - 1:
+                    await asyncio.sleep(COORDINATOR_RETRY_DELAYS[attempt])
+            except httpx.HTTPError as err:
+                # Non-transient (connection refused, DNS) — fail immediately
+                raise UpdateFailed(f"Failed to fetch /v1/models: {err}") from err
+            except ValueError as err:
+                raise UpdateFailed(f"Bad JSON from /v1/models: {err}") from err
+        else:
+            raise UpdateFailed(
+                f"Failed after {COORDINATOR_MAX_RETRIES} attempts: {last_err}"
+            )
 
+        seen_ids: set[str] = set()
         models: list[dict[str, Any]] = []
         for m in payload.get("data", []):
             mid = m.get("id")
-            if not mid:
+            if not mid or mid in seen_ids:
                 continue
+            seen_ids.add(mid)
             models.append(
                 {
                     "id": mid,
@@ -90,13 +112,13 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @property
     def chat_models(self) -> list[dict[str, Any]]:
-        """Chat-capable models (filter out image-only), newest first."""
+        """Chat-capable models (image-only excluded), newest first."""
         if not self.data:
             return []
         return [
             m
             for m in self.data.get("models", [])
-            if not m["id"].startswith("gpt-image")
+            if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
         ]
 
     @property

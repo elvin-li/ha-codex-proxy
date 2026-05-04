@@ -12,8 +12,6 @@ to Codex Token Pool, not OpenAI Conversation.
 """
 from __future__ import annotations
 
-import logging
-
 from homeassistant.components.openai_conversation.const import (
     CONF_CHAT_MODEL as UPSTREAM_CONF_CHAT_MODEL,
 )
@@ -22,12 +20,10 @@ from homeassistant.components.openai_conversation.conversation import (
 )
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DEFAULT_MODEL, DOMAIN, SUBENTRY_TYPE_CONVERSATION
-
-_LOGGER = logging.getLogger(__name__)
+from .const import SUBENTRY_TYPE_CONVERSATION
+from .entity_utils import build_codex_device_info
 
 
 class CodexConversationEntity(OpenAIConversationEntity):
@@ -35,12 +31,8 @@ class CodexConversationEntity(OpenAIConversationEntity):
 
     def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
         super().__init__(entry, subentry)
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, subentry.subentry_id)},
-            name=subentry.title,
-            manufacturer="OpenAI Codex Token Pool",
-            model=subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL),
-            entry_type=dr.DeviceEntryType.SERVICE,
+        self._attr_device_info = build_codex_device_info(
+            subentry, UPSTREAM_CONF_CHAT_MODEL
         )
 
 
