@@ -7,6 +7,32 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.1] – 2026-05-19
+
+### Added
+
+- **Model select entity** (`select.*_active_model`, disabled by default) — dropdown
+  per LLM subentry showing all chat-capable models from the proxy; selecting one
+  updates the subentry and reloads the config entry immediately.
+- `CONTRIBUTING.md` — dev setup, project layout, architecture notes.
+
+### Changed
+
+- Coordinator error messages now include the full URL and exception type
+  (e.g. `"Failed to fetch https://proxy/v1/models: ConnectError: ..."`) for
+  faster triage in HA logs.
+
+### Tests (86 → 130)
+
+- `test_parse_toml_validate.py`: 18 tests for `_parse_toml_and_validate`
+- `test_coordinator_properties.py`: 12 tests for `chat_models` and
+  `latest_chat_model_id` properties
+- `test_select.py`: 12 tests for `CodexModelSelectEntity`
+- `test_update_entity.py`: +2 tests for `_handle_coordinator_update` (live
+  subentry refresh from `entry.subentries`)
+
+---
+
 ## [0.2.0] – 2026-05-19
 
 ### Added

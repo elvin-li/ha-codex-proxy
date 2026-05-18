@@ -122,6 +122,11 @@
     }
   },
   "entity": {
+    "select": {
+      "active_model": {
+        "name": "当前模型"
+      }
+    },
     "sensor": {
       "chat_model_count": {
         "name": "可用对话模型数"
