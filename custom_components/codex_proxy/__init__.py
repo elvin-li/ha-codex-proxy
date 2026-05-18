@@ -110,6 +110,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> boo
     return True
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bool:
+    """Migrate config entries from older schema versions.
+
+    Version 1 is the current schema (api_key + base_url + codex_installation_id).
+    This function is called automatically by HA when entry.version < VERSION in
+    CodexConfigFlow. Add new ``if entry.version < N`` blocks here as the schema
+    evolves so existing users are migrated non-destructively on upgrade.
+    """
+    _LOGGER.debug(
+        "Migrating Codex Token Pool config entry from version %s", entry.version
+    )
+    # No migrations needed yet — version 1 is the only schema.
+    # Future example:
+    #   if entry.version < 2:
+    #       hass.config_entries.async_update_entry(entry, version=2, data={...})
+    return True
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bool:
     """Unload a Codex Token Pool config entry.
 

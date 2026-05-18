@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an improvement or new capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear description of the problem you're trying to solve.
+      placeholder: "I'm frustrated when…"
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: This feature is specific to codex_proxy and not better implemented upstream in openai_conversation
+          required: false
+        - label: I searched existing issues and this hasn't been requested before
+          required: true
