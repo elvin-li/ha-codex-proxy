@@ -84,12 +84,17 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     await asyncio.sleep(COORDINATOR_RETRY_DELAYS[attempt])
             except httpx.HTTPError as err:
                 # Non-transient (connection refused, DNS) — fail immediately
-                raise UpdateFailed(f"Failed to fetch /v1/models: {err}") from err
+                raise UpdateFailed(
+                    f"Failed to fetch {url}: {type(err).__name__}: {err}"
+                ) from err
             except ValueError as err:
-                raise UpdateFailed(f"Bad JSON from /v1/models: {err}") from err
+                raise UpdateFailed(
+                    f"Bad JSON from {url}: {err}"
+                ) from err
         else:
             raise UpdateFailed(
-                f"Failed after {COORDINATOR_MAX_RETRIES} attempts: {last_err}"
+                f"Failed to fetch {url} after {COORDINATOR_MAX_RETRIES} attempts"
+                f" (last error: {type(last_err).__name__}: {last_err})"
             )
 
         seen_ids: set[str] = set()

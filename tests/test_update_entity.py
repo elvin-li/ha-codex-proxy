@@ -58,7 +58,8 @@ class _UpdateEntityBase(_Subscriptable):
 
 
 class _CoordinatorEntityBase(_Subscriptable):
-    pass
+    def _handle_coordinator_update(self) -> None:
+        """Stub — real implementation notifies HA state machine."""
 
 
 class _DataUpdateCoordinatorBase(_Subscriptable):
@@ -208,3 +209,34 @@ class TestAsyncInstall:
         entity = _make_entity("gpt-5.5", None)
         await entity.async_install(version=None, backup=False)
         entity.hass.config_entries.async_update_subentry.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _handle_coordinator_update — live subentry refresh
+# ---------------------------------------------------------------------------
+
+
+class TestHandleCoordinatorUpdate:
+    def test_subentry_refreshed_from_entry_subentries(self) -> None:
+        """After a coordinator update, _subentry should be re-read from
+        entry.subentries so installed_version reflects external changes."""
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        # Simulate the live subentry having been updated externally to gpt-5.6
+        live_subentry = _make_subentry("gpt-5.6")
+        entity._entry.subentries = {entity._subentry.subentry_id: live_subentry}
+
+        entity._handle_coordinator_update()
+
+        assert entity._subentry is live_subentry
+        assert entity.installed_version == "gpt-5.6"
+
+    def test_subentry_unchanged_when_not_in_entry(self) -> None:
+        """If the subentry_id is not found in entry.subentries (e.g. it was
+        deleted), the stale subentry reference is preserved."""
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        original_subentry = entity._subentry
+        entity._entry.subentries = {}  # empty — subentry not found
+
+        entity._handle_coordinator_update()
+
+        assert entity._subentry is original_subentry
