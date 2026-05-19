@@ -250,6 +250,26 @@ class TestCoordinatorRetry:
         # Should have slept between retries (not after the final one)
         assert sleep_mock.call_count >= 1
 
+    @pytest.mark.asyncio
+    async def test_exhausted_retries_message_contains_url(self) -> None:
+        """UpdateFailed raised after all retries are exhausted must include the
+        proxy URL so operators with multiple Codex entries can identify the
+        failing proxy from a single HA log line.
+
+        Companion to TestCoordinatorNonTransient.test_connection_error_message_contains_url —
+        together they ensure the URL invariant holds across both failure paths
+        (immediate non-transient vs. exhausted retries)."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            pytest.raises(UpdateFailed) as exc_info,
+        ):
+            await coord._async_update_data()
+
+        assert coord._url in str(exc_info.value)
+
 
 # ---------------------------------------------------------------------------
 # Non-transient errors (immediate failure)
@@ -318,6 +338,20 @@ class TestCoordinatorNonTransient:
 
         with pytest.raises(UpdateFailed, match="403"):
             await coord._async_update_data()
+
+    @pytest.mark.asyncio
+    async def test_connection_error_message_contains_url(self) -> None:
+        """UpdateFailed raised for a non-transient ConnectError must include
+        the proxy URL so operators with multiple Codex entries can identify
+        the failing proxy from a single HA log line without cross-referencing
+        entry IDs."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
+
+        with pytest.raises(UpdateFailed) as exc_info:
+            await coord._async_update_data()
+
+        assert coord._url in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_5xx_still_retried(self) -> None:

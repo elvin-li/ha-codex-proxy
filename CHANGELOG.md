@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.66] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_retry.py`** — two new error-message contract tests:
+  - `TestCoordinatorNonTransient.test_connection_error_message_contains_url` — verifies
+    that `UpdateFailed` raised on a non-transient `ConnectError` includes the proxy URL
+    in its message, so operators with multiple Codex entries can identify the failing
+    endpoint from a single HA log line without cross-referencing entry IDs.
+  - `TestCoordinatorRetry.test_exhausted_retries_message_contains_url` — same URL
+    invariant for the exhausted-retries path; together the two tests guard both
+    `UpdateFailed` raise sites in `_async_update_data` against silent message regression.
+
+---
+
 ## [0.2.65] – 2026-05-19
 
 ### Added (tests)
