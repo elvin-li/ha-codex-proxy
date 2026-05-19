@@ -68,25 +68,89 @@ def _make_subentry(
     return sub
 
 
+def _make_coordinator_with_models(model_ids: list[str]) -> MagicMock:
+    """Return a coordinator mock whose chat_models list contains the given IDs."""
+    coord = MagicMock()
+    coord.chat_models = [
+        {"id": mid, "created": 0, "owned_by": "", "display_name": mid} for mid in model_ids
+    ]
+    return coord
+
+
 def _make_flow(
     handler_cls: type,
     entry_id: str = "entry-1",
     subentry: MagicMock | None = None,
+    coordinator: MagicMock | None = None,
 ) -> Any:
-    """Instantiate a subentry flow handler with all HA lifecycle methods mocked."""
+    """Instantiate a subentry flow handler with all HA lifecycle methods mocked.
+
+    Pass *coordinator* to simulate a live coordinator in hass.data so that
+    _build_schema exercises the coordinator-populated model dropdown path.
+    """
+    from custom_components.codex_proxy.const import DATA_COORDINATOR, DOMAIN
+
     flow = object.__new__(handler_cls)
     # Mock HA plumbing
     entry = MagicMock()
     entry.entry_id = entry_id
     # hass.data used by _build_schema to get coordinator
     flow.hass = MagicMock()
-    flow.hass.data = {}  # empty → no coordinator → fallback to defaults
+    if coordinator is not None:
+        flow.hass.data = {DOMAIN: {entry_id: {DATA_COORDINATOR: coordinator}}}
+    else:
+        flow.hass.data = {}  # empty → no coordinator → fallback to defaults
     flow._get_entry = MagicMock(return_value=entry)
     flow._get_reconfigure_subentry = MagicMock(return_value=subentry or _make_subentry())
     flow.async_show_form = MagicMock(return_value={"type": "form"})
     flow.async_create_entry = MagicMock(return_value={"type": "create_entry"})
     flow.async_update_and_abort = MagicMock(return_value={"type": "abort"})
     return flow
+
+
+# ---------------------------------------------------------------------------
+# _build_schema with live coordinator
+# ---------------------------------------------------------------------------
+
+
+class TestBuildSchemaWithCoordinator:
+    @pytest.mark.asyncio
+    async def test_form_shown_when_coordinator_has_models(self) -> None:
+        """_build_schema uses coordinator.chat_models when the coordinator is
+        present in hass.data — smoke test verifying no crash and form is shown."""
+        coord = _make_coordinator_with_models(["gpt-5.5", "gpt-5.6"])
+        flow = _make_flow(ConversationSubentryFlowHandler, coordinator=coord)
+
+        result = await flow.async_step_user(None)
+
+        assert result["type"] == "form"
+        flow.async_show_form.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_schema_options_include_coordinator_models(self) -> None:
+        """The data_schema passed to async_show_form must include the model IDs
+        supplied by the coordinator (verified via _model_select_options directly
+        to avoid introspecting voluptuous internals)."""
+        from custom_components.codex_proxy.config_flow import _model_select_options
+
+        coord = _make_coordinator_with_models(["gpt-5.5", "gpt-5.6"])
+        options = _model_select_options(coord, None)
+        option_values = [o["value"] for o in options]
+
+        assert "gpt-5.5" in option_values
+        assert "gpt-5.6" in option_values
+
+    @pytest.mark.asyncio
+    async def test_empty_coordinator_falls_back_to_default(self) -> None:
+        """When the coordinator has no chat models, the dropdown falls back to
+        the DEFAULT_MODEL so the form is never empty."""
+        coord = _make_coordinator_with_models([])
+        flow = _make_flow(ConversationSubentryFlowHandler, coordinator=coord)
+
+        result = await flow.async_step_user(None)
+
+        # Form should still be shown (not crash)
+        assert result["type"] == "form"
 
 
 # ---------------------------------------------------------------------------

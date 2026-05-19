@@ -321,6 +321,15 @@ _HELPERS.httpx_client = sys.modules["homeassistant.helpers.httpx_client"]
 _HELPERS.entity_platform = sys.modules["homeassistant.helpers.entity_platform"]
 _HELPERS.selector = sys.modules["homeassistant.helpers.selector"]
 
+
+# SelectOptionDict must produce real dicts so tests can inspect option values.
+# The real HA class is a TypedDict; a plain dict factory is sufficient here.
+def _SelectOptionDict(**kwargs: object) -> dict:  # type: ignore[return]
+    return dict(kwargs)
+
+
+_HELPERS.selector.SelectOptionDict = _SelectOptionDict
+
 _COMPONENTS = sys.modules["homeassistant.components"]
 _COMPONENTS.binary_sensor = sys.modules["homeassistant.components.binary_sensor"]
 _COMPONENTS.button = sys.modules["homeassistant.components.button"]

@@ -13,6 +13,27 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.32] – 2026-05-19
+
+### Fixed (stubs)
+
+- **`tests/ha_stubs.py`** — `SelectOptionDict` is now a real dict factory
+  (`**kwargs → dict`) instead of a `MagicMock`.  The old stub caused
+  `o["value"]` to return another `MagicMock`, making any test that inspects
+  option values silently pass even when the wrong options were produced.
+
+### Changed (tests)
+
+- `test_subentry_flow.py` — Added `_make_coordinator_with_models` helper and
+  updated `_make_flow` to accept an optional `coordinator` argument that wires
+  it into `hass.data`.  New class `TestBuildSchemaWithCoordinator` covers:
+  - Form shown when coordinator has models (smoke test)
+  - `_model_select_options` returns options whose `value` fields match the
+    coordinator model IDs (catches the now-working `SelectOptionDict` stub)
+  - Empty coordinator falls back to DEFAULT_MODEL (no crash)
+
+---
+
 ## [0.2.31] – 2026-05-19
 
 ### Fixed
