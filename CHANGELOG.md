@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.122] - 2026-05-19
+### Tests
+- `test_subentry_flow.py`: add `TestAsyncStepReconfigure.test_update_and_abort_data_is_keyword_arg` — pins keyword calling convention for `async_update_and_abort`, replacing three OR-fallback patterns in the class
+
 ## [0.2.121] - 2026-05-19
 ### Tests
 - `test_select.py`: add `test_update_subentry_data_passed_as_keyword` — pins `"data" in call_args.kwargs` so the keyword calling convention is enforced instead of silently accepting a positional fallback

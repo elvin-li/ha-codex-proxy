@@ -262,6 +262,28 @@ class TestAsyncStepReconfigure:
         flow.async_update_and_abort.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_update_and_abort_data_is_keyword_arg(self) -> None:
+        """async_update_and_abort must be called with ``data=`` as a keyword
+        argument.
+
+        Three tests in this class extract the data dict via an OR fallback:
+        ``call_args[1].get("data") or call_args[0][-1]`` — they pass whether
+        data arrives as a keyword or the last positional arg.  If the
+        implementation changes to positional-only, those tests still pass while
+        the HA subentry API (which expects a keyword) may reject the call.
+
+        This test pins the keyword calling convention directly, mirroring the
+        pattern used in test_select.py
+        (test_update_subentry_data_passed_as_keyword, v0.2.121)."""
+        flow = _make_flow(ConversationSubentryFlowHandler)
+        await flow.async_step_reconfigure(_VALID_USER_INPUT)
+        call_args = flow.async_update_and_abort.call_args
+        assert "data" in call_args.kwargs, (
+            f"async_update_and_abort must be called with data= as a keyword arg; "
+            f"got kwargs={call_args.kwargs!r}, args={call_args.args!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_service_tier_is_none_after_reconfigure(self) -> None:
         """Even after reconfigure, service_tier must remain None."""
         existing_sub = _make_subentry(
