@@ -189,6 +189,28 @@ class TestAsyncSelectOption:
         assert "gpt-5.5" in logged  # old model must also appear
 
     @pytest.mark.asyncio
+    async def test_info_log_includes_subentry_title(self) -> None:
+        """The model-change info log must include the subentry title so operators
+        with multiple subentries (conversation + ai_task) can identify which
+        agent's model was changed.
+
+        Without the title, log lines are identical across subentries:
+        'Model changed from gpt-5.5 to gpt-5.6' is ambiguous when both
+        conversation and ai_task agents are reconfigured simultaneously.
+        Matches the pattern added in v0.2.79 for the update entity."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
+        # _make_subentry sets title = "Test Agent"
+        with patch("custom_components.codex_proxy.select._LOGGER") as mock_log:
+            await entity.async_select_option("gpt-5.6")
+        logged = str(mock_log.info.call_args)
+        assert "Test Agent" in logged, (
+            "Subentry title missing from model-change log — "
+            "operators cannot identify which agent's model changed in multi-subentry setups"
+        )
+
+    @pytest.mark.asyncio
     async def test_no_log_on_noop(self) -> None:
         """No log should be emitted when the same model is re-selected."""
         from unittest.mock import patch

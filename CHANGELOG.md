@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.80] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_select.py`** — `TestAsyncSelectOption.test_info_log_includes_subentry_title`
+  pins that `async_select_option` includes the subentry title in its info log.
+  The existing `test_info_logged_on_model_change` already checks both old and new
+  model IDs; without this test a refactor that dropped the title arg would go
+  undetected while those checks still passed. Mirrors the gap fixed for the update
+  entity in v0.2.79 (`test_install_log_includes_subentry_title`).
+
+---
+
 ## [0.2.79] – 2026-05-19
 
 ### Added (tests)
