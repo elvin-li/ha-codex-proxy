@@ -151,6 +151,38 @@ class TestUpstreamKeys:
         for k, v in keys.items():
             assert isinstance(v, str) and v, f"Key {k!r} has empty/non-string value: {v!r}"
 
+    def test_upstream_keys_exact_values(self) -> None:
+        """Each logical key must map to the exact HA const value (or the
+        fallback literal) that the integration uses to read subentry data.
+
+        test_all_values_are_non_empty_strings only checks ``isinstance(v, str)
+        and v`` — any non-empty string passes, including a swapped or typo'd
+        value.  Pinning the exact mapping ensures that if the HA upstream const
+        ever renames e.g. ``CONF_CHAT_MODEL`` from 'chat_model' to 'model', the
+        test fails immediately rather than silently writing data under the wrong
+        key and producing a broken conversation entity."""
+        self._reset_cache()
+        keys = _upstream_keys()
+        # Under ha_stubs the fallback literals are used; each key maps to itself.
+        assert keys["chat_model"] == "chat_model", (
+            f"Expected keys['chat_model'] == 'chat_model', got {keys['chat_model']!r}"
+        )
+        assert keys["prompt"] == "prompt", (
+            f"Expected keys['prompt'] == 'prompt', got {keys['prompt']!r}"
+        )
+        assert keys["reasoning_effort"] == "reasoning_effort", (
+            f"Expected keys['reasoning_effort'] == 'reasoning_effort', "
+            f"got {keys['reasoning_effort']!r}"
+        )
+        assert keys["store_responses"] == "store_responses", (
+            f"Expected keys['store_responses'] == 'store_responses', "
+            f"got {keys['store_responses']!r}"
+        )
+        assert keys["service_tier"] == "service_tier", (
+            f"Expected keys['service_tier'] == 'service_tier', "
+            f"got {keys['service_tier']!r}"
+        )
+
     def test_second_call_returns_same_object(self) -> None:
         """Cache must be used — two calls must return the identical dict object."""
         self._reset_cache()

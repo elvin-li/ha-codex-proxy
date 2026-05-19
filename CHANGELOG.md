@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.154] - 2026-05-19
+### Tests
+- `test_enrich_subentry.py`: add `TestUpstreamKeys.test_upstream_keys_exact_values` — pins each logical key to its exact ha_stubs value, replacing the truthiness-only check that passed for any non-empty string
+
 ## [0.2.153] - 2026-05-19
 ### Tests
 - `test_update_entity.py`: add `TestReleaseSummary.test_no_coordinator_data_exact_release_summary` — pins the full "Model list not yet available …" string to exact equality, replacing two independent substring checks that left the wording unconstrained
