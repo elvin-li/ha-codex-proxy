@@ -122,6 +122,11 @@
     }
   },
   "entity": {
+    "button": {
+      "refresh_models": {
+        "name": "Refresh models"
+      }
+    },
     "select": {
       "active_model": {
         "name": "Active model"

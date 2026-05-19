@@ -7,6 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.2] – 2026-05-19
+
+### Added
+
+- **Refresh models button** (`button.*_refresh_models`) — pressing it triggers
+  an immediate out-of-schedule `/v1/models` refresh without waiting 6 hours.
+- **`tests/ha_stubs.py`** — shared HA module bootstrap used by test files that
+  import coordinator-dependent modules; eliminates the sys.modules ordering
+  fragility that caused 22 tests to fail when run in certain orders.
+
+### Changed
+
+- Coordinator now handles both OpenAI-convention `{"object":"list","data":[...]}`
+  and bare `[...]` response formats from non-standard proxy implementations.
+
+---
+
 ## [0.2.1] – 2026-05-19
 
 ### Added

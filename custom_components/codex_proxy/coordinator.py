@@ -97,9 +97,18 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 f" (last error: {type(last_err).__name__}: {last_err})"
             )
 
+        # Some proxies return the model list at the top level ("data" key
+        # missing); others follow the OpenAI convention {"object":"list","data":[...]}.
+        # Handle both gracefully.
+        raw_list: list[Any] = (
+            payload.get("data", payload) if isinstance(payload, dict) else payload
+        )
+        if not isinstance(raw_list, list):
+            raw_list = []
+
         seen_ids: set[str] = set()
         models: list[dict[str, Any]] = []
-        for m in payload.get("data", []):
+        for m in raw_list:
             mid = m.get("id")
             if not mid or mid in seen_ids:
                 continue

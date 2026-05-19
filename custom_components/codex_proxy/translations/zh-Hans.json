@@ -122,6 +122,11 @@
     }
   },
   "entity": {
+    "button": {
+      "refresh_models": {
+        "name": "立即刷新模型列表"
+      }
+    },
     "select": {
       "active_model": {
         "name": "当前模型"

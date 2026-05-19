@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [
+    Platform.BUTTON,
     Platform.CONVERSATION,
     Platform.AI_TASK,
     Platform.SELECT,
