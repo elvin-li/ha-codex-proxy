@@ -43,6 +43,9 @@ _OLD_API_KEY = "sk-old-key"
 _NEW_API_KEY = "sk-new-key"
 _OLD_URL = "https://old-proxy.example.com"
 _NEW_URL = "https://new-proxy.example.com"
+# Reconfigure normalises submitted URLs via normalize_base_url (appends /v1
+# when missing) so stored / unique-id / probe values are the normalised form.
+_NEW_URL_NORMALISED = f"{_NEW_URL}/v1"
 
 
 def _make_entry(
@@ -240,7 +243,9 @@ class TestReconfigurePreservesInstallationId:
             await flow.async_step_reconfigure(_VALID_USER_INPUT)
 
         passed_data = flow.async_update_reload_and_abort.call_args[1]["data"]
-        assert passed_data[CONF_BASE_URL] == _NEW_URL
+        # User submitted _NEW_URL (bare host); reconfigure stores the
+        # /v1-normalised form so the OpenAI SDK hits /v1/responses.
+        assert passed_data[CONF_BASE_URL] == _NEW_URL_NORMALISED
 
     @pytest.mark.asyncio
     async def test_extra_entry_fields_preserved(self) -> None:
@@ -293,8 +298,8 @@ class TestReconfigurePreservesInstallationId:
         assert probe_args[1] == _NEW_API_KEY, (
             f"probe received old api_key — expected {_NEW_API_KEY!r}, got {probe_args[1]!r}"
         )
-        assert probe_args[2] == _NEW_URL, (
-            f"probe received old base_url — expected {_NEW_URL!r}, got {probe_args[2]!r}"
+        assert probe_args[2] == _NEW_URL_NORMALISED, (
+            f"probe received old base_url — expected {_NEW_URL_NORMALISED!r}, got {probe_args[2]!r}"
         )
 
     @pytest.mark.asyncio
@@ -314,7 +319,7 @@ class TestReconfigurePreservesInstallationId:
         ):
             await flow.async_step_reconfigure(_VALID_USER_INPUT)
 
-        flow.async_set_unique_id.assert_awaited_once_with(_NEW_URL)
+        flow.async_set_unique_id.assert_awaited_once_with(_NEW_URL_NORMALISED)
 
     @pytest.mark.asyncio
     async def test_api_key_whitespace_stripped_in_reconfigure(self) -> None:

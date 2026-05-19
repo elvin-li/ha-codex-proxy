@@ -22,6 +22,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
+from ._pure_helpers import normalize_base_url
 from .const import (
     CODEX_OPENAI_BETA,
     CODEX_ORIGINATOR,
@@ -71,10 +72,19 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=MODEL_REFRESH_INTERVAL,
         )
         api_key: str = entry.data[CONF_API_KEY]
-        base_url: str = entry.data[CONF_BASE_URL].rstrip("/")
+        # ``base_url`` is the OpenAI-compatible base ending in ``/v1`` (see
+        # ``_pure_helpers.normalize_base_url``); ``async_setup_entry`` writes
+        # the normalised form back to the entry, so reading ``entry.data`` here
+        # is sufficient.  We still call ``normalize_base_url`` defensively so
+        # the coordinator works even if instantiated from a test or migration
+        # path that hasn't yet persisted the normalised value.
+        base_url: str = normalize_base_url(entry.data[CONF_BASE_URL])
         self._http: httpx.AsyncClient = get_async_client(hass)
         # Pre-build invariant request parts so _async_update_data stays lean.
-        self._url: str = f"{base_url}/v1/models"
+        # ``base_url`` already ends in ``/v1`` after normalisation, so append
+        # ``/models`` (NOT ``/v1/models``) to avoid producing
+        # ``…/v1/v1/models`` which strict proxies reject.
+        self._url: str = f"{base_url}/models"
         self._headers: dict[str, str] = {
             "Authorization": f"Bearer {api_key}",
             "User-Agent": CODEX_USER_AGENT,

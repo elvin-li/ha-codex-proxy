@@ -25,6 +25,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
+from ._pure_helpers import normalize_base_url
 from .const import (
     CODEX_OPENAI_BETA,
     CODEX_ORIGINATOR,
@@ -73,15 +74,25 @@ def _build_codex_headers(installation_id: str) -> dict[str, str]:
 async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bool:
     """Set up Codex Token Pool from a config entry."""
     api_key: str = entry.data[CONF_API_KEY]
-    base_url: str = entry.data[CONF_BASE_URL]
+    stored_base_url: str = entry.data[CONF_BASE_URL]
+    # Normalise the base URL so the OpenAI SDK (which expects an "openai-
+    # compatible base" ending in /v1) hits /v1/responses rather than
+    # /responses.  Entries created by older versions stored the bare host
+    # (e.g. https://proxy.example.com) which silently worked against lenient
+    # proxies but produced a cryptic "Last content in chat log is not an
+    # AssistantContent" error against strict proxies — we now lazily migrate
+    # those entries here so users don't have to delete-and-recreate.
+    base_url = normalize_base_url(stored_base_url)
 
     installation_id = entry.data.get(CONF_INSTALLATION_ID)
+    new_data: dict[str, str] | None = None
+    if base_url != stored_base_url:
+        new_data = {**entry.data, CONF_BASE_URL: base_url}
     if not installation_id:
         installation_id = str(uuid.uuid4())
-        hass.config_entries.async_update_entry(
-            entry,
-            data={**entry.data, CONF_INSTALLATION_ID: installation_id},
-        )
+        new_data = {**(new_data or entry.data), CONF_INSTALLATION_ID: installation_id}
+    if new_data is not None:
+        hass.config_entries.async_update_entry(entry, data=new_data)
 
     client = openai.AsyncOpenAI(
         api_key=api_key,

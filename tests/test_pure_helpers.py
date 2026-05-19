@@ -17,6 +17,7 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402
 from custom_components.codex_proxy._pure_helpers import (  # noqa: E402
+    normalize_base_url,
     parse_codex_toml,
     validate_base_url,
 )
@@ -226,3 +227,64 @@ class TestValidateBaseUrl:
     def test_ipv6_address_accepted(self) -> None:
         """IPv6 bracket notation must be accepted."""
         assert validate_base_url("http://[::1]:8080") is None
+
+
+# ---------------------------------------------------------------------------
+# normalize_base_url
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizeBaseUrl:
+    def test_bare_host_gets_v1_appended(self) -> None:
+        """https://proxy.example.com → https://proxy.example.com/v1.
+
+        Without the /v1 suffix the OpenAI SDK hits /responses instead of
+        /v1/responses; strict proxies return their HTML landing page (HTTP 200
+        text/html) and HA surfaces it as 'Last content in chat log is not an
+        AssistantContent' — extremely hard to diagnose without packet capture.
+        """
+        assert normalize_base_url("https://proxy.example.com") == "https://proxy.example.com/v1"
+
+    def test_already_normalised_unchanged(self) -> None:
+        """An already-normalised URL must round-trip verbatim — no double /v1."""
+        assert normalize_base_url("https://proxy.example.com/v1") == "https://proxy.example.com/v1"
+
+    def test_trailing_slash_on_bare_host_stripped_before_append(self) -> None:
+        assert normalize_base_url("https://proxy.example.com/") == "https://proxy.example.com/v1"
+
+    def test_trailing_slash_on_v1_stripped(self) -> None:
+        """https://proxy.example.com/v1/ → strip trailing slash, leave /v1."""
+        assert normalize_base_url("https://proxy.example.com/v1/") == "https://proxy.example.com/v1"
+
+    def test_vendor_prefix_with_v1_preserved(self) -> None:
+        """Path-prefixed proxies (e.g. ``/api/v1``) must be left alone — the
+        suffix detection looks only at the *last* path segment."""
+        assert (
+            normalize_base_url("https://proxy.example.com/api/v1")
+            == "https://proxy.example.com/api/v1"
+        )
+
+    def test_v1_substring_in_path_not_match(self) -> None:
+        """A path ending in something like 'v1beta' must not be treated as
+        already-normalised — only an exact 'v1' final segment counts.
+
+        Without this guard, ``https://proxy.example.com/v1beta`` would be
+        returned unchanged and the SDK would hit
+        ``https://proxy.example.com/v1beta/responses`` (probably 404).
+        """
+        assert (
+            normalize_base_url("https://proxy.example.com/v1beta")
+            == "https://proxy.example.com/v1beta/v1"
+        )
+
+    def test_http_localhost_with_port(self) -> None:
+        """Local dev proxies (no /v1) must still get /v1 appended."""
+        assert normalize_base_url("http://localhost:8080") == "http://localhost:8080/v1"
+
+    def test_idempotent(self) -> None:
+        """Applying normalize_base_url twice must return the same value as
+        applying it once.  This guarantees that lazy migration in
+        async_setup_entry doesn't keep rewriting entry.data on every restart."""
+        once = normalize_base_url("https://proxy.example.com")
+        twice = normalize_base_url(once)
+        assert once == twice, f"normalize_base_url is not idempotent: {once!r} != {twice!r}"

@@ -45,3 +45,42 @@ def validate_base_url(url: str) -> str | None:
     if not p.netloc:
         return "invalid_url"
     return None
+
+
+def normalize_base_url(url: str) -> str:
+    """Return *url* normalised to the OpenAI-compatible form (ends with ``/v1``).
+
+    The OpenAI Python SDK treats ``base_url`` as the "OpenAI-compatible base"
+    and appends path components like ``/responses``, ``/chat/completions``, and
+    ``/models`` directly to it.  For OpenAI proper, ``base_url`` is
+    ``https://api.openai.com/v1`` — note the trailing ``/v1``.
+
+    Codex-style reverse proxies follow the same convention, but users
+    frequently paste the bare host (``https://proxy.example.com``) into the
+    config flow because the proxy's own UI shows the host without ``/v1``.
+    Some lenient proxies silently accept both forms; stricter ones (e.g.
+    ``tokenclub.top``) require the ``/v1`` and respond to ``/responses`` with
+    the proxy's HTML landing page, producing the cryptic
+    ``Last content in chat log is not an AssistantContent`` error in HA.
+
+    This helper makes the two forms interchangeable from the user's
+    perspective:
+
+    * ``https://proxy.example.com``        → ``https://proxy.example.com/v1``
+    * ``https://proxy.example.com/``       → ``https://proxy.example.com/v1``
+    * ``https://proxy.example.com/v1``     → ``https://proxy.example.com/v1``
+    * ``https://proxy.example.com/v1/``    → ``https://proxy.example.com/v1``
+    * ``https://proxy.example.com/api/v1`` → ``https://proxy.example.com/api/v1``
+      (already has ``/v1`` at the end of the path — left alone so vendor-
+      specific prefixes like ``/api/v1`` continue to work)
+
+    The caller still owns scheme/netloc validation — call ``validate_base_url``
+    first.  This function does not raise; it always returns a string.
+    """
+    trimmed = url.rstrip("/")
+    # Treat the URL as already-normalised if the last path segment is "v1".
+    # Using rsplit avoids a false match on a path containing "v1" elsewhere
+    # (e.g. "https://proxy.example.com/v1beta/responses" would not match).
+    if trimmed.rsplit("/", 1)[-1] == "v1":
+        return trimmed
+    return f"{trimmed}/v1"

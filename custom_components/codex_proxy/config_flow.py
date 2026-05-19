@@ -595,6 +595,14 @@ def _parse_toml_and_validate(
         if url_err:
             errors[CONF_BASE_URL] = url_err
 
+    if not errors:
+        # Normalise after validation so the stored value is what the OpenAI
+        # SDK expects (ending in ``/v1``).  This makes the bare-host and
+        # ``/v1``-suffixed forms interchangeable in the form input.
+        from ._pure_helpers import normalize_base_url
+
+        base_url = normalize_base_url(base_url)
+
     return _ParseResult(
         errors=errors,
         api_key=api_key,

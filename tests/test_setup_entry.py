@@ -43,7 +43,11 @@ def _make_entry(
     entry.entry_id = entry_id
     data: dict = {
         "api_key": "sk-test-key",
-        "base_url": "https://proxy.example.com",
+        # Use the already-normalised form so async_setup_entry does not write
+        # back a migration update for the base_url (that would interfere with
+        # tests asserting async_update_entry was NOT called).  Tests that need
+        # to exercise the bare-host → /v1 migration set base_url explicitly.
+        "base_url": "https://proxy.example.com/v1",
     }
     if installation_id is not None:
         data[CONF_INSTALLATION_ID] = installation_id

@@ -67,12 +67,12 @@ class TestManualInput:
         )
         assert not result.errors
         assert result.api_key == "sk-abc"
-        assert result.base_url == "https://proxy.example.com"
+        assert result.base_url == "https://proxy.example.com/v1"
 
     def test_trailing_slash_stripped_from_base_url(self) -> None:
         result = _parse_toml_and_validate(_input(base_url="https://proxy.example.com/"))
         assert not result.errors
-        assert result.base_url == "https://proxy.example.com"
+        assert result.base_url == "https://proxy.example.com/v1"
 
     def test_model_defaults_when_empty(self) -> None:
         result = _parse_toml_and_validate(_input(model=""))
@@ -112,9 +112,10 @@ class TestManualInput:
         changed to 'https'.  Exact equality ensures the full URL survives
         _parse_toml_and_validate without modification."""
         result = _parse_toml_and_validate(_input(base_url="http://localhost:8080"))
-        assert result.base_url == "http://localhost:8080", (
-            f"Expected 'http://localhost:8080', got {result.base_url!r} — "
-            "the URL must be preserved exactly (including port) by _parse_toml_and_validate"
+        assert result.base_url == "http://localhost:8080/v1", (
+            f"Expected 'http://localhost:8080/v1', got {result.base_url!r} — "
+            "the URL must be preserved exactly (including port) by _parse_toml_and_validate, "
+            "with the openai-compatible /v1 suffix appended by normalize_base_url"
         )
 
     def test_base_url_with_surrounding_whitespace_stripped(self) -> None:
@@ -122,7 +123,7 @@ class TestManualInput:
         accepted and stripped — a common paste-from-browser artifact."""
         result = _parse_toml_and_validate(_input(base_url="  https://proxy.example.com  "))
         assert not result.errors
-        assert result.base_url == "https://proxy.example.com"
+        assert result.base_url == "https://proxy.example.com/v1"
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +139,10 @@ base_url = "https://from-toml.example.com"
 """
         result = _parse_toml_and_validate(_input(base_url="", toml=toml))
         assert not result.errors
-        assert result.base_url == "https://from-toml.example.com"
+        # base_url is normalised to end in /v1 so the OpenAI SDK hits
+        # /v1/responses; the TOML provides the bare host so the result is the
+        # /v1-suffixed form.
+        assert result.base_url == "https://from-toml.example.com/v1"
 
     def test_toml_overrides_manual_base_url(self) -> None:
         toml = """
@@ -147,7 +151,7 @@ base_url = "https://from-toml.example.com"
 """
         result = _parse_toml_and_validate(_input(base_url="https://manual.example.com", toml=toml))
         assert not result.errors
-        assert result.base_url == "https://from-toml.example.com"
+        assert result.base_url == "https://from-toml.example.com/v1"
 
     def test_toml_sets_model(self) -> None:
         toml = 'model = "gpt-5.6"\n[model_providers.p]\nbase_url = "https://x.com"\n'
@@ -270,7 +274,8 @@ class TestParseResultNamedAccess:
 
     def test_base_url_attribute(self) -> None:
         result = _parse_toml_and_validate(_input(base_url="https://named.example.com"))
-        assert result.base_url == "https://named.example.com"
+        # Stored value is /v1-normalised so the OpenAI SDK hits /v1/responses.
+        assert result.base_url == "https://named.example.com/v1"
 
     def test_model_attribute(self) -> None:
         result = _parse_toml_and_validate(_input(model="gpt-named"))

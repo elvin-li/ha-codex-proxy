@@ -9,7 +9,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.2.170] - 2026-05-19
+## [0.2.171] - 2026-05-19
+### Fixed
+- `base_url` is now normalised to always end in `/v1` (the OpenAI-compatible "base URL" convention). The OpenAI SDK treats `base_url` as the base it appends `/responses`, `/chat/completions`, etc. to, so a stored `https://proxy.example.com` was producing requests to `https://proxy.example.com/responses` (no `/v1`). Lenient proxies silently accepted that and the integration appeared to work; strict proxies (e.g. `tokenclub.top`) returned their HTML landing page and HA surfaced the cryptic error "Last content in chat log is not an AssistantContent: UserContent(...)". The coordinator's `_url` build was the mirror image — it appended `/v1/models` to `base_url`, which only worked when `base_url` lacked the `/v1` suffix. Both paths now agree on the convention.
+- `coordinator.py` builds `_url` as `{base_url}/models` (not `{base_url}/v1/models`) so it stays correct after normalisation.
+- `__init__.py:async_setup_entry` lazily migrates existing entries that stored a bare-host `base_url`, writing the `/v1`-normalised form back to `entry.data` on the next setup so users do not need to delete-and-recreate the integration.
+- `config_flow.py:_parse_toml_and_validate` calls `normalize_base_url` after validation so newly created entries (and reconfigure-flow updates) store the normalised form.
+### Added
+- `_pure_helpers.normalize_base_url(url)` — pure-Python helper that appends `/v1` only when the URL does not already end in it. Distinguishes a final `/v1` segment from substrings like `/v1beta` (which gets `/v1` appended), and preserves vendor-prefixed forms like `/api/v1`. Idempotent.
+### Tests
+- `tests/test_pure_helpers.py::TestNormalizeBaseUrl`: eight cases covering bare host, already-normalised, trailing slash on either form, vendor prefix `/api/v1`, `v1beta` (substring, not match), localhost with port, and idempotency
+
+
 ### Fixed
 - `CodexModelCoordinator` now explicitly initialises and updates `last_update_success_time`. The base `DataUpdateCoordinator` in current HA Core does not expose this attribute, so `binary_sensor.proxy_reachable` was crashing with `AttributeError: 'CodexModelCoordinator' object has no attribute 'last_update_success_time'` when HA tried to add the entity at startup. The tests masked it because the `ha_stubs.DataUpdateCoordinator` stub pre-set the attribute; production HA didn't.
 ### Tests

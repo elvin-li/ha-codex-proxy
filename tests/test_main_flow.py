@@ -153,7 +153,10 @@ class TestEntryCreation:
         ):
             await flow.async_step_user(_VALID_INPUT)
         call_kwargs = flow.async_create_entry.call_args[1]
-        assert call_kwargs["data"][CONF_BASE_URL] == "https://proxy.example.com"
+        # User pasted the bare host; the stored value gets normalised to end
+        # in /v1 so the OpenAI SDK (which expects an openai-compatible base
+        # URL) hits /v1/responses rather than /responses.
+        assert call_kwargs["data"][CONF_BASE_URL] == "https://proxy.example.com/v1"
 
     @pytest.mark.asyncio
     async def test_entry_title_includes_host(self) -> None:
@@ -178,8 +181,10 @@ class TestEntryCreation:
         dashboard and in YAML snippets shared between users; a refactor that
         changes the format silently breaks existing user documentation.
 
-        Expected: 'Codex 号池 (proxy.example.com)' for base_url
-        'https://proxy.example.com'."""
+        Expected: 'Codex 号池 (proxy.example.com/v1)' for normalised base_url
+        'https://proxy.example.com/v1'.  The title is built from
+        ``base_url.split('//', 1)[-1]`` *after* normalisation; the trailing
+        ``/v1`` is therefore part of the visible netloc-style suffix."""
         flow = _make_flow()
         with patch(
             "custom_components.codex_proxy.config_flow._probe_proxy",
@@ -187,9 +192,9 @@ class TestEntryCreation:
         ):
             await flow.async_step_user(_VALID_INPUT)
         title = flow.async_create_entry.call_args[1]["title"]
-        assert title == "Codex 号池 (proxy.example.com)", (
+        assert title == "Codex 号池 (proxy.example.com/v1)", (
             f"Entry title {title!r} does not match expected format "
-            "'Codex 号池 (proxy.example.com)' — the substring test "
+            "'Codex 号池 (proxy.example.com/v1)' — the substring test "
             "test_entry_title_includes_host would still pass with the wrong format"
         )
 
@@ -273,8 +278,11 @@ class TestEntryCreation:
         mock_probe.assert_awaited_once()
         probe_args = mock_probe.call_args[0]
         assert probe_args[1] == "sk-test", f"probe received wrong api_key: {probe_args[1]!r}"
-        assert probe_args[2] == "https://proxy.example.com", (
-            f"probe received wrong base_url: {probe_args[2]!r}"
+        assert probe_args[2] == "https://proxy.example.com/v1", (
+            f"probe received wrong base_url: {probe_args[2]!r} — "
+            "the probe must use the normalised /v1-suffixed base so it hits "
+            "/v1/responses (lenient proxies accept /responses but strict ones "
+            "return their HTML landing page and the probe silently passes/fails)"
         )
 
     @pytest.mark.asyncio
@@ -292,7 +300,11 @@ class TestEntryCreation:
         ):
             await flow.async_step_user(_VALID_INPUT)
 
-        flow.async_set_unique_id.assert_awaited_once_with("https://proxy.example.com")
+        # unique_id is the normalised base_url so two entries with the bare
+        # host and /v1-suffixed forms of the same proxy still conflict (HA
+        # would otherwise let users create two entries pointing at the same
+        # backend).
+        flow.async_set_unique_id.assert_awaited_once_with("https://proxy.example.com/v1")
 
     @pytest.mark.asyncio
     async def test_api_key_whitespace_stripped_in_flow(self) -> None:
