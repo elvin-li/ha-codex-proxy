@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.88] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_binary_sensor.py`** — `TestMetadata.test_unique_id_exact_format_via_constructor`
+  builds `CodexProxyReachableSensor` via its real `__init__` and asserts
+  `_attr_unique_id == "pin-entry-bs-42_proxy_reachable"`.  The existing
+  `test_unique_id_has_suffix` uses the `_make_sensor` helper which manually
+  assigns the attribute — bypassing the constructor — so a refactor that changes
+  the format in `__init__` would not be caught.  Matches the constructor-based
+  exact-format pattern applied to button, sensor, select, and update entities.
+
+---
+
 ## [0.2.87] – 2026-05-19
 
 ### Added (tests)

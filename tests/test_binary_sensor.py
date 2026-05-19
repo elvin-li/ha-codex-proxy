@@ -144,6 +144,29 @@ class TestMetadata:
         sensor = _make_sensor(entry_id="abc")
         assert sensor._attr_unique_id == "abc_proxy_reachable"
 
+    def test_unique_id_exact_format_via_constructor(self) -> None:
+        """unique_id must be '{entry_id}_proxy_reachable' when built via the
+        real __init__, not just via the _make_sensor helper.
+
+        The existing test_unique_id_has_suffix pins the format but uses the
+        _make_sensor helper, which manually sets _attr_unique_id — bypassing the
+        constructor.  This test builds via CodexProxyReachableSensor.__init__
+        directly so a refactor that changes the suffix or separator in the
+        constructor is caught here rather than only discovered at runtime."""
+        from unittest.mock import MagicMock
+
+        from tests.ha_stubs import _CoordinatorEntity
+
+        entry = MagicMock()
+        entry.entry_id = "pin-entry-bs-42"
+        entry.title = "Codex Proxy (pin-entry-bs-42)"
+        coord = MagicMock()
+
+        s = object.__new__(CodexProxyReachableSensor)
+        _CoordinatorEntity.__init__(s, coord)
+        CodexProxyReachableSensor.__init__(s, coord, entry)
+        assert s._attr_unique_id == "pin-entry-bs-42_proxy_reachable"
+
     def test_translation_key(self) -> None:
         sensor = _make_sensor()
         assert sensor._attr_translation_key == "proxy_reachable"
