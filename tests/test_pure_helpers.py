@@ -42,6 +42,29 @@ base_url = "https://proxy.example.com/api"
         assert result["store_responses"] is False
         assert result["base_url"] == "https://proxy.example.com/api"
 
+    def test_full_config_exact_key_set(self) -> None:
+        """A fully-populated TOML must produce exactly four keys in the result dict.
+
+        test_full_config checks the four expected values but does not pin the key
+        set.  An implementation that accidentally added a fifth key (e.g. an
+        intermediate 'model_providers' dump or a debug key) would pass the per-value
+        tests but leak unexpected data into the config-flow step.  Exact set equality
+        catches that regression in one assertion."""
+        toml = """
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+disable_response_storage = true
+
+[model_providers.codex]
+base_url = "https://proxy.example.com/api"
+"""
+        result = parse_codex_toml(toml)
+        expected_keys = {"model", "reasoning_effort", "store_responses", "base_url"}
+        assert set(result.keys()) == expected_keys, (
+            f"Unexpected keys: {set(result.keys()) - expected_keys}. "
+            f"Missing: {expected_keys - set(result.keys())}."
+        )
+
     def test_no_provider_table_returns_no_base_url(self) -> None:
         toml = 'model = "gpt-5.5"\n'
         result = parse_codex_toml(toml)

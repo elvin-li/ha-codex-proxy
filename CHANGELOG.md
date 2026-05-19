@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.128] - 2026-05-19
+### Tests
+- `test_pure_helpers.py`: add `TestParseCodexToml.test_full_config_exact_key_set` — exact set equality on parse result keys, catching accidental extra keys the per-value tests would miss
+
 ## [0.2.127] - 2026-05-19
 ### Tests
 - `test_setup_entry.py`: add `test_hass_data_entry_contains_exactly_coordinator_key` — exact set equality on `hass.data[DOMAIN][entry_id]` keys, catching accidental additions the prior `in` check would miss
