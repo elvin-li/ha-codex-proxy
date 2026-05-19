@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.89] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_retry.py`** — `TestCoordinatorTransient.test_exhausted_retries_message_contains_error_type`
+  verifies that the `UpdateFailed` message raised after all retries are exhausted
+  includes the exception type name (`"TimeoutException"`).  The existing
+  `test_exhausted_retries_message_contains_url` only checks the URL portion;
+  a refactor that dropped the `type(last_err).__name__` interpolation would
+  produce an opaque `(last error: timed out)` with no type context yet pass
+  the URL-only test.  Mirrors `test_retry_log_includes_error_type_for_timeout`
+  which covers the same invariant for the intermediate retry debug log.
+
+---
+
 ## [0.2.88] – 2026-05-19
 
 ### Added (tests)

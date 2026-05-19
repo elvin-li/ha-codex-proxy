@@ -270,6 +270,35 @@ class TestCoordinatorRetry:
 
         assert coord._url in str(exc_info.value)
 
+    @pytest.mark.asyncio
+    async def test_exhausted_retries_message_contains_error_type(self) -> None:
+        """UpdateFailed raised after all retries must include the exception type
+        name so operators can distinguish a timeout-exhausted entry from a
+        5xx-exhausted entry without enabling coordinator DEBUG logging.
+
+        The message format is 'Failed to fetch {url} after N attempts
+        (last error: ExcType: message)'.  The existing
+        test_exhausted_retries_message_contains_url only pins the URL portion;
+        a refactor that dropped the ``type(last_err).__name__`` interpolation
+        would still pass that test — producing an opaque '(last error: timed out)'
+        with no type context.  This test closes the gap, mirroring
+        test_retry_log_includes_error_type_for_timeout which covers the same
+        invariant for the intermediate retry debug log."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            pytest.raises(UpdateFailed) as exc_info,
+        ):
+            await coord._async_update_data()
+
+        assert "TimeoutException" in str(exc_info.value), (
+            "UpdateFailed message after exhausted retries must include the exception "
+            "type name ('TimeoutException') so operators can distinguish timeout "
+            "failures from HTTP 5xx failures without enabling DEBUG logging"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Non-transient errors (immediate failure)
