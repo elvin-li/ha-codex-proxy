@@ -13,6 +13,26 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.74] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_sensor.py`** — added `test_unique_id_exact_format` to both
+  `TestChatModelCountSensor` and `TestLastRefreshSensor`:
+  - `TestChatModelCountSensor.test_unique_id_exact_format` — pins
+    `"{entry_id}_chat_model_count"` by calling the real `__init__`.
+  - `TestLastRefreshSensor.test_unique_id_exact_format` — pins
+    `"{entry_id}_last_model_refresh"` by calling the real `__init__`.
+
+  Both sensors previously had only substring checks (`entry_id in unique_id`)
+  via the `_make_count_sensor` / `_make_refresh_sensor` helpers, which bypass
+  the constructor.  Exact-format pinning matches the pattern introduced in
+  v0.2.73 for button, select, and update entities, and guards against
+  EntityDescription key renames that would silently orphan existing sensor
+  entities in the HA entity registry.
+
+---
+
 ## [0.2.73] – 2026-05-19
 
 ### Added (tests)

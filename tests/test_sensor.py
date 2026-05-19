@@ -200,6 +200,21 @@ class TestChatModelCountSensor:
         sensor = _make_count_sensor(entry_id="my-entry-99")
         assert "my-entry-99" in sensor._attr_unique_id
 
+    def test_unique_id_exact_format(self) -> None:
+        """unique_id must be '{entry_id}_chat_model_count' exactly.
+
+        The suffix is derived from the EntityDescription key; if the key changes
+        or the format string changes, HA orphans the old entity in the registry
+        and creates a duplicate.  This test builds via the real __init__ — not the
+        _make_count_sensor helper that manually assigns the attribute — so a change
+        in the constructor is caught directly."""
+        entry = MagicMock()
+        entry.entry_id = "pin-entry-007"
+        coord = _make_coordinator()
+        s = object.__new__(CodexChatModelCountSensor)
+        CodexChatModelCountSensor.__init__(s, coord, entry)
+        assert s._attr_unique_id == "pin-entry-007_chat_model_count"
+
 
 # ---------------------------------------------------------------------------
 # CodexLastRefreshSensor
@@ -219,6 +234,21 @@ class TestLastRefreshSensor:
     def test_unique_id_uses_entry_id(self) -> None:
         sensor = _make_refresh_sensor(entry_id="entry-xyz")
         assert "entry-xyz" in sensor._attr_unique_id
+
+    def test_unique_id_exact_format(self) -> None:
+        """unique_id must be '{entry_id}_last_model_refresh' exactly.
+
+        The suffix is derived from the EntityDescription key; if the key changes
+        or the format string changes, HA orphans the old entity in the registry
+        and creates a duplicate.  This test builds via the real __init__ — not the
+        _make_refresh_sensor helper that manually assigns the attribute — so a
+        change in the constructor is caught directly."""
+        entry = MagicMock()
+        entry.entry_id = "pin-entry-007"
+        coord = _make_coordinator()
+        s = object.__new__(CodexLastRefreshSensor)
+        CodexLastRefreshSensor.__init__(s, coord, entry)
+        assert s._attr_unique_id == "pin-entry-007_last_model_refresh"
 
     def test_timestamp_preserves_timezone(self) -> None:
         ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
