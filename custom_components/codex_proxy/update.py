@@ -131,8 +131,12 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        # Re-read the subentry from the entry registry so installed_version
-        # reflects user changes that didn't come through this entity.
+        """Re-read the subentry so installed_version reflects external changes.
+
+        If the user reconfigures the subentry via the config flow (which
+        doesn't go through this entity), ``self._subentry`` would otherwise
+        be stale and ``installed_version`` would return the pre-change model.
+        """
         live = self._entry.subentries.get(self._subentry.subentry_id)
         if live is not None:
             self._subentry = live

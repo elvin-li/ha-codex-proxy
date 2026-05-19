@@ -65,7 +65,7 @@ def _process_models(payload_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "display_name": str(m.get("display_name") or mid),
             }
         )
-    models.sort(key=lambda x: x["created"], reverse=True)
+    models.sort(key=lambda x: (-x["created"], x["id"]))
     return models
 
 
@@ -135,6 +135,24 @@ class TestModelProcessing:
         data = [{"id": "gpt-5.5", "created": None}]
         models = _process_models(data)
         assert models[0]["created"] == 0
+
+    def test_same_created_sorted_alphabetically_by_id(self) -> None:
+        """When two models have the same created timestamp (e.g. both 0 from
+        a local proxy), the sort must be deterministic: alphabetical by id.
+
+        This guards against non-deterministic ordering after coordinator
+        updates, which could cause spurious ``update available`` flicker when
+        the 'latest' model id changes between polls despite the proxy returning
+        the same models.
+        """
+        data = [
+            _make_model("gpt-z-model", created=0),
+            _make_model("gpt-a-model", created=0),
+            _make_model("gpt-m-model", created=0),
+        ]
+        models = _process_models(data)
+        ids = [m["id"] for m in models]
+        assert ids == ["gpt-a-model", "gpt-m-model", "gpt-z-model"]
 
     def test_empty_string_display_name_falls_back_to_id(self) -> None:
         """An empty-string display_name (falsy, like None) must fall back to

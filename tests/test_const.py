@@ -78,6 +78,12 @@ class TestDefaults:
     def test_default_model_is_non_empty(self) -> None:
         assert DEFAULT_MODEL and isinstance(DEFAULT_MODEL, str)
 
+    def test_default_model_value(self) -> None:
+        """DEFAULT_MODEL is used as the subentry fallback when no model has been
+        explicitly configured.  Changing it without a migration would silently
+        revert users' configurations, so we pin the exact value here."""
+        assert DEFAULT_MODEL == "gpt-5.5"
+
     def test_default_reasoning_effort_in_reasoning_efforts(self) -> None:
         assert DEFAULT_REASONING_EFFORT in REASONING_EFFORTS
 

@@ -37,6 +37,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
+    """Create one proxy-reachable binary sensor for this config entry."""
     coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     async_add_entities([CodexProxyReachableSensor(coordinator, entry)])
 

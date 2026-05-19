@@ -155,7 +155,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "display_name": str(m.get("display_name") or mid),
                 }
             )
-        models.sort(key=lambda x: x["created"], reverse=True)
+        models.sort(key=lambda x: (-x["created"], x["id"]))
         if _LOGGER.isEnabledFor(logging.DEBUG):
             chat_count = sum(
                 1 for m in models if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
