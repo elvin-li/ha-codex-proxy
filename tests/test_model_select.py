@@ -90,6 +90,15 @@ class TestModelSelectOptions:
         )
         assert opts[0]["label"] == "gpt-5.5"
 
+    def test_empty_string_display_name_falls_back_to_id(self) -> None:
+        """An empty-string display_name is falsy — the label must fall back to
+        the model id rather than rendering a blank dropdown option."""
+        opts = _model_select_options(
+            _coord([{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": ""}]),
+            None,
+        )
+        assert opts[0]["label"] == "gpt-5.5"
+
     def test_deduplication_by_id(self) -> None:
         # Two entries with same id — should only appear once
         opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.5")]), None)

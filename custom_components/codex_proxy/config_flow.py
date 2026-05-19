@@ -162,6 +162,7 @@ async def _probe_proxy(
     Do NOT call ``client.close()`` after the probe — the http_client is HA's
     shared httpx client; closing it would tear down all HA network I/O.
     """
+    _LOGGER.debug("Probing proxy at %s with model %s", base_url, model)
     errors: dict[str, str] = {}
     client = openai.AsyncOpenAI(
         api_key=api_key,
@@ -246,11 +247,41 @@ def _model_select_options(coordinator: Any, current: str | None) -> list[SelectO
 
 
 class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Initial setup flow."""
+    """Initial setup flow for creating a new Codex Token Pool config entry.
+
+    Handles the top-level integration setup (API key + proxy URL).  After a
+    successful setup it creates two default subentries — one for conversation
+    agents and one for AI Task data generation — so the integration is
+    immediately usable with the Home Assistant Assist pipeline.
+
+    To modify credentials after initial setup use the ``reconfigure`` step
+    (:meth:`async_step_reconfigure`), which updates the connection without
+    destroying any subentries the user may have customised.
+    """
 
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Handle the initial 'add integration' step.
+
+        Two phases:
+
+        1. **Show form** — when ``user_input`` is ``None`` (HA's first call),
+           returns the user-facing form with fields for API key, proxy URL,
+           optional default model, and an optional paste-your-``config.toml``
+           shortcut.
+
+        2. **Process submit** — when ``user_input`` is provided:
+           a. TOML is parsed and merged (if pasted) via :func:`_parse_toml_and_validate`.
+           b. A live probe request is sent to the proxy via :func:`_probe_proxy`
+              to validate the credentials before storing them.
+           c. On success the config entry is created with two default subentries
+              (``conversation`` and ``ai_task_data``), each pre-populated with
+              ``service_tier=None`` to prevent proxy 502 errors.
+
+        Any validation or probe error re-displays the form with an inline
+        error message.
+        """
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=STEP_USER_SCHEMA)
 

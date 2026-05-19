@@ -13,6 +13,28 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.49] – 2026-05-19
+
+### Changed
+
+- **`config_flow.py`** — ``CodexConfigFlow`` class docstring expanded to
+  describe the three-flow architecture and the purpose of the reconfigure step.
+  ``async_step_user`` now has a detailed two-phase docstring (show-form /
+  process-submit) explaining the TOML parse, probe, and subentry-creation steps.
+- **`config_flow.py`** — ``_probe_proxy`` now emits a ``DEBUG``-level log
+  message at the start of the probe (``"Probing proxy at <url> with model <id>"``).
+  This makes it easy to confirm what URL is being tested during setup without
+  trawling the entire HA log.
+
+### Added (tests)
+
+- `test_model_select.py` — ``test_empty_string_display_name_falls_back_to_id``:
+  an empty-string ``display_name`` is falsy and must produce the model id as
+  the label, not a blank dropdown entry.  Covers the same ``or mid`` branch as
+  the existing ``None`` test but makes the intent explicit for both falsy values.
+
+---
+
 ## [0.2.48] – 2026-05-19
 
 ### Added
