@@ -7,6 +7,27 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.5] – 2026-05-19
+
+### Added
+
+- **20 new tests** across 3 new test files:
+  `test_migrate_entry.py` (4), `test_setup_unload.py` (6), `test_setup_entry.py` (7),
+  plus 3 edge-case additions to `test_diagnostics.py` — suite now at 210 tests.
+  New coverage: `async_migrate_entry`, `async_unload_entry`, `_async_update_listener`,
+  `async_setup_entry` installation-id generation/reuse, non-fatal coordinator
+  first-refresh failure, and `diagnostics.py` `coordinator.data=None` path.
+
+### Changed
+
+- **`test_coordinator_retry.py`** — migrated from 40-line inline stub block (which
+  unconditionally overwrote `DataUpdateCoordinator` and could poison test ordering)
+  to `import tests.ha_stubs`. All 14 tests continue to pass.
+- **`test_parse_toml_validate.py`** — migrated from 43-line inline stub block to
+  `import tests.ha_stubs`. All 18 tests continue to pass.
+
+---
+
 ## [0.2.4] – 2026-05-19
 
 ### Added
