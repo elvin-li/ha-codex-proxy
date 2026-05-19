@@ -150,6 +150,22 @@ class TestCurrentOption:
         entity._subentry.data = {"chat_model": None}
         assert entity.current_option == DEFAULT_MODEL
 
+    def test_falls_back_to_default_when_value_is_empty_string(self) -> None:
+        """Round-2 audit Finding #4 regression.
+
+        An empty string stored as ``chat_model`` (which the previous
+        ``return value if value is not None else DEFAULT_MODEL`` logic let
+        through) would cause HA to log
+        ``Invalid current option '' for entity`` because ``options`` filters
+        out the current value via a truthy ``if current and current not in
+        seen`` check.  Empty-string must collapse to ``DEFAULT_MODEL``."""
+        entity = _make_entity()
+        entity._subentry.data = {"chat_model": ""}
+        assert entity.current_option == DEFAULT_MODEL, (
+            "Empty-string chat_model must fall back to DEFAULT_MODEL — "
+            "returning '' would surface as 'Invalid current option' in HA logs"
+        )
+
 
 # ---------------------------------------------------------------------------
 # async_select_option

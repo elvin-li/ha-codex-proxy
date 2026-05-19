@@ -79,9 +79,13 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
 
         Reads ``subentry.data[UPSTREAM_CONF_CHAT_MODEL]`` and falls back to
         ``DEFAULT_MODEL`` when the key is absent (e.g. fresh subentry created
-        before the model was explicitly set by the user).
+        before the model was explicitly set by the user) **or** when the
+        stored value is falsy (``None`` or ``""`` — a fresh-from-form value
+        before the user explicitly picked a model).  Returning ``""`` here
+        would make ``latest_version`` fall back to ``""`` too, surfacing as
+        a phantom blank update in the HA UI.
         """
-        return self._subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL)
+        return self._subentry.data.get(UPSTREAM_CONF_CHAT_MODEL) or DEFAULT_MODEL
 
     @property
     def latest_version(self) -> str | None:

@@ -38,11 +38,28 @@ def parse_codex_toml(text: str) -> dict[str, Any]:
 
 
 def validate_base_url(url: str) -> str | None:
-    """Return an error key if *url* is not a valid http/https base URL."""
+    """Return an error key if *url* is not a valid http/https base URL.
+
+    Rejects:
+    * Non-http(s) schemes (``ftp://`` etc.)
+    * URLs with no netloc (``https://``)
+    * URLs carrying a query string (``?key=value``) or fragment (``#anchor``).
+      A base URL with query/fragment is almost always a copy-paste artefact
+      (the user pasted a deep-linked URL from their browser).  Leaving these
+      in place would corrupt the URL after ``normalize_base_url`` appends
+      ``/v1`` — e.g. ``https://host.com?x=1`` would become
+      ``https://host.com?x=1/v1`` and the OpenAI SDK would emit requests
+      to ``https://host.com?x=1/v1/responses`` (404 against any sane proxy).
+    """
     p = urlparse(url)
     if p.scheme not in ("http", "https"):
         return "invalid_url_scheme"
     if not p.netloc:
+        return "invalid_url"
+    if p.query or p.fragment:
+        # Treat both as the same user-visible error to keep the strings.json
+        # surface area minimal — the message tells users to drop the query
+        # and fragment from the URL.
         return "invalid_url"
     return None
 

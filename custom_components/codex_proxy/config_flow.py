@@ -200,6 +200,19 @@ async def _probe_proxy(
     except (TimeoutError, OSError) as err:
         _LOGGER.warning("Unexpected error during proxy probe: %s", err)
         errors["base"] = "cannot_connect"
+    except Exception as err:  # noqa: BLE001
+        # Catch-all for any exception not anticipated above (e.g.
+        # ``openai.APIError`` base, ``httpx.ProxyError``, ``ssl.SSLError``,
+        # ``json.JSONDecodeError`` from a proxy that returns HTML on a TLS
+        # handshake failure, etc.).  Without this clause an unexpected
+        # exception escapes ``async_step_user`` / ``async_step_reconfigure``
+        # and HA renders a raw traceback page instead of an inline form
+        # error, leaving the user with no actionable signal beyond the
+        # stack trace.  Log at WARNING so operators can diagnose
+        # unexpected error classes, but show the user a generic
+        # "unknown" error in the form.
+        _LOGGER.warning("Unhandled %s during proxy probe: %s", type(err).__name__, err)
+        errors["base"] = "unknown"
     return errors
 
 
@@ -376,9 +389,20 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         await self.async_set_unique_id(parsed.base_url)
-        self._abort_if_unique_id_mismatch()
+        # We intentionally do NOT call ``_abort_if_unique_id_mismatch()`` here:
+        # our ``unique_id`` *is* the ``base_url``, so a legitimate proxy host
+        # change (e.g. provider rebrand, swapping from a soon-to-be-deprecated
+        # subdomain) necessarily changes the unique_id.  The mismatch check
+        # would trap the user — every reconfigure with a different host would
+        # abort, forcing a delete-and-recreate that loses every subentry
+        # customisation.  Instead we rely on ``async_set_unique_id`` itself to
+        # raise/abort if a *different* entry already owns the new unique_id
+        # (HA's duplicate-prevention contract), then write the new value via
+        # ``async_update_reload_and_abort(unique_id=...)`` below so the entry's
+        # unique_id stays in sync with its ``base_url``.
         return self.async_update_reload_and_abort(
             entry,
+            unique_id=parsed.base_url,
             # Merge with existing data to preserve CONF_INSTALLATION_ID and any
             # future fields that may have been added since initial setup.
             data={**entry.data, CONF_API_KEY: parsed.api_key, CONF_BASE_URL: parsed.base_url},

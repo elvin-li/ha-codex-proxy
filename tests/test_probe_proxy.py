@@ -316,6 +316,71 @@ class TestProbeProxyPermissionDenied:
         assert errors.get("base") == "invalid_auth"
 
 
+class TestProbeProxyUnhandledException:
+    """Round-2 audit Finding #3 regression.
+
+    An unanticipated exception (e.g. ``ssl.SSLError``, ``httpx.ProxyError``,
+    ``openai.APIError`` base class, ``json.JSONDecodeError``) must NOT
+    propagate out of ``_probe_proxy`` — otherwise HA renders a raw traceback
+    page instead of an inline form error, leaving the user with no
+    actionable signal beyond the stack trace."""
+
+    @pytest.mark.asyncio
+    async def test_ssl_error_treated_as_connection_failure(self) -> None:
+        """``ssl.SSLError`` is a subclass of ``OSError`` and is correctly
+        caught by the ``(TimeoutError, OSError)`` clause, surfacing as
+        ``cannot_connect`` — TLS handshake failures *are* connection
+        failures.  This test pins that subclassing relationship: if a future
+        Python release relocates SSLError out of OSError, the test will
+        catch the regression where SSL errors silently flow into the
+        catch-all and surface as 'unknown' instead of the more accurate
+        'cannot_connect'."""
+        import ssl
+
+        with _patch_openai(ssl.SSLError("certificate verify failed")):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "cannot_connect"
+
+    @pytest.mark.asyncio
+    async def test_value_error_returns_unknown(self) -> None:
+        """Generic ValueError (e.g. from a malformed proxy response that an
+        upstream parser dies on) must be caught."""
+        with _patch_openai(ValueError("malformed response")):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "unknown"
+
+    @pytest.mark.asyncio
+    async def test_runtime_error_returns_unknown(self) -> None:
+        """``openai.APIError`` is a ``RuntimeError`` subclass in some SDK
+        versions; the base class is not explicitly caught above, so the
+        catch-all clause must take it."""
+        with _patch_openai(RuntimeError("unexpected openai SDK state")):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "unknown"
+
+    @pytest.mark.asyncio
+    async def test_unhandled_exception_logged_as_warning(self) -> None:
+        """Operators need WARNING-level evidence to diagnose the unexpected
+        exception class without enabling full DEBUG logging."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(RuntimeError("opaque proxy error")),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        mock_log.warning.assert_called_once()
+        call_args = mock_log.warning.call_args
+        # The format string must distinguish unhandled exceptions from the
+        # known TimeoutError/OSError path so operators can grep for them.
+        assert call_args.args[0] == "Unhandled %s during proxy probe: %s", (
+            f"Expected exact format string 'Unhandled %s during proxy probe: %s', "
+            f"got {call_args.args[0]!r} — operators need a distinct log prefix to "
+            "spot unknown exception classes in the HA log"
+        )
+
+
 class TestProbeProxyRateLimit:
     @pytest.mark.asyncio
     async def test_rate_limit_returns_rate_limited(self) -> None:

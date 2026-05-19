@@ -9,6 +9,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.173] - 2026-05-19
+### Fixed
+- `validate_base_url` now rejects URLs carrying a query string (`?key=value`) or fragment (`#anchor`). Either is almost always a copy-paste artefact (browser deep-link); leaving them in place corrupted the URL after `normalize_base_url` appended `/v1` — `https://host?x=1` became `https://host?x=1/v1` and the OpenAI SDK requested `https://host?x=1/v1/responses` (404 against any sane proxy).
+- `CodexConfigFlow.async_step_reconfigure` no longer calls `_abort_if_unique_id_mismatch`. Our `unique_id` *is* the `base_url`, so a legitimate proxy host change (rebrand, subdomain swap) necessarily changes the unique_id; the mismatch check aborted every such reconfigure and forced a delete-and-recreate that lost every subentry customisation (contradicting the documented "preserve subentries" contract). The new value is now passed through `async_update_reload_and_abort(unique_id=…)` so the entry's unique_id stays in sync with its base_url.
+- `_probe_proxy` now has a final `except Exception` clause that catches unanticipated errors (e.g. `httpx.ProxyError`, `openai.APIError` base, `json.JSONDecodeError` from a proxy returning HTML mid-TLS). Without it those exceptions escaped `async_step_user` / `async_step_reconfigure` and HA rendered a raw traceback page instead of an inline form error.
+- `select.current_option` and `update.installed_version` now collapse an empty-string `chat_model` to `DEFAULT_MODEL` (was only collapsing `None`). An empty stored value caused HA to log `Invalid current option ''` and the update entity to show a phantom blank update card.
+
+### Tests
+- `tests/test_pure_helpers.py`: 3 new cases for `validate_base_url` rejecting query/fragment/both
+- `tests/test_reconfigure_flow.py`: `TestReconfigureChangesHost` (2 tests) — pins that mismatch-abort is not called, and that the new unique_id flows through to `async_update_reload_and_abort`
+- `tests/test_probe_proxy.py`: `TestProbeProxyUnhandledException` (4 tests) — pins SSLError → cannot_connect (via OSError subclass), and ValueError / RuntimeError → unknown via the new catch-all, with exact warning-format assertion
+- `tests/test_select.py`, `tests/test_update_entity.py`: empty-string fallback to DEFAULT_MODEL
+
 ## [0.2.172] - 2026-05-19
 ### Fixed
 - `async_setup_entry` now also catches `ConfigEntryNotReady` from `async_config_entry_first_refresh`. HA Core wraps the `UpdateFailed` raised by `_async_update_data` and re-raises it as `ConfigEntryNotReady`, so the pre-existing `except (httpx.HTTPError, UpdateFailed)` clause never matched in production — any transient proxy hiccup at HA startup caused the entire entry setup to fail instead of running in the documented "warn and continue" degraded mode.

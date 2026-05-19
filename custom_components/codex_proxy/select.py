@@ -85,14 +85,22 @@ class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEnt
     def current_option(self) -> str:
         """Currently configured model id.
 
-        Always returns a non-None string so HA never warns about an invalid
+        Always returns a non-empty string so HA never warns about an invalid
         current option.  Falls back to ``DEFAULT_MODEL`` when the subentry
-        key is absent **or** when the stored value is explicitly ``None``
-        (which can happen if an older version wrote ``None`` instead of
-        omitting the key entirely).
+        key is absent, the stored value is ``None`` (which can happen if an
+        older version wrote ``None`` instead of omitting the key entirely),
+        OR when the stored value is the empty string ``""``.
+
+        The empty-string case matters because ``options`` filters out the
+        current value via a truthy ``if current and current not in seen``
+        check — returning ``""`` here would cause HA to log
+        ``Invalid current option '' for entity`` because the empty string
+        is never in the ``options`` list.
         """
         value = self._subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL)
-        return value if value is not None else DEFAULT_MODEL
+        # `value or DEFAULT_MODEL` collapses None and "" to the default in
+        # one expression — both are falsy, both should fall back.
+        return value or DEFAULT_MODEL
 
     @property
     def options(self) -> list[str]:

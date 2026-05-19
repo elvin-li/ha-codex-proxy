@@ -228,6 +228,24 @@ class TestValidateBaseUrl:
         """IPv6 bracket notation must be accepted."""
         assert validate_base_url("http://[::1]:8080") is None
 
+    def test_url_with_query_rejected(self) -> None:
+        """A base URL with a query string is almost always a copy-paste
+        artefact (the user pasted a deep-linked URL from their browser).
+        Leaving the query in place would corrupt the URL after
+        ``normalize_base_url`` appends ``/v1`` — ``https://host?x=1`` becomes
+        ``https://host?x=1/v1`` and the OpenAI SDK emits requests to
+        ``https://host?x=1/v1/responses`` (404 against any sane proxy).
+        Reject upfront so the user sees an inline form error."""
+        assert validate_base_url("https://proxy.example.com?token=abc") == "invalid_url"
+
+    def test_url_with_fragment_rejected(self) -> None:
+        """Same reasoning as the query-string case — fragments are a paste
+        artefact and corrupt the URL after ``/v1`` appending."""
+        assert validate_base_url("https://proxy.example.com#section") == "invalid_url"
+
+    def test_url_with_both_query_and_fragment_rejected(self) -> None:
+        assert validate_base_url("https://proxy.example.com?x=1#y") == "invalid_url"
+
 
 # ---------------------------------------------------------------------------
 # normalize_base_url

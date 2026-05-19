@@ -74,6 +74,24 @@ class TestVersionProperties:
         entity._subentry.data = {}  # no chat_model key
         assert entity.installed_version == DEFAULT_MODEL
 
+    def test_installed_version_falls_back_to_default_on_empty_string(self) -> None:
+        """Round-2 audit Finding #4 regression.
+
+        An empty string stored as ``chat_model`` would cause
+        ``latest_version`` to fall back to ``""`` (since
+        ``coordinator.latest_chat_model_id or installed_version`` evaluates
+        the OR with both sides being falsy when the coordinator is also
+        empty), producing a phantom blank update card in the HA UI.
+        Empty-string installed_version must collapse to DEFAULT_MODEL just
+        like None."""
+        entity = _make_entity()
+        entity._subentry = MagicMock()
+        entity._subentry.data = {"chat_model": ""}
+        assert entity.installed_version == DEFAULT_MODEL, (
+            "Empty-string chat_model must fall back to DEFAULT_MODEL — "
+            "returning '' surfaces as a phantom blank update in HA's UI"
+        )
+
     def test_latest_version_equals_coordinator_latest(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.6")
         assert entity.latest_version == "gpt-5.6"

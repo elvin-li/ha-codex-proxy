@@ -364,3 +364,49 @@ class TestReconfigurePreservesInstallationId:
             f"probe received {probe_args[1]!r} instead of 'sk-padded' — "
             "api_key stripping must happen BEFORE the probe, not after"
         )
+
+
+class TestReconfigureChangesHost:
+    """Round-2 audit Finding #2 regression: a legitimate proxy host change
+    (e.g. provider rebrand, swapping subdomains) must NOT abort.  The
+    reconfigure flow now updates ``unique_id`` to the new base_url via
+    ``async_update_reload_and_abort`` rather than aborting on mismatch."""
+
+    @pytest.mark.asyncio
+    async def test_host_change_does_not_call_abort_if_unique_id_mismatch(self) -> None:
+        """``_abort_if_unique_id_mismatch`` must NOT be invoked — calling it
+        with a changed host would unconditionally abort the flow and trap
+        the user (the unique_id IS the base_url; changing one means
+        changing the other)."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_reconfigure(_VALID_USER_INPUT)
+
+        flow._abort_if_unique_id_mismatch.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_host_change_passes_new_unique_id_to_update(self) -> None:
+        """``async_update_reload_and_abort`` must receive the new
+        ``unique_id`` so HA writes it back to ``core.config_entries`` and
+        future reconfigure attempts pre-fill against the new value."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_reconfigure(_VALID_USER_INPUT)
+
+        call = flow.async_update_reload_and_abort.call_args
+        assert call[1].get("unique_id") == _NEW_URL_NORMALISED, (
+            "Reconfigure must pass unique_id=<new_base_url> to "
+            "async_update_reload_and_abort — without this the stored "
+            "unique_id stays at the old value and the NEXT reconfigure "
+            "(after the host change) hits a fresh mismatch trap"
+        )
