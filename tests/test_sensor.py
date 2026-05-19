@@ -5,13 +5,11 @@ Runs without a full HA install by using the shared ha_stubs module.
 
 from __future__ import annotations
 
-import sys
 import os
-from datetime import datetime, timezone
+import sys
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
-
-import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,7 +24,6 @@ from custom_components.codex_proxy.sensor import (  # noqa: E402
     CodexChatModelCountSensor,
     CodexLastRefreshSensor,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -102,8 +99,9 @@ class TestEntityDescriptions:
         assert _CHAT_MODEL_COUNT.entity_registry_enabled_default is False
 
     def test_chat_model_count_state_class_is_measurement(self) -> None:
-        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
         from homeassistant.components.sensor import SensorStateClass  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
 
         assert _CHAT_MODEL_COUNT.state_class is SensorStateClass.MEASUREMENT
 
@@ -124,8 +122,9 @@ class TestEntityDescriptions:
         assert _LAST_REFRESH.entity_registry_enabled_default is False
 
     def test_last_refresh_device_class_is_timestamp(self) -> None:
-        from custom_components.codex_proxy.sensor import _LAST_REFRESH
         from homeassistant.components.sensor import SensorDeviceClass  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy.sensor import _LAST_REFRESH
 
         assert _LAST_REFRESH.device_class is SensorDeviceClass.TIMESTAMP
 
@@ -189,7 +188,7 @@ class TestLastRefreshSensor:
         assert sensor.native_value is None
 
     def test_returns_datetime_when_set(self) -> None:
-        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
         sensor = _make_refresh_sensor(last_time=ts)
         assert sensor.native_value == ts
 
@@ -198,7 +197,7 @@ class TestLastRefreshSensor:
         assert "entry-xyz" in sensor._attr_unique_id
 
     def test_timestamp_preserves_timezone(self) -> None:
-        ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
         sensor = _make_refresh_sensor(last_time=ts)
         result = sensor.native_value
         assert result is not None

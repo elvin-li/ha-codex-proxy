@@ -6,8 +6,8 @@ timeout to the httpx client on a successful fetch.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -15,18 +15,15 @@ import pytest
 # Bootstrap HA stubs BEFORE any codex_proxy import
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
+
 import tests.ha_stubs  # noqa: F401, E402
-
-import httpx  # real httpx  # noqa: E402
-
-from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CODEX_OPENAI_BETA,
     CODEX_ORIGINATOR,
     CODEX_USER_AGENT,
     COORDINATOR_TIMEOUT_S,
 )
-
+from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers

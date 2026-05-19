@@ -5,20 +5,18 @@ Runs without a full HA install by using the shared ha_stubs module.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import MagicMock
-
-import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import tests.ha_stubs  # noqa: F401, E402
+from datetime import UTC
 
+import tests.ha_stubs  # noqa: F401, E402
 from custom_components.codex_proxy.binary_sensor import (  # noqa: E402
     CodexProxyReachableSensor,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -108,7 +106,6 @@ class TestMetadata:
         assert sensor._attr_translation_key == "proxy_reachable"
 
     def test_device_class_is_connectivity(self) -> None:
-        from homeassistant.components.binary_sensor import BinarySensorDeviceClass  # type: ignore[attr-defined]
 
         sensor = _make_sensor()
         # The attribute is set at class level — just verify it is defined
@@ -155,9 +152,9 @@ class TestExtraStateAttributes:
         assert s.extra_state_attributes is None
 
     def test_returns_isoformat_timestamp(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=UTC)
         s = _make_sensor_with_coord(last_update_success_time=ts)
         attrs = s.extra_state_attributes
         assert attrs is not None
@@ -165,9 +162,9 @@ class TestExtraStateAttributes:
         assert attrs["last_checked"] == ts.isoformat()
 
     def test_last_checked_is_string(self) -> None:
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
         s = _make_sensor_with_coord(last_update_success=False, last_update_success_time=ts)
         attrs = s.extra_state_attributes
         assert isinstance(attrs["last_checked"], str)
@@ -182,9 +179,9 @@ class TestExtraStateAttributes:
 
     def test_latest_model_absent_when_coordinator_has_no_model(self) -> None:
         """latest_model is not included when the coordinator has no chat models yet."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=UTC)
         s = _make_sensor_with_coord(
             last_update_success_time=ts,
             latest_chat_model_id=None,
@@ -195,9 +192,9 @@ class TestExtraStateAttributes:
 
     def test_both_attributes_present_after_successful_poll(self) -> None:
         """After a successful poll both last_checked and latest_model are present."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
         s = _make_sensor_with_coord(
             last_update_success_time=ts,
             latest_chat_model_id="gpt-5.5",

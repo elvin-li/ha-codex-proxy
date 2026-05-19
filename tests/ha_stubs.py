@@ -249,7 +249,11 @@ if not isinstance(getattr(_UPD, "DataUpdateCoordinator", None), type):
 if not isinstance(getattr(_UPD, "CoordinatorEntity", None), type):
     _UPD.CoordinatorEntity = _CoordinatorEntity
 if not isinstance(getattr(_UPD, "UpdateFailed", None), type):
-    _UPD.UpdateFailed = Exception
+
+    class _UpdateFailed(Exception):
+        """Minimal stand-in for homeassistant.helpers.update_coordinator.UpdateFailed."""
+
+    _UPD.UpdateFailed = _UpdateFailed
 
 # UpdateEntity
 _UPD_COMP = sys.modules["homeassistant.components.update"]

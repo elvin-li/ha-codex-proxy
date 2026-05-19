@@ -7,16 +7,15 @@ Runs without a full HA install.
 
 from __future__ import annotations
 
-import sys
 import os
-from unittest.mock import AsyncMock, MagicMock
+import sys
+from unittest.mock import MagicMock
 
 import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -55,8 +54,8 @@ class TestBinarySensorSetup:
     @pytest.mark.asyncio
     async def test_setup_creates_one_entity_per_entry(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.binary_sensor import (
-            async_setup_entry,
             CodexProxyReachableSensor,
+            async_setup_entry,
         )
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -86,8 +85,8 @@ class TestButtonSetup:
     @pytest.mark.asyncio
     async def test_setup_creates_one_button_per_entry(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.button import (
-            async_setup_entry,
             CodexRefreshModelsButton,
+            async_setup_entry,
         )
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -117,9 +116,9 @@ class TestSensorSetup:
     @pytest.mark.asyncio
     async def test_setup_creates_two_sensors_per_entry(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.sensor import (
-            async_setup_entry,
             CodexChatModelCountSensor,
             CodexLastRefreshSensor,
+            async_setup_entry,
         )
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -155,8 +154,8 @@ class TestSelectSetup:
     ) -> None:
         """mock_entry has 1 conversation + 1 ai_task_data subentry → 2 selects."""
         from custom_components.codex_proxy.select import (
-            async_setup_entry,
             CodexModelSelectEntity,
+            async_setup_entry,
         )
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -180,8 +179,8 @@ class TestSelectSetup:
     @pytest.mark.asyncio
     async def test_non_llm_subentry_skipped(self, mock_entry, mock_coordinator) -> None:
         """A subentry of an unknown type must not produce a select entity."""
-        from tests.conftest import _FakeSubentry
         from custom_components.codex_proxy.select import async_setup_entry
+        from tests.conftest import _FakeSubentry
 
         # Inject a third subentry with a non-LLM type
         mock_entry.subentries["sub-other-1"] = _FakeSubentry(
@@ -228,8 +227,8 @@ class TestUpdateSetup:
         self, mock_entry, mock_coordinator
     ) -> None:
         from custom_components.codex_proxy.update import (
-            async_setup_entry,
             CodexModelUpdate,
+            async_setup_entry,
         )
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -253,8 +252,8 @@ class TestUpdateSetup:
     @pytest.mark.asyncio
     async def test_non_llm_subentry_skipped(self, mock_entry, mock_coordinator) -> None:
         """A subentry of an unknown type must not produce an update entity."""
-        from tests.conftest import _FakeSubentry
         from custom_components.codex_proxy.update import async_setup_entry
+        from tests.conftest import _FakeSubentry
 
         mock_entry.subentries["sub-other-2"] = _FakeSubentry(
             subentry_id="sub-other-2",
@@ -299,8 +298,8 @@ class TestConversationSetup:
     ) -> None:
         """mock_entry has exactly one 'conversation' subentry → 1 entity."""
         from custom_components.codex_proxy.conversation import (
-            async_setup_entry,
             CodexConversationEntity,
+            async_setup_entry,
         )
 
         add, added = _collecting_add_entities()
@@ -349,8 +348,8 @@ class TestAITaskSetup:
     ) -> None:
         """mock_entry has exactly one 'ai_task_data' subentry → 1 entity."""
         from custom_components.codex_proxy.ai_task import (
-            async_setup_entry,
             CodexAITaskEntity,
+            async_setup_entry,
         )
 
         add, added = _collecting_add_entities()

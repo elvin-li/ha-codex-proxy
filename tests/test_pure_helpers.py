@@ -7,8 +7,8 @@ be bootstrapped first.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 import pytest
 
@@ -16,12 +16,10 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402
-
 from custom_components.codex_proxy._pure_helpers import (  # noqa: E402
     parse_codex_toml,
     validate_base_url,
 )
-
 
 # ---------------------------------------------------------------------------
 # parse_codex_toml
@@ -69,7 +67,9 @@ base_url = "https://example.com/"
         assert result["base_url"] == "https://example.com"
 
     def test_invalid_toml_raises(self) -> None:
-        with pytest.raises(Exception):
+        import tomllib
+
+        with pytest.raises(tomllib.TOMLDecodeError):
             parse_codex_toml("not = valid [ toml")
 
     def test_non_string_model_ignored(self) -> None:

@@ -5,20 +5,18 @@ Runs without a full HA install by using the shared ha_stubs module.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import MagicMock
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
+from custom_components.codex_proxy.const import DEFAULT_MODEL, DOMAIN  # noqa: E402
 from custom_components.codex_proxy.entity_utils import (  # noqa: E402
     build_codex_device_info,
     build_codex_entry_device_info,
 )
-from custom_components.codex_proxy.const import DEFAULT_MODEL, DOMAIN  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers

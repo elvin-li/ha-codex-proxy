@@ -6,8 +6,8 @@ noop on double-press is handled by coordinator throttle (not our code).
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -15,9 +15,7 @@ import pytest
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
 from custom_components.codex_proxy.button import CodexRefreshModelsButton  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers

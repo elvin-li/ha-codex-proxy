@@ -119,7 +119,8 @@ class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEnt
 
     async def async_select_option(self, option: str) -> None:
         """Update the subentry's model and reload the config entry."""
-        if option == self.current_option:
+        old_model = self.current_option
+        if option == old_model:
             return
 
         new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: option}
@@ -127,7 +128,7 @@ class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEnt
         _LOGGER.info(
             "Model for subentry '%s' changed from '%s' to '%s'; reloading entry",
             self._subentry.title,
-            self.current_option,
+            old_model,
             option,
         )
         await self.hass.config_entries.async_reload(self._entry.entry_id)

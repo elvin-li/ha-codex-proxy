@@ -6,8 +6,8 @@ HA integration) depends on.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from datetime import timedelta
 
 # Bootstrap HA stubs — importing from the package loads __init__.py which needs HA
@@ -91,7 +91,7 @@ class TestDefaults:
 
 class TestIntervals:
     def test_model_refresh_interval_is_6h(self) -> None:
-        assert MODEL_REFRESH_INTERVAL == timedelta(hours=6)
+        assert timedelta(hours=6) == MODEL_REFRESH_INTERVAL
 
     def test_probe_timeout_positive(self) -> None:
         assert PROBE_TIMEOUT_S > 0

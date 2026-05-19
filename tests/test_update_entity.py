@@ -6,8 +6,8 @@ namespace before importing the module under test.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -19,7 +19,6 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
-
 from custom_components.codex_proxy.const import DEFAULT_MODEL  # noqa: E402
 from custom_components.codex_proxy.update import CodexModelUpdate  # noqa: E402
 
@@ -207,8 +206,9 @@ class TestClassAttributes:
 
     def test_entity_category_is_config(self) -> None:
         """Update entities belong to the CONFIG category (not DIAGNOSTIC)."""
-        from custom_components.codex_proxy.update import CodexModelUpdate
         from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy.update import CodexModelUpdate
 
         assert CodexModelUpdate._attr_entity_category is EntityCategory.CONFIG
 

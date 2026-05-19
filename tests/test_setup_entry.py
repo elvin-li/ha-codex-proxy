@@ -11,8 +11,8 @@ Runs without a full HA install.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -20,14 +20,13 @@ import pytest
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
 from custom_components.codex_proxy import async_setup_entry  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CONF_INSTALLATION_ID,
     DATA_COORDINATOR,
     DOMAIN,
 )
-
+from homeassistant.helpers.update_coordinator import UpdateFailed  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -165,13 +164,10 @@ class TestCoordinatorFailurePath:
     @pytest.mark.asyncio
     async def test_returns_true_when_coordinator_raises_update_failed(self) -> None:
         """UpdateFailed on first refresh is non-fatal; entry still loads."""
-        import httpx
-        from homeassistant.helpers.update_coordinator import UpdateFailed  # type: ignore[attr-defined]
 
         entry = _make_entry(installation_id="iid-fail")
         hass = _make_hass()
-        # UpdateFailed is stubbed as Exception in ha_stubs
-        patcher, _ = _patch_coordinator(first_refresh_side_effect=Exception("poll failed"))
+        patcher, _ = _patch_coordinator(first_refresh_side_effect=UpdateFailed("poll failed"))
 
         with patcher:
             result = await async_setup_entry(hass, entry)
@@ -184,7 +180,7 @@ class TestCoordinatorFailurePath:
         next poll can succeed without a full reload."""
         entry = _make_entry("entry-fail2", installation_id="iid-fail2")
         hass = _make_hass()
-        patcher, _ = _patch_coordinator(first_refresh_side_effect=Exception("timeout"))
+        patcher, _ = _patch_coordinator(first_refresh_side_effect=UpdateFailed("timeout"))
 
         with patcher:
             await async_setup_entry(hass, entry)

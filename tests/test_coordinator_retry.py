@@ -4,13 +4,12 @@ We mock httpx at the call-site so we can simulate 5xx, timeout, DNS failure,
 and bad JSON without a live proxy. asyncio.sleep is patched to avoid actually
 waiting in tests.
 """
+# isort: skip_file — imports must be ordered: stdlib → httpx → ha_stubs → HA/codex
 
 from __future__ import annotations
 
-import asyncio
-import sys
 import os
-from typing import Any
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -20,12 +19,11 @@ import pytest
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
-
 import httpx  # real httpx — coordinator uses it directly  # noqa: E402
+from homeassistant.helpers.update_coordinator import UpdateFailed  # noqa: E402
 
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -34,7 +32,6 @@ from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # n
 
 def _make_coordinator() -> CodexModelCoordinator:
     """Instantiate a coordinator with mocked HA deps."""
-    hass = MagicMock()
     entry = MagicMock()
     entry.entry_id = "entry-1"
     entry.data = {
@@ -167,9 +164,11 @@ class TestCoordinatorRetry:
         coord = _make_coordinator()
         coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
 
-        with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()):
-            with pytest.raises(Exception):  # UpdateFailed (mocked as Exception)
-                await coord._async_update_data()
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            pytest.raises(UpdateFailed),
+        ):
+            await coord._async_update_data()
 
     @pytest.mark.asyncio
     async def test_sleep_called_between_retries(self) -> None:
@@ -177,9 +176,11 @@ class TestCoordinatorRetry:
         coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
 
         sleep_mock = AsyncMock()
-        with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock):
-            with pytest.raises(Exception):
-                await coord._async_update_data()
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock),
+            pytest.raises(UpdateFailed),
+        ):
+            await coord._async_update_data()
 
         # Should have slept between retries (not after the final one)
         assert sleep_mock.call_count >= 1
@@ -196,7 +197,7 @@ class TestCoordinatorNonTransient:
         coord = _make_coordinator()
         coord._http.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
 
-        with pytest.raises(Exception):  # UpdateFailed
+        with pytest.raises(UpdateFailed):
             await coord._async_update_data()
 
     @pytest.mark.asyncio
@@ -207,7 +208,7 @@ class TestCoordinatorNonTransient:
         bad_response.json.side_effect = ValueError("bad json")
         coord._http.get = AsyncMock(return_value=bad_response)
 
-        with pytest.raises(Exception):  # UpdateFailed
+        with pytest.raises(UpdateFailed):
             await coord._async_update_data()
 
     @pytest.mark.asyncio
@@ -217,9 +218,11 @@ class TestCoordinatorNonTransient:
         coord._http.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
 
         sleep_mock = AsyncMock()
-        with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock):
-            with pytest.raises(Exception):
-                await coord._async_update_data()
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock),
+            pytest.raises(UpdateFailed),
+        ):
+            await coord._async_update_data()
 
         # No sleep between retries — it failed immediately
         sleep_mock.assert_not_called()
@@ -340,9 +343,11 @@ class TestRetryDelayClamping:
         async def capture_sleep(delay: float) -> None:
             sleep_delays.append(delay)
 
-        with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=capture_sleep):
-            with pytest.raises(Exception):
-                await coord._async_update_data()
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=capture_sleep),
+            pytest.raises(UpdateFailed),
+        ):
+            await coord._async_update_data()
 
         # COORDINATOR_MAX_RETRIES=3 means 2 sleeps (between attempt 0→1 and 1→2)
         from custom_components.codex_proxy.const import COORDINATOR_RETRY_DELAYS

@@ -8,8 +8,8 @@ Runs without a full HA install.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,9 +17,7 @@ import pytest
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
 from custom_components.codex_proxy import async_migrate_entry  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers

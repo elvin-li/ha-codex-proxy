@@ -6,27 +6,24 @@ Runs without a full HA install — all HA modules are mocked via ha_stubs.
 
 from __future__ import annotations
 
-import sys
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
-import uuid
+import sys
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
 from custom_components.codex_proxy import (  # noqa: E402
-    async_unload_entry,
     _async_update_listener,
+    async_unload_entry,
 )
 from custom_components.codex_proxy.const import (  # noqa: E402
     CONF_INSTALLATION_ID,
     DATA_COORDINATOR,
     DOMAIN,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

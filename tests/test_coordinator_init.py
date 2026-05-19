@@ -7,24 +7,20 @@ so the actual __init__ code path is exercised (not bypassed via object.__new__).
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402
-
-from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CONF_API_KEY,
     CONF_BASE_URL,
     MODEL_REFRESH_INTERVAL,
 )
-
+from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers

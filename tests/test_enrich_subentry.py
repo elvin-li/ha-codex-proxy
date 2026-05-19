@@ -7,10 +7,8 @@ user_input values.  Also covers the _upstream_keys() cache contract.
 
 from __future__ import annotations
 
-import sys
 import os
-import importlib
-from typing import Any
+import sys
 
 # ---------------------------------------------------------------------------
 # Bootstrap HA stubs before any codex_proxy import.
@@ -27,7 +25,6 @@ from custom_components.codex_proxy.config_flow import (  # noqa: E402
     _enrich_subentry_data,
     _upstream_keys,
 )
-
 
 # ---------------------------------------------------------------------------
 # Tests

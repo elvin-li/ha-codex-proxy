@@ -6,21 +6,18 @@ expected platform strings. Runs without a full HA install.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-
-
 from custom_components.codex_proxy.const import (  # noqa: E402
     CODEX_OPENAI_BETA,
     CODEX_ORIGINATOR,
     CODEX_USER_AGENT,
     CONF_INSTALLATION_ID,
 )
-
 
 # ---------------------------------------------------------------------------
 # _build_codex_headers
@@ -93,18 +90,21 @@ class TestPlatforms:
     def test_binary_sensor_registered(self) -> None:
         """Platform.BINARY_SENSOR must appear in PLATFORMS."""
         from homeassistant.const import Platform  # type: ignore[attr-defined]
+
         from custom_components.codex_proxy import PLATFORMS
 
         assert Platform.BINARY_SENSOR in PLATFORMS
 
     def test_conversation_registered(self) -> None:
         from homeassistant.const import Platform  # type: ignore[attr-defined]
+
         from custom_components.codex_proxy import PLATFORMS
 
         assert Platform.CONVERSATION in PLATFORMS
 
     def test_sensor_registered(self) -> None:
         from homeassistant.const import Platform  # type: ignore[attr-defined]
+
         from custom_components.codex_proxy import PLATFORMS
 
         assert Platform.SENSOR in PLATFORMS

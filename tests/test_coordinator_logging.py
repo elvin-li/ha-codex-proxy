@@ -6,12 +6,12 @@ _LOGGER.debug was called with expected message patterns.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 import httpx
+import pytest
 
 # ---------------------------------------------------------------------------
 # Bootstrap — must precede codex_proxy imports
@@ -19,9 +19,7 @@ import httpx
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
-
 from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers

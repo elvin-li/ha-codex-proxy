@@ -6,8 +6,8 @@ deduplication, noop on same option, and async_select_option call flow.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -19,13 +19,11 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
-
-from custom_components.codex_proxy.select import CodexModelSelectEntity  # noqa: E402
 from custom_components.codex_proxy.const import DEFAULT_MODEL  # noqa: E402
+from custom_components.codex_proxy.select import CodexModelSelectEntity  # noqa: E402
 
 # Use the shared CoordinatorEntity base from ha_stubs
 from tests.ha_stubs import _CoordinatorEntity as _CoordinatorEntityBase  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -68,7 +66,7 @@ def _make_entity(
     _CoordinatorEntityBase.__init__(entity, coord)
     entity._entry = entry
     entity._subentry = subentry
-    entity._attr_unique_id = f"sub-1_model_select"
+    entity._attr_unique_id = "sub-1_model_select"
     entity._attr_device_info = {}
     entity.hass = MagicMock()
     entity.hass.config_entries.async_reload = AsyncMock()
@@ -169,7 +167,8 @@ class TestAsyncSelectOption:
 
     @pytest.mark.asyncio
     async def test_info_logged_on_model_change(self) -> None:
-        """_LOGGER.info is called once when the model is changed."""
+        """_LOGGER.info is called once when the model is changed, mentioning
+        both the old and new model ids."""
         from unittest.mock import patch
 
         entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
@@ -179,6 +178,7 @@ class TestAsyncSelectOption:
         # Log message should mention both old and new model
         logged = str(mock_log.info.call_args)
         assert "gpt-5.6" in logged
+        assert "gpt-5.5" in logged  # old model must also appear
 
     @pytest.mark.asyncio
     async def test_no_log_on_noop(self) -> None:

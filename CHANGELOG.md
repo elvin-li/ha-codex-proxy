@@ -13,6 +13,41 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.26] – 2026-05-19
+
+### Fixed
+
+- **`select.py`** — `async_select_option` now captures `old_model` from
+  `current_option` *before* calling `async_update_subentry`.  Previously the
+  log message "changed from X to Y" could show the new model for both
+  positions if the mock/implementation updated the subentry data in-place
+  before the log line executed.
+
+### Improved (tests)
+
+- **`tests/test_select.py`** — `test_info_logged_on_model_change` now
+  asserts that the *old* model id appears in the log call-args in addition to
+  the new one, confirming the capture-before-update fix is exercised.
+- **`tests/ha_stubs.py`** — `UpdateFailed` is now a proper `Exception`
+  subclass (`_UpdateFailed(Exception)`) rather than an alias of bare
+  `Exception`.  This lets tests use `pytest.raises(UpdateFailed)` without
+  triggering the `B017` ruff rule and makes `except UpdateFailed` in
+  production code behave correctly in the test environment.
+- **`tests/test_coordinator_retry.py`** — All `pytest.raises(Exception)` calls
+  replaced with `pytest.raises(UpdateFailed)`; nested `with` statements
+  combined into single parenthesised `with` blocks (`SIM117`); unused `hass`
+  variable removed (`F841`); `# isort: skip_file` added to preserve
+  bootstrapping-required import order.
+- **`tests/test_setup_entry.py`** — `first_refresh_side_effect` changed from
+  bare `Exception(...)` to `UpdateFailed(...)` so the `except UpdateFailed`
+  branch in `async_setup_entry` is correctly exercised.
+- **`tests/test_pure_helpers.py`** — `test_invalid_toml_raises` now uses
+  `pytest.raises(tomllib.TOMLDecodeError)` instead of bare `Exception`.
+- Across all test files: 116 ruff auto-fixes applied (unused imports, import
+  sorting, `timezone.utc` → `UTC`, etc.).
+
+---
+
 ## [0.2.25] – 2026-05-19
 
 ### Added

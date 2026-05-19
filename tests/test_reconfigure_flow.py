@@ -12,8 +12,8 @@ rather than a MagicMock, enabling direct unit tests of the flow method.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -27,14 +27,12 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
-
 from custom_components.codex_proxy.config_flow import CodexConfigFlow  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CONF_API_KEY,
     CONF_BASE_URL,
     CONF_INSTALLATION_ID,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

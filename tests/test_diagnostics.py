@@ -6,11 +6,11 @@ info shape, and subentry enumeration. Runs without a full HA install.
 
 from __future__ import annotations
 
-import sys
 import os
-from datetime import datetime, timezone
+import sys
+from datetime import UTC, datetime
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -33,8 +33,9 @@ def _real_async_redact_data(data: dict[str, Any], to_redact: set[str]) -> dict[s
 
 sys.modules["homeassistant.components.diagnostics"].async_redact_data = _real_async_redact_data
 
-from custom_components.codex_proxy.diagnostics import async_get_config_entry_diagnostics  # noqa: E402
-
+from custom_components.codex_proxy.diagnostics import (  # noqa: E402
+    async_get_config_entry_diagnostics,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -183,7 +184,7 @@ class TestDiagnosticsCoordinatorInfo:
 
     @pytest.mark.asyncio
     async def test_last_update_success_time_isoformat(self) -> None:
-        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
         coord = _make_coordinator(last_time=ts)
         entry = _make_entry()
         hass = _make_hass(coord, entry.entry_id)

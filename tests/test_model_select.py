@@ -6,8 +6,8 @@ deduplication, and fallback when coordinator has no data.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -16,10 +16,9 @@ from unittest.mock import MagicMock
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
-
 from unittest.mock import patch  # noqa: E402
 
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 from custom_components.codex_proxy.config_flow import _model_select_options  # noqa: E402
 
 
@@ -34,7 +33,6 @@ _PATCH_SELECT_OPTION = patch(
     side_effect=_SelectOptionDict,
 )
 from custom_components.codex_proxy.const import DEFAULT_MODEL  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -6,11 +6,9 @@ _async_update_data. They have no HA runtime dependency.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from typing import Any
-
-import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

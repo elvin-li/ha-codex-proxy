@@ -12,8 +12,8 @@ before test_probe_proxy.py is imported.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -23,9 +23,7 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402
-
 from custom_components.codex_proxy.config_flow import _probe_proxy  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Independent exception stubs — no dependency on real openai package
