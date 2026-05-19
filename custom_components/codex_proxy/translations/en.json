@@ -125,7 +125,15 @@
   "entity": {
     "binary_sensor": {
       "proxy_reachable": {
-        "name": "Proxy reachable"
+        "name": "Proxy reachable",
+        "state_attributes": {
+          "last_checked": {
+            "name": "Last checked"
+          },
+          "latest_model": {
+            "name": "Latest model"
+          }
+        }
       }
     },
     "button": {

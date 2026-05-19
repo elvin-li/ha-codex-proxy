@@ -83,6 +83,19 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
 
     async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch ``/v1/models`` and return a normalised ``{"models": [...]}`` dict.
+
+        Retry behaviour (controlled by ``COORDINATOR_MAX_RETRIES`` and
+        ``COORDINATOR_RETRY_DELAYS``):
+        - HTTP 5xx and ``httpx.TimeoutException`` are transient — the request is
+          retried after the configured delay.
+        - HTTP 4xx and ``httpx.HTTPError`` (connection refused, DNS failure) are
+          non-transient — ``UpdateFailed`` is raised immediately without retrying.
+        - ``json.JSONDecodeError`` (proxy returned non-JSON) is non-transient.
+
+        The normalised model list is sorted by ``(-created, id)`` so it is
+        deterministic even when multiple models share the same timestamp.
+        """
         last_err: Exception | None = None
         for attempt in range(COORDINATOR_MAX_RETRIES):
             try:

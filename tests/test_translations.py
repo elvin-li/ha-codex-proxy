@@ -172,6 +172,29 @@ class TestTranslationKeyConsistency:
                             f"{step_name}.data_description.{field_key} is empty"
                         )
 
+    def test_binary_sensor_state_attributes_documented(self) -> None:
+        """proxy_reachable exposes last_checked and latest_model via
+        extra_state_attributes; all translation files must document them so
+        HA's UI renders proper labels in the More Info dialog."""
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            ps = data["entity"]["binary_sensor"]["proxy_reachable"]
+            assert "state_attributes" in ps, (
+                f"{fname} entity.binary_sensor.proxy_reachable missing state_attributes"
+            )
+            attrs = ps["state_attributes"]
+            for key in ("last_checked", "latest_model"):
+                assert key in attrs, (
+                    f"{fname} entity.binary_sensor.proxy_reachable.state_attributes "
+                    f"missing {key!r}"
+                )
+                assert "name" in attrs[key], (
+                    f"{fname} state_attributes.{key} is missing 'name' field"
+                )
+                assert attrs[key]["name"], (
+                    f"{fname} state_attributes.{key}.name is empty"
+                )
+
     def test_all_translation_keys_in_sync(self) -> None:
         """Deep structural check: the full set of dotted key paths in strings.json,
         en.json, and zh-Hans.json must be identical. This catches any new key added

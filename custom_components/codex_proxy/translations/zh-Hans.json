@@ -125,7 +125,15 @@
   "entity": {
     "binary_sensor": {
       "proxy_reachable": {
-        "name": "反代可达"
+        "name": "反代可达",
+        "state_attributes": {
+          "last_checked": {
+            "name": "上次检测时间"
+          },
+          "latest_model": {
+            "name": "最新模型"
+          }
+        }
       }
     },
     "button": {
