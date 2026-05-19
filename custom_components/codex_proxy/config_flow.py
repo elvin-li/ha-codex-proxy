@@ -495,7 +495,16 @@ def _parse_toml_and_validate(
             if "model" in parsed:
                 model = parsed["model"]
             if "reasoning_effort" in parsed:
-                reasoning_effort = parsed["reasoning_effort"]
+                if parsed["reasoning_effort"] in REASONING_EFFORTS:
+                    reasoning_effort = parsed["reasoning_effort"]
+                else:
+                    _LOGGER.warning(
+                        "TOML model_reasoning_effort '%s' is not a valid value "
+                        "(%s); using default '%s'",
+                        parsed["reasoning_effort"],
+                        ", ".join(REASONING_EFFORTS),
+                        DEFAULT_REASONING_EFFORT,
+                    )
             if "store_responses" in parsed:
                 store_responses = parsed["store_responses"]
             if not base_url:

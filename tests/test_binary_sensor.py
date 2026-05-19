@@ -86,6 +86,40 @@ class TestIsOn:
 
         assert s.is_on is False
 
+    def test_is_none_before_first_successful_poll(self) -> None:
+        """When the coordinator hasn't completed any poll yet,
+        last_update_success_time is None and is_on must return None
+        (unknown state) rather than True (which would be misleading)."""
+        from tests.ha_stubs import _CoordinatorEntity
+
+        coord = MagicMock()
+        coord.last_update_success = True  # HA initialises to True — still unknown
+        coord.last_update_success_time = None  # no successful poll yet
+
+        s = object.__new__(CodexProxyReachableSensor)
+        _CoordinatorEntity.__init__(s, coord)
+        s._attr_unique_id = "entry-z_proxy_reachable"
+        s._attr_device_info = {}
+
+        assert s.is_on is None
+
+    def test_is_on_after_first_successful_poll(self) -> None:
+        """Once last_update_success_time is set, is_on reflects last_update_success."""
+        from datetime import datetime
+
+        from tests.ha_stubs import _CoordinatorEntity
+
+        coord = MagicMock()
+        coord.last_update_success = True
+        coord.last_update_success_time = datetime(2026, 1, 1, tzinfo=UTC)
+
+        s = object.__new__(CodexProxyReachableSensor)
+        _CoordinatorEntity.__init__(s, coord)
+        s._attr_unique_id = "entry-w_proxy_reachable"
+        s._attr_device_info = {}
+
+        assert s.is_on is True
+
 
 # ---------------------------------------------------------------------------
 # Identity / metadata

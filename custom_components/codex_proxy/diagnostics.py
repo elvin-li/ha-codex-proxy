@@ -40,7 +40,7 @@ async def async_get_config_entry_diagnostics(
         {
             "subentry_type": s.subentry_type,
             "title": s.title,
-            "data": dict(s.data),
+            "data": async_redact_data(dict(s.data), _TO_REDACT),
         }
         for s in entry.subentries.values()
     ]

@@ -303,3 +303,44 @@ class TestDiagnosticsEdgeCases:
         result = await async_get_config_entry_diagnostics(hass, entry)
 
         assert result["entry_data"]["codex_installation_id"] == _INSTALLATION_ID
+
+
+class TestDiagnosticsSubentryRedaction:
+    @pytest.mark.asyncio
+    async def test_subentry_data_api_key_redacted(self) -> None:
+        """If a subentry ever contains an api_key (e.g., via a future refactor)
+        the diagnostics output must redact it just like entry_data."""
+        sub = MagicMock()
+        sub.subentry_type = "conversation"
+        sub.title = "Test Agent"
+        sub.data = {"api_key": _API_KEY, "chat_model": "gpt-5.5"}
+
+        coord = _make_coordinator()
+        entry = _make_entry(subentries={"sub-1": sub})
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert len(result["subentries"]) == 1
+        subentry_data = result["subentries"][0]["data"]
+        assert subentry_data["api_key"] == "**REDACTED**"
+        assert _API_KEY not in str(result)
+
+    @pytest.mark.asyncio
+    async def test_subentry_non_sensitive_data_preserved(self) -> None:
+        """Non-sensitive subentry fields (chat_model, reasoning_effort) are
+        not redacted and appear verbatim in the diagnostics output."""
+        sub = MagicMock()
+        sub.subentry_type = "conversation"
+        sub.title = "Test Agent"
+        sub.data = {"chat_model": "gpt-5.5", "reasoning_effort": "high"}
+
+        coord = _make_coordinator()
+        entry = _make_entry(subentries={"sub-1": sub})
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        subentry_data = result["subentries"][0]["data"]
+        assert subentry_data["chat_model"] == "gpt-5.5"
+        assert subentry_data["reasoning_effort"] == "high"

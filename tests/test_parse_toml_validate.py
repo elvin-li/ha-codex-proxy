@@ -181,3 +181,32 @@ base_url = "https://from-toml.example.com"
         assert not errors
         assert reasoning_effort == DEFAULT_REASONING_EFFORT
         assert store == DEFAULT_STORE
+
+    def test_invalid_reasoning_effort_from_toml_uses_default(self) -> None:
+        """A TOML with an unrecognised model_reasoning_effort value must not
+        be stored; the default effort should be used instead and no error
+        should be returned (the flow continues with a warning logged)."""
+        toml = (
+            'model_reasoning_effort = "turbo"\n'
+            '[model_providers.p]\nbase_url = "https://proxy.example.com"\n'
+        )
+        errors, _, _, _, reasoning_effort, _ = _parse_toml_and_validate(
+            _input(base_url="", toml=toml)
+        )
+        assert not errors
+        assert reasoning_effort == DEFAULT_REASONING_EFFORT
+
+    def test_valid_reasoning_effort_from_toml_used(self) -> None:
+        """Known effort values from TOML are accepted without any error."""
+        from custom_components.codex_proxy.const import REASONING_EFFORTS  # noqa: E402
+
+        for effort in REASONING_EFFORTS:
+            toml = (
+                f'model_reasoning_effort = "{effort}"\n'
+                '[model_providers.p]\nbase_url = "https://proxy.example.com"\n'
+            )
+            errors, _, _, _, reasoning_effort, _ = _parse_toml_and_validate(
+                _input(base_url="", toml=toml)
+            )
+            assert not errors, f"unexpected error for effort={effort}: {errors}"
+            assert reasoning_effort == effort

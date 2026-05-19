@@ -59,8 +59,15 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
         self._attr_device_info = build_codex_entry_device_info(entry)
 
     @property
-    def is_on(self) -> bool:
-        """Return True when the last coordinator poll succeeded."""
+    def is_on(self) -> bool | None:
+        """Return True when the last coordinator poll succeeded.
+
+        Returns ``None`` (unknown state) before the first poll completes so the
+        entity doesn't prematurely report "connected" while HA is still starting
+        up.  After the first poll the value is always ``True`` or ``False``.
+        """
+        if self.coordinator.last_update_success_time is None:
+            return None  # no successful poll yet — state is unknown
         return bool(self.coordinator.last_update_success)
 
     @property

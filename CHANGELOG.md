@@ -13,6 +13,46 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.28] – 2026-05-19
+
+### Fixed
+
+- **`binary_sensor.py`** — `is_on` now returns `None` (HA "unknown" state)
+  before the coordinator has completed any successful poll.  Previously, HA's
+  `DataUpdateCoordinator` initialises `last_update_success = True` even before
+  the first network call completes, so the sensor would transiently report
+  "connected" during HA startup even when the proxy has never been reached.
+  The fix checks `last_update_success_time is None` as the sentinel for
+  "not yet polled".  Return type is widened from `bool` to `bool | None` to
+  match HA's interface.
+
+- **`config_flow.py`** — TOML `model_reasoning_effort` values that are not in
+  `REASONING_EFFORTS` (e.g. `"turbo"`, `"ultra"`) are now silently ignored
+  with a `_LOGGER.warning` and the default effort is used.  Previously the
+  invalid string was stored verbatim in the config entry, which the UI would
+  later reject when showing the subentry settings.
+
+- **`diagnostics.py`** — Subentry `data` dicts are now passed through
+  `async_redact_data` before being included in the diagnostics bundle.
+  Previously, if a future refactor stored a sensitive value (e.g. an
+  `api_key`) inside a subentry, it would be leaked in the diagnostics
+  download.
+
+### Added (tests)
+
+- **`tests/test_binary_sensor.py`** — 2 new `TestIsOn` cases:
+  `test_is_none_before_first_successful_poll` and
+  `test_is_on_after_first_successful_poll`.
+- **`tests/test_parse_toml_validate.py`** — 2 new cases:
+  `test_invalid_reasoning_effort_from_toml_uses_default` (verifies the
+  warning path) and `test_valid_reasoning_effort_from_toml_used` (iterates all
+  four valid efforts).
+- **`tests/test_diagnostics.py`** — 2 new `TestDiagnosticsSubentryRedaction`
+  cases: `test_subentry_data_api_key_redacted` and
+  `test_subentry_non_sensitive_data_preserved`.
+
+---
+
 ## [0.2.27] – 2026-05-19
 
 ### Fixed
