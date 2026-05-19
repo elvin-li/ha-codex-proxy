@@ -171,6 +171,30 @@ class TestTitle:
         assert entity.title is not None
 
 
+class TestClassAttributes:
+    def test_has_entity_name_is_true(self) -> None:
+        from custom_components.codex_proxy.update import CodexModelUpdate
+
+        assert CodexModelUpdate._attr_has_entity_name is True
+
+    def test_supported_features_is_set(self) -> None:
+        from custom_components.codex_proxy.update import CodexModelUpdate
+
+        assert CodexModelUpdate._attr_supported_features is not None
+
+    def test_entity_category_is_config(self) -> None:
+        """Update entities belong to the CONFIG category (not DIAGNOSTIC)."""
+        from custom_components.codex_proxy.update import CodexModelUpdate
+        from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
+        assert CodexModelUpdate._attr_entity_category is EntityCategory.CONFIG
+
+    def test_translation_key(self) -> None:
+        from custom_components.codex_proxy.update import CodexModelUpdate
+
+        assert CodexModelUpdate._attr_translation_key == "model_update"
+
+
 class TestHandleCoordinatorUpdate:
     def test_subentry_refreshed_from_entry_subentries(self) -> None:
         """After a coordinator update, _subentry should be re-read from

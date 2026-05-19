@@ -163,6 +163,18 @@ class TestAsyncSelectOption:
 # ---------------------------------------------------------------------------
 
 
+class TestClassAttributes:
+    def test_has_entity_name_is_true(self) -> None:
+        assert CodexModelSelectEntity._attr_has_entity_name is True
+
+    def test_translation_key(self) -> None:
+        assert CodexModelSelectEntity._attr_translation_key == "active_model"
+
+    def test_disabled_by_default(self) -> None:
+        """Select entity is opt-in; default enabled = False."""
+        assert CodexModelSelectEntity._attr_entity_registry_enabled_default is False
+
+
 class TestHandleCoordinatorUpdate:
     def test_subentry_refreshed_from_entry_on_update(self) -> None:
         """When the coordinator fires an update, _subentry should be re-read
