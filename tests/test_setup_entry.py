@@ -228,3 +228,35 @@ class TestCoordinatorFailurePath:
         mock_log.warning.assert_called_once()
         logged = str(mock_log.warning.call_args)
         assert "proxy unreachable" in logged or "Initial model refresh failed" in logged
+
+    @pytest.mark.asyncio
+    async def test_warning_log_prefix_is_initial_model_refresh_failed(self) -> None:
+        """The warning format string must begin with 'Initial model refresh failed'
+        so operators can distinguish startup-phase coordinator failures from
+        later runtime poll failures in HA logs.
+
+        The existing test_warning_logged_when_coordinator_refresh_fails uses an
+        OR condition (error text OR format prefix); without this dedicated test a
+        refactor that changes the format string to e.g. 'Coordinator error: %s'
+        would still pass because the exception text 'proxy unreachable' appears
+        in the call_args repr regardless of the format prefix."""
+        from unittest.mock import patch
+
+        entry = _make_entry(installation_id="iid-prefix")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator(
+            first_refresh_side_effect=UpdateFailed("proxy unreachable")
+        )
+
+        with (
+            patcher,
+            patch("custom_components.codex_proxy._LOGGER") as mock_log,
+        ):
+            await async_setup_entry(hass, entry)
+
+        logged = str(mock_log.warning.call_args)
+        assert "Initial model refresh failed" in logged, (
+            "Warning format prefix 'Initial model refresh failed' missing from "
+            "startup coordinator failure log — operators cannot distinguish "
+            "startup-phase failures without the specific prefix in HA logs"
+        )

@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.82] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_setup_entry.py`** — `TestCoordinatorFailurePath.test_warning_log_prefix_is_initial_model_refresh_failed`
+  pins that the startup-failure warning always begins with
+  `"Initial model refresh failed"`.  The existing
+  `test_warning_logged_when_coordinator_refresh_fails` uses an OR condition
+  (error text OR format prefix); without this companion test, renaming the
+  format string would silently pass because the exception text appears in the
+  call_args repr regardless.
+
+---
+
 ## [0.2.81] – 2026-05-19
 
 ### Added (tests)
