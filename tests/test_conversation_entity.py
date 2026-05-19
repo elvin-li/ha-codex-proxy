@@ -104,6 +104,19 @@ class TestCodexAITaskEntity:
         entity = CodexAITaskEntity(_make_entry(), _make_subentry())
         assert "sw_version" in entity._attr_device_info
 
+    def test_device_info_model_uses_chat_model(self) -> None:
+        """device_info['model'] must reflect the subentry's chat_model so HA's
+        device card shows which AI model the AI Task agent is using.
+
+        Parity with TestCodexConversationEntity.test_device_info_model_uses_chat_model.
+        Both entities call build_codex_device_info with UPSTREAM_CONF_CHAT_MODEL;
+        without this test, a refactor that accidentally passed the wrong key for
+        the AI Task entity would be caught for Conversation but not for AI Task."""
+        entry = _make_entry()
+        sub = _make_subentry(chat_model="gpt-5.6")
+        entity = CodexAITaskEntity(entry, sub)
+        assert entity._attr_device_info["model"] == "gpt-5.6"
+
     def test_device_info_differs_between_entities(self) -> None:
         entity_a = CodexConversationEntity(_make_entry(), _make_subentry("sub-a"))
         entity_b = CodexAITaskEntity(_make_entry(), _make_subentry("sub-b"))

@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.83] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_conversation_entity.py`** — `TestCodexAITaskEntity.test_device_info_model_uses_chat_model`
+  fills the parity gap with `TestCodexConversationEntity`.  Both entities call
+  `build_codex_device_info(subentry, UPSTREAM_CONF_CHAT_MODEL)` so the
+  `device_info["model"]` field should reflect the subentry's chat_model; without
+  this test a refactor passing the wrong key for the AI Task entity would be caught
+  for Conversation but silently missed for AI Task.
+
+---
+
 ## [0.2.82] – 2026-05-19
 
 ### Added (tests)
