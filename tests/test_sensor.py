@@ -128,6 +128,30 @@ class TestEntityDescriptions:
 
         assert _LAST_REFRESH.device_class is SensorDeviceClass.TIMESTAMP
 
+    def test_chat_model_count_entity_category_is_diagnostic(self) -> None:
+        """_CHAT_MODEL_COUNT must belong to the DIAGNOSTIC category so it lands in
+        the Diagnostic section of the device card rather than the primary card."""
+        from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+
+        assert _CHAT_MODEL_COUNT.entity_category is EntityCategory.DIAGNOSTIC
+
+    def test_last_refresh_entity_category_is_diagnostic(self) -> None:
+        """_LAST_REFRESH must belong to the DIAGNOSTIC category."""
+        from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy.sensor import _LAST_REFRESH
+
+        assert _LAST_REFRESH.entity_category is EntityCategory.DIAGNOSTIC
+
+    def test_chat_model_count_icon(self) -> None:
+        """Icon must be 'mdi:format-list-numbered' — pins the visual identity
+        so a future icon rename doesn't silently break the dashboard card."""
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+
+        assert _CHAT_MODEL_COUNT.icon == "mdi:format-list-numbered"
+
     def test_translation_keys_match_strings_json(self) -> None:
         """Verify translation_key values are present in strings.json entity.sensor."""
         import json

@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.64] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_sensor.py`** — three new tests in `TestEntityDescriptions` that pin
+  previously untested `SensorEntityDescription` fields:
+  - `test_chat_model_count_entity_category_is_diagnostic` — verifies `_CHAT_MODEL_COUNT`
+    belongs to `EntityCategory.DIAGNOSTIC` so it lands in the Diagnostic section of HA's
+    device card rather than the primary card.
+  - `test_last_refresh_entity_category_is_diagnostic` — same guarantee for `_LAST_REFRESH`.
+  - `test_chat_model_count_icon` — pins `icon == "mdi:format-list-numbered"` so a future
+    icon rename doesn't silently break the dashboard card visual identity.
+
+---
+
 ## [0.2.63] – 2026-05-19
 
 ### Added (tests)
