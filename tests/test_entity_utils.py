@@ -1,4 +1,4 @@
-"""Tests for entity_utils.build_codex_device_info.
+"""Tests for entity_utils.build_codex_device_info and build_codex_entry_device_info.
 
 Runs without a full HA install by using the shared ha_stubs module.
 """
@@ -12,7 +12,10 @@ from unittest.mock import MagicMock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
 
-from custom_components.codex_proxy.entity_utils import build_codex_device_info  # noqa: E402
+from custom_components.codex_proxy.entity_utils import (  # noqa: E402
+    build_codex_device_info,
+    build_codex_entry_device_info,
+)
 from custom_components.codex_proxy.const import DEFAULT_MODEL, DOMAIN  # noqa: E402
 
 
@@ -75,4 +78,44 @@ class TestBuildCodexDeviceInfo:
         sub_b = _make_subentry(subentry_id="sub-b")
         info_a = build_codex_device_info(sub_a, "chat_model")
         info_b = build_codex_device_info(sub_b, "chat_model")
+        assert info_a["identifiers"] != info_b["identifiers"]
+
+
+# ---------------------------------------------------------------------------
+# build_codex_entry_device_info
+# ---------------------------------------------------------------------------
+
+
+def _make_entry(entry_id: str = "entry-1", title: str = "Codex 号池") -> MagicMock:
+    entry = MagicMock()
+    entry.entry_id = entry_id
+    entry.title = title
+    return entry
+
+
+class TestBuildCodexEntryDeviceInfo:
+    def test_identifiers_contain_domain_and_entry_id(self) -> None:
+        entry = _make_entry("my-entry-abc")
+        info = build_codex_entry_device_info(entry)
+        assert (DOMAIN, "my-entry-abc") in info["identifiers"]
+
+    def test_name_matches_entry_title(self) -> None:
+        entry = _make_entry(title="Codex Proxy Test")
+        info = build_codex_entry_device_info(entry)
+        assert info["name"] == "Codex Proxy Test"
+
+    def test_manufacturer_is_set(self) -> None:
+        entry = _make_entry()
+        info = build_codex_entry_device_info(entry)
+        assert info["manufacturer"] == "OpenAI Codex Token Pool"
+
+    def test_no_model_key_present(self) -> None:
+        """Entry-level DeviceInfo should not include a 'model' field."""
+        entry = _make_entry()
+        info = build_codex_entry_device_info(entry)
+        assert "model" not in info
+
+    def test_two_entries_get_different_identifiers(self) -> None:
+        info_a = build_codex_entry_device_info(_make_entry("e-1"))
+        info_b = build_codex_entry_device_info(_make_entry("e-2"))
         assert info_a["identifiers"] != info_b["identifiers"]
