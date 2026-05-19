@@ -187,6 +187,41 @@ class TestDiagnosticsCoordinatorInfo:
         assert "models" in c
 
     @pytest.mark.asyncio
+    async def test_coordinator_section_exact_keys(self) -> None:
+        """The coordinator diagnostics section must contain exactly the expected
+        seven keys — no more, no less.
+
+        test_coordinator_section_present uses ``in`` checks for five of the
+        seven keys; it passes even if keys are added or removed.  Exact set
+        equality ensures that:
+        - No key is accidentally dropped (regression guard)
+        - No sensitive extra keys are added (e.g. raw headers with the API key)
+
+        Expected keys: last_update_success, last_update_success_time,
+        chat_models_count, latest_chat_model, models, update_interval, last_error."""
+        coord = _make_coordinator()
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        expected_keys = {
+            "last_update_success",
+            "last_update_success_time",
+            "chat_models_count",
+            "latest_chat_model",
+            "models",
+            "update_interval",
+            "last_error",
+        }
+        actual_keys = set(result["coordinator"].keys())
+        assert actual_keys == expected_keys, (
+            f"Coordinator section key mismatch. "
+            f"Extra: {actual_keys - expected_keys}. "
+            f"Missing: {expected_keys - actual_keys}."
+        )
+
+    @pytest.mark.asyncio
     async def test_last_update_success_time_isoformat(self) -> None:
         ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
         coord = _make_coordinator(last_time=ts)

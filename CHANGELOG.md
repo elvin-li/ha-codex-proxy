@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.110] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_diagnostics.py`** —
+  `TestDiagnosticsCoordinatorInfo.test_coordinator_section_exact_keys` uses
+  exact set equality to pin that the coordinator diagnostics section contains
+  exactly seven keys: `last_update_success`, `last_update_success_time`,
+  `chat_models_count`, `latest_chat_model`, `models`, `update_interval`, and
+  `last_error`.  The existing `test_coordinator_section_present` only checked
+  five keys with `in` tests; a dropped key or extra sensitive key would not be
+  caught by the existing test.
+
+---
+
 ## [0.2.109] – 2026-05-19
 
 ### Added (tests)
