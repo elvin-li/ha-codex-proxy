@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.108] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_retry.py`** —
+  `TestCoordinatorTransient.test_exhausted_retries_message_contains_attempt_count`
+  verifies that `str(COORDINATOR_MAX_RETRIES)` appears in the `UpdateFailed`
+  message after all retries are exhausted.  Existing tests only verified the URL
+  and error-type portions; a refactor that hardcoded a different count or dropped
+  the count entirely would still pass those tests.
+
+---
+
 ## [0.2.107] – 2026-05-19
 
 ### Added (tests)

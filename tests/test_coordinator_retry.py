@@ -300,6 +300,38 @@ class TestCoordinatorRetry:
         )
 
 
+    @pytest.mark.asyncio
+    async def test_exhausted_retries_message_contains_attempt_count(self) -> None:
+        """The UpdateFailed message must include the exact attempt count so an
+        operator can immediately see how many retries were made.
+
+        The format is 'Failed to fetch {url} after {COORDINATOR_MAX_RETRIES}
+        attempts (last error: …)'.  Existing tests pin the URL and error-type
+        portions but neither verifies the count literal.  A refactor that
+        accidentally hardcodes a different number (e.g. '1 attempt') or drops
+        the count entirely would still pass those tests.
+
+        We check ``str(COORDINATOR_MAX_RETRIES) in message`` so the test
+        automatically tracks the constant — if someone changes the constant
+        to 5 and forgets to update the error-message format string, this fails."""
+        from custom_components.codex_proxy.const import COORDINATOR_MAX_RETRIES
+
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            pytest.raises(UpdateFailed) as exc_info,
+        ):
+            await coord._async_update_data()
+
+        msg = str(exc_info.value)
+        assert str(COORDINATOR_MAX_RETRIES) in msg, (
+            f"Expected attempt count '{COORDINATOR_MAX_RETRIES}' in UpdateFailed message, "
+            f"got: {msg!r} — the message must reference the actual retry count from the const"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Non-transient errors (immediate failure)
 # ---------------------------------------------------------------------------
