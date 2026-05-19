@@ -323,6 +323,26 @@ class TestAsyncInstall:
         )
 
     @pytest.mark.asyncio
+    async def test_install_log_format_string_exact(self) -> None:
+        """args[0] of the install info call must be the exact format string.
+
+        test_install_log_model_positions_in_format_args pins args[1-3] (target,
+        title, old) but never checks args[0] — the template itself.  If the
+        wording changed to e.g. 'Upgrading model …', the positional tests still
+        pass while the operator-visible log text changes silently."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        with patch("custom_components.codex_proxy.update._LOGGER") as mock_log:
+            await entity.async_install(version="gpt-5.6", backup=False)
+        fmt = mock_log.info.call_args.args[0]
+        assert fmt == "Installing model '%s' on subentry '%s' (was '%s'); reloading entry", (
+            f"Expected exact format string "
+            f"\"Installing model '%s' on subentry '%s' (was '%s'); reloading entry\", "
+            f"got {fmt!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_no_log_on_noop_install(self) -> None:
         """No log when version is already installed."""
         from unittest.mock import patch
