@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.144] - 2026-05-19
+### Tests
+- `test_select.py`: add `TestOptions.test_returns_coordinator_models_exact_list` — exact list equality for the happy-path case where current model is in coordinator list, replacing two `in` membership checks
+
 ## [0.2.143] - 2026-05-19
 ### Tests
 - `test_coordinator_properties.py`: add `TestChatModelsProperty.test_gpt_image_filter_preserves_remaining_chat_models` — exact list equality after gpt-image filter, catching over-aggressive filtering missed by the `not in`/`in` pair

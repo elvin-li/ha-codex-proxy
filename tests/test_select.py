@@ -84,6 +84,18 @@ class TestOptions:
         assert "gpt-5.5" in entity.options
         assert "gpt-5.4" in entity.options
 
+    def test_returns_coordinator_models_exact_list(self) -> None:
+        """When the current model is already in the coordinator list, options
+        must be *exactly* the coordinator list in the same order — no extras.
+
+        test_returns_coordinator_models uses two ``in`` checks which pass even
+        if options contains additional unexpected entries (e.g. from a stale
+        prepend path).  Exact list equality verifies the happy path is clean."""
+        entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.4"])
+        assert entity.options == ["gpt-5.5", "gpt-5.4"], (
+            f"Expected exactly ['gpt-5.5', 'gpt-5.4'], got {entity.options!r}"
+        )
+
     def test_current_model_prepended_if_missing_from_coordinator(self) -> None:
         entity = _make_entity("gpt-5.3", ["gpt-5.5", "gpt-5.4"])
         assert entity.options[0] == "gpt-5.3"
