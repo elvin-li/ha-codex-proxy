@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.166] - 2026-05-19
+### Tests
+- `test_translations.py`: add `test_config_error_keys_exact_set` — pins the canonical set of ten config error keys in strings.json; the existing consistency test only proves all three files agree with each other so a simultaneous change across all files would pass undetected
+
 ## [0.2.165] - 2026-05-19
 ### Tests
 - `test_translations.py`: add `TestTranslationKeyConsistency.test_entity_platform_keys_exact_set` — pins the entity platform key set to exactly `{"binary_sensor", "button", "select", "sensor", "update"}` against strings.json; the existing consistency test only proves all three files agree with each other, so a simultaneous omission from all files would go undetected without this fixture

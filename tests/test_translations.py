@@ -52,6 +52,33 @@ class TestTranslationKeyConsistency:
         assert s_errors == e_errors, f"en.json missing keys: {s_errors - e_errors}"
         assert s_errors == z_errors, f"zh-Hans.json missing keys: {s_errors - z_errors}"
 
+    def test_config_error_keys_exact_set(self) -> None:
+        """strings.json must define exactly the known config error keys.
+
+        test_config_error_keys_consistent_across_all_files proves cross-file
+        agreement, but if all three files simultaneously gain or lose an error
+        key that test still passes. This test pins the canonical set so any
+        accidental addition or removal is caught at the source (strings.json)
+        regardless of whether the other files mirror the change."""
+        strings = _load("strings.json")
+        actual = set(strings["config"]["error"].keys())
+        expected = {
+            "cannot_connect",
+            "invalid_auth",
+            "unknown_model",
+            "unknown",
+            "bad_toml",
+            "required",
+            "invalid_url_scheme",
+            "invalid_url",
+            "toml_no_base_url",
+            "rate_limited",
+        }
+        assert actual == expected, (
+            f"Expected config error keys {expected!r}, got {actual!r} — "
+            "update this test when an error key is intentionally added or removed"
+        )
+
     def test_entity_section_present_in_all_files(self) -> None:
         for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
             data = _load(fname)
