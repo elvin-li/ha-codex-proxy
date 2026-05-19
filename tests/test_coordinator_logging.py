@@ -136,6 +136,35 @@ class TestRetryLogging:
         assert mock_log.debug.call_count >= 1
 
     @pytest.mark.asyncio
+    async def test_retry_log_includes_error_type_for_timeout(self) -> None:
+        """The retry debug log must include 'TimeoutException' when the failure
+        is a timeout, so operators can distinguish timeouts from 5xx in HA logs.
+
+        Companion to test_retry_log_includes_error_type_for_5xx — together they
+        pin that the (%s) error-type placeholder is filled for both transient
+        failure modes."""
+        coord = _make_coordinator()
+        ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 1}]})
+        coord._http.get = AsyncMock(
+            side_effect=[
+                httpx.TimeoutException("timed out"),
+                ok,
+            ]
+        )
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log,
+        ):
+            await coord._async_update_data()
+
+        debug_calls_str = " ".join(str(c) for c in mock_log.debug.call_args_list)
+        assert "TimeoutException" in debug_calls_str, (
+            "Retry log must include 'TimeoutException' so operators can distinguish "
+            "timeout retries from HTTP 5xx retries without cross-referencing timestamps"
+        )
+
+    @pytest.mark.asyncio
     async def test_sleep_delay_passed_to_logger(self) -> None:
         """The retry log message should include the sleep delay."""
         coord = _make_coordinator()

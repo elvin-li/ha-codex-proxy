@@ -13,6 +13,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.86] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_logging.py`** — `TestRetryLogging.test_retry_log_includes_error_type_for_timeout`
+  pins that `TimeoutException` appears in the retry debug log when the failure
+  is a network timeout.  Companion to v0.2.85's `test_retry_log_includes_error_type_for_5xx`
+  — together they verify the `(%s)` error-type placeholder is filled for both transient
+  failure modes so operators can distinguish timeouts from HTTP 5xx in HA logs.
+
+---
+
 ## [0.2.85] – 2026-05-19
 
 ### Added (tests)
