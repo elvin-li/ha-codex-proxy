@@ -7,6 +7,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.20] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_translations.py`** — 2 new tests:
+  - `test_config_subentries_keys_consistent_across_all_files`: verifies that
+    `config_subentries` subentry types and step keys are identical across
+    `strings.json`, `en.json`, and `zh-Hans.json`.
+  - `test_all_translation_keys_in_sync`: deep structural check — flattens all
+    three translation files into dotted key paths and asserts they are
+    identical, catching any key added to one file but forgotten in the others
+    at any nesting depth.
+
+---
+
 ## [0.2.19] – 2026-05-19
 
 ### Changed (CI + code style)

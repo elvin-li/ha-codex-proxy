@@ -129,3 +129,58 @@ class TestTranslationKeyConsistency:
                         f"{fname} entity.{platform}.{key} is missing 'name' field"
                     )
                     assert entry["name"], f"{fname} entity.{platform}.{key}.name is empty"
+
+    def test_config_subentries_keys_consistent_across_all_files(self) -> None:
+        """config_subentries section must have the same subentry types and step
+        keys in all three files so HA can render the subentry flows correctly."""
+        strings = _load("strings.json")
+        en = _load("translations/en.json")
+        zh = _load("translations/zh-Hans.json")
+
+        s_types = set(strings.get("config_subentries", {}).keys())
+        e_types = set(en.get("config_subentries", {}).keys())
+        z_types = set(zh.get("config_subentries", {}).keys())
+        assert s_types == e_types, f"en.json config_subentries type mismatch: {s_types ^ e_types}"
+        assert s_types == z_types, (
+            f"zh-Hans.json config_subentries type mismatch: {s_types ^ z_types}"
+        )
+
+        for subentry_type in s_types:
+            s_steps = set(strings["config_subentries"][subentry_type].get("step", {}).keys())
+            e_steps = set(en["config_subentries"][subentry_type].get("step", {}).keys())
+            z_steps = set(zh["config_subentries"][subentry_type].get("step", {}).keys())
+            assert s_steps == e_steps, (
+                f"en.json config_subentries.{subentry_type}.step mismatch: {s_steps ^ e_steps}"
+            )
+            assert s_steps == z_steps, (
+                f"zh-Hans.json config_subentries.{subentry_type}.step mismatch: {s_steps ^ z_steps}"
+            )
+
+    def test_all_translation_keys_in_sync(self) -> None:
+        """Deep structural check: the full set of dotted key paths in strings.json,
+        en.json, and zh-Hans.json must be identical. This catches any new key added
+        to one file but forgotten in the others at any nesting depth."""
+
+        def _flatten(d: dict, prefix: str = "") -> set[str]:
+            result: set[str] = set()
+            for k, v in d.items():
+                full = f"{prefix}.{k}" if prefix else k
+                result.add(full)
+                if isinstance(v, dict):
+                    result |= _flatten(v, full)
+            return result
+
+        strings_keys = _flatten(_load("strings.json"))
+        en_keys = _flatten(_load("translations/en.json"))
+        zh_keys = _flatten(_load("translations/zh-Hans.json"))
+
+        assert strings_keys == en_keys, (
+            f"Key mismatch between strings.json and en.json:\n"
+            f"  In strings only: {strings_keys - en_keys}\n"
+            f"  In en only: {en_keys - strings_keys}"
+        )
+        assert strings_keys == zh_keys, (
+            f"Key mismatch between strings.json and zh-Hans.json:\n"
+            f"  In strings only: {strings_keys - zh_keys}\n"
+            f"  In zh only: {zh_keys - strings_keys}"
+        )
