@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.145] - 2026-05-19
+### Tests
+- `test_enrich_subentry.py`: add `TestUpstreamKeys.test_upstream_keys_exact_key_set` — exact set equality on `_upstream_keys()` result keys, catching accidental additions missed by the five-iteration `in` loop
+
 ## [0.2.144] - 2026-05-19
 ### Tests
 - `test_select.py`: add `TestOptions.test_returns_coordinator_models_exact_list` — exact list equality for the happy-path case where current model is in coordinator list, replacing two `in` membership checks

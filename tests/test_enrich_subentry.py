@@ -121,6 +121,30 @@ class TestUpstreamKeys:
         for k in ("chat_model", "prompt", "reasoning_effort", "store_responses", "service_tier"):
             assert k in keys, f"Missing key: {k}"
 
+    def test_upstream_keys_exact_key_set(self) -> None:
+        """_upstream_keys() must return a dict with exactly the five expected
+        logical keys — no more, no less.
+
+        test_returns_dict_with_expected_keys uses a for-loop with five ``in``
+        checks that pass even if a sixth unexpected key is accidentally added
+        (e.g. ``"chat_model_id"`` from a copy-paste of a newer HA const).
+        An extra key would propagate into the subentry data dict on every
+        reconfigure, silently injecting unknown fields into HA's config storage.
+        Exact set equality catches that before it reaches users."""
+        self._reset_cache()
+        keys = _upstream_keys()
+        expected_keys = {
+            "chat_model",
+            "prompt",
+            "reasoning_effort",
+            "store_responses",
+            "service_tier",
+        }
+        assert set(keys.keys()) == expected_keys, (
+            f"Unexpected _upstream_keys keys: {set(keys.keys()) - expected_keys}. "
+            f"Missing: {expected_keys - set(keys.keys())}."
+        )
+
     def test_all_values_are_non_empty_strings(self) -> None:
         self._reset_cache()
         keys = _upstream_keys()
