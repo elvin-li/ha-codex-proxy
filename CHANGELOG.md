@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.127] - 2026-05-19
+### Tests
+- `test_setup_entry.py`: add `test_hass_data_entry_contains_exactly_coordinator_key` — exact set equality on `hass.data[DOMAIN][entry_id]` keys, catching accidental additions the prior `in` check would miss
+
 ## [0.2.126] - 2026-05-19
 ### Tests
 - `test_entity_utils.py`: add `test_identifiers_exact_set_for_subentry` and `test_identifiers_exact_set_for_entry` — exact set equality on DeviceInfo identifiers for both builders, catching accidental extra identifiers the prior `in` checks would miss

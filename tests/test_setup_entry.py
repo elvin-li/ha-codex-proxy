@@ -168,6 +168,30 @@ class TestSetupResult:
         assert DATA_COORDINATOR in hass.data[DOMAIN]["entry-data"]
 
     @pytest.mark.asyncio
+    async def test_hass_data_entry_contains_exactly_coordinator_key(self) -> None:
+        """hass.data[DOMAIN][entry_id] must contain exactly the DATA_COORDINATOR key.
+
+        test_hass_data_populated checks the key is *present* using ``in``, but
+        does not verify that no extra keys were accidentally stored alongside it.
+        A refactor that adds a second key (e.g. for caching or a second coordinator)
+        without updating the diagnostics or unload code would pass the existing test
+        but break the single-key contract documented in const.py.
+
+        Exact set equality here catches both omissions and accidental additions."""
+        entry = _make_entry("entry-xk", installation_id="iid-xk")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator()
+
+        with patcher:
+            await async_setup_entry(hass, entry)
+
+        entry_data = hass.data[DOMAIN]["entry-xk"]
+        assert set(entry_data.keys()) == {DATA_COORDINATOR}, (
+            f"hass.data[DOMAIN][entry_id] must contain exactly {{DATA_COORDINATOR}}, "
+            f"got keys: {set(entry_data.keys())!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_forward_entry_setups_called(self) -> None:
         from custom_components.codex_proxy import PLATFORMS
 
