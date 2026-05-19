@@ -174,6 +174,27 @@ class TestAsyncSelectOption:
         assert new_data["chat_model"] == "gpt-5.6"
 
     @pytest.mark.asyncio
+    async def test_update_subentry_data_passed_as_keyword(self) -> None:
+        """async_update_subentry must be called with ``data=`` as a keyword
+        argument, not a positional one.
+
+        test_update_subentry_receives_new_model uses an OR fallback:
+        ``call_kwargs[1].get("data") or call_kwargs[0][2]`` — it passes whether
+        data is keyword or the third positional arg.  If a refactor changes the
+        calling convention to positional (dropping the ``data=`` keyword), the
+        existing test still passes while HA's config_entries API may reject the
+        call.  Pinning ``"data" in call_args.kwargs`` ensures the keyword form is
+        always used, matching the pattern established in test_setup_entry.py
+        (test_installation_id_update_uses_keyword_data_arg, v0.2.107)."""
+        entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
+        await entity.async_select_option("gpt-5.6")
+        call_args = entity.hass.config_entries.async_update_subentry.call_args
+        assert "data" in call_args.kwargs, (
+            f"async_update_subentry must be called with data= as a keyword arg; "
+            f"got kwargs={call_args.kwargs!r}, args={call_args.args!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_info_logged_on_model_change(self) -> None:
         """_LOGGER.info is called once when the model is changed, mentioning
         both the old and new model ids."""

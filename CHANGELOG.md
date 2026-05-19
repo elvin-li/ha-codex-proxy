@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.121] - 2026-05-19
+### Tests
+- `test_select.py`: add `test_update_subentry_data_passed_as_keyword` — pins `"data" in call_args.kwargs` so the keyword calling convention is enforced instead of silently accepting a positional fallback
+
 ## [0.2.120] - 2026-05-19
 ### Tests
 - `test_coordinator_logging.py`: add `TestSuccessLogging.test_success_log_format_string_starts_with_fetched` — pins `args[0].startswith("Fetched")` replacing OR-condition check on combined call repr
