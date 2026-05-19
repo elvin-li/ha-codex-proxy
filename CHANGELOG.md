@@ -13,6 +13,25 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.72] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_button.py`**, **`tests/test_select.py`**, **`tests/test_binary_sensor.py`**,
+  **`tests/test_update_entity.py`** — added `test_translation_key_in_strings_json` to each
+  file's `TestClassAttributes` class. These bridge tests verify that each entity's
+  `_attr_translation_key` class attribute actually maps to an existing key in
+  `strings.json entity.<platform>`. Without this check, a rename in Python without a
+  matching strings.json update would cause HA to render the raw key string in the UI
+  (e.g., `"active_model"` instead of `"Active Model"`) — a silent regression that
+  `test_translations.py`'s file-consistency checks cannot catch because they only
+  compare JSON files to each other, not Python code to JSON. Closes the Python→JSON
+  bridge gap that `test_sensor.py::test_translation_keys_match_strings_json` already
+  covered for sensors but was missing for button, select, binary_sensor, and update
+  platforms.
+
+---
+
 ## [0.2.71] – 2026-05-19
 
 ### Added (tests)

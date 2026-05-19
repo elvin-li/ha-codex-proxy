@@ -168,6 +168,32 @@ class TestMetadata:
     def test_has_entity_name_is_true(self) -> None:
         assert CodexProxyReachableSensor._attr_has_entity_name is True
 
+    def test_translation_key_in_strings_json(self) -> None:
+        """_attr_translation_key must map to an existing key in strings.json entity.binary_sensor.
+
+        HA renders the raw translation-key string (e.g. 'proxy_reachable') instead
+        of a human-readable name when this mapping is absent.  A refactor that
+        renames the Python attribute without updating strings.json would pass all
+        other metadata tests but silently break the UI; this test catches exactly
+        that drift."""
+        import json
+        import pathlib
+
+        strings_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "strings.json"
+        )
+        binary_strings = (
+            json.loads(strings_path.read_text()).get("entity", {}).get("binary_sensor", {})
+        )
+        key = CodexProxyReachableSensor._attr_translation_key
+        assert key in binary_strings, (
+            f"'{key}' missing from strings.json entity.binary_sensor — "
+            "HA will render the raw translation key instead of a human-readable sensor name"
+        )
+
 
 # ---------------------------------------------------------------------------
 # extra_state_attributes

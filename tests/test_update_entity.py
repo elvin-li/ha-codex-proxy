@@ -258,6 +258,32 @@ class TestClassAttributes:
 
         assert CodexModelUpdate._attr_translation_key == "model_update"
 
+    def test_translation_key_in_strings_json(self) -> None:
+        """_attr_translation_key must map to an existing key in strings.json entity.update.
+
+        HA renders the raw translation-key string (e.g. 'model_update') instead
+        of a human-readable name when this mapping is absent.  A refactor that
+        renames the Python attribute without updating strings.json would pass all
+        other ClassAttribute tests but silently break the UI; this test catches
+        exactly that drift."""
+        import json
+        import pathlib
+
+        from custom_components.codex_proxy.update import CodexModelUpdate
+
+        strings_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "strings.json"
+        )
+        update_strings = json.loads(strings_path.read_text()).get("entity", {}).get("update", {})
+        key = CodexModelUpdate._attr_translation_key
+        assert key in update_strings, (
+            f"'{key}' missing from strings.json entity.update — "
+            "HA will render the raw translation key instead of a human-readable update entity name"
+        )
+
 
 class TestDeviceInfo:
     """Device info must use build_codex_device_info for full metadata."""
