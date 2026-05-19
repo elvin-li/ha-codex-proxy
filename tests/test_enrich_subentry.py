@@ -60,6 +60,25 @@ class TestEnrichSubentryData:
         assert "chat_model" in result
         assert "service_tier" in result
 
+    def test_base_none_exact_key_set(self) -> None:
+        """When base=None and a single-key user_input is passed, the returned
+        dict must contain exactly three keys: the user-supplied key, 'service_tier'
+        (always pinned to None), and 'llm_hass_api' (defaulted to []).
+
+        test_base_none_returns_clean_dict checks only that two keys are *present*
+        using 'in'; it passes even if extra keys leak into the dict (e.g. a stray
+        debug key or a future default added without updating tests).  Exact set
+        equality here catches both omissions and accidental additions in one
+        assertion, mirroring the exact-key pattern in test_coordinator_init.py
+        and test_diagnostics.py."""
+        result = _enrich_subentry_data({"chat_model": "gpt-5.5"}, base=None)
+        expected_keys = {"chat_model", "service_tier", "llm_hass_api"}
+        actual_keys = set(result.keys())
+        assert actual_keys == expected_keys, (
+            f"Unexpected keys: {actual_keys - expected_keys}. "
+            f"Missing: {expected_keys - actual_keys}."
+        )
+
     def test_user_input_overrides_base_chat_model(self) -> None:
         base = {"chat_model": "gpt-5.5"}
         result = _enrich_subentry_data({"chat_model": "gpt-5.6"}, base=base)

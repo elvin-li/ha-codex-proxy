@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.119] - 2026-05-19
+### Tests
+- `test_enrich_subentry.py`: add `TestEnrichSubentryData.test_base_none_exact_key_set` — exact set equality on result keys, catching accidental additions that the prior two `in` checks would silently accept
+
 ## [0.2.118] - 2026-05-19
 ### Tests
 - `test_coordinator_logging.py`: add `TestRetryLogging.test_retry_log_format_string_starts_with_transient_error_on_attempt` — checks `args[0]` starts with exact phrase instead of OR-condition substring search
