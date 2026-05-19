@@ -13,6 +13,54 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.43] – 2026-05-19
+
+### Changed
+
+- **`update.py`** (`title` property) — Changed from the generic `"Proxy chat
+  model"` to `f"Proxy model ({subentry.title})"`.  Users with multiple
+  subentries (conversation + AI Task) now see distinct update card titles in
+  HA ("Proxy model (Codex 号池对话)" vs "Proxy model (Codex 号池 AI Task)")
+  rather than two identical "Proxy chat model" cards.
+- **`sensor.py`** — Added proper docstrings to `native_value` on both
+  `CodexChatModelCountSensor` and `CodexLastRefreshSensor`, explaining the
+  zero / ``None`` return conditions.
+
+### Added (tests)
+
+- `test_update_entity.py` — `test_title_includes_subentry_name` and
+  `test_title_changes_with_subentry_title`: pin the new title format and
+  guard the subentry-name disambiguating behaviour.
+- `test_const.py` — `test_default_reasoning_effort_value`: pins
+  `DEFAULT_REASONING_EFFORT == "xhigh"`; a silent change would alter
+  inference cost for every new subentry.
+- `test_const.py` — `test_probe_timeout_less_than_coordinator_timeout`:
+  documents the design rationale (probe runs in UI-blocking flow, coordinator
+  in background) and guards the ordering.
+
+---
+
+## [0.2.42] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** (`chat_models` docstring) — Clarified that the property
+  only **filters** (never sorts); the sort invariant is owned by
+  `_async_update_data` and the returned list preserves stored order.
+- **`update.py`** — Added proper docstrings to `installed_version` and
+  `latest_version` properties, converting the existing inline comment
+  on `latest_version`'s fallback behaviour into formal docstring text.
+
+### Added (tests)
+
+- `test_const.py` — `test_no_empty_prefix` and `test_all_prefixes_are_lowercase`
+  for `IMAGE_MODEL_ID_PREFIXES`: guard against an accidental empty-string entry
+  (would filter ALL models) or uppercase prefix (would silently fail to filter).
+- `test_coordinator_properties.py` — `test_chat_models_returns_empty_when_models_key_absent`:
+  verifies graceful degradation when `data` has no `"models"` key.
+
+---
+
 ## [0.2.41] – 2026-05-19
 
 ### Changed

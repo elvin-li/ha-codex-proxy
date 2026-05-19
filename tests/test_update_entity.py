@@ -31,9 +31,10 @@ _CoordinatorEntityBase = tests.ha_stubs._CoordinatorEntity
 # ---------------------------------------------------------------------------
 
 
-def _make_subentry(model: str = DEFAULT_MODEL) -> MagicMock:
+def _make_subentry(model: str = DEFAULT_MODEL, title: str = "Test Agent") -> MagicMock:
     sub = MagicMock()
     sub.subentry_id = "sub-1"
+    sub.title = title
     sub.data = {"chat_model": model}
     return sub
 
@@ -190,13 +191,26 @@ class TestAsyncInstall:
 
 
 class TestTitle:
-    def test_title_value(self) -> None:
+    def test_title_includes_subentry_name(self) -> None:
+        """title must include the subentry title so updates are distinguishable
+        when a user has multiple subentries (conversation + ai_task)."""
         entity = _make_entity("gpt-5.5", "gpt-5.5")
-        assert entity.title == "Proxy chat model"
+        # _make_subentry default title is "Test Agent"
+        assert entity.title == "Proxy model (Test Agent)"
 
     def test_title_is_not_none(self) -> None:
         entity = _make_entity()
         assert entity.title is not None
+
+    def test_title_changes_with_subentry_title(self) -> None:
+        """Different subentry titles produce different update entity titles."""
+        entity_a = _make_entity("gpt-5.5", "gpt-5.5")
+        entity_a._subentry = _make_subentry("gpt-5.5", title="Agent A")
+        entity_b = _make_entity("gpt-5.5", "gpt-5.5")
+        entity_b._subentry = _make_subentry("gpt-5.5", title="Agent B")
+        assert entity_a.title != entity_b.title
+        assert "Agent A" in entity_a.title
+        assert "Agent B" in entity_b.title
 
 
 class TestClassAttributes:

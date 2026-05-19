@@ -98,7 +98,13 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
 
     @property
     def title(self) -> str | None:
-        return "Proxy chat model"
+        """Short label shown in HA's update card for this entity.
+
+        Includes the subentry title so users with multiple conversation or
+        AI-task subentries can distinguish which agent has a pending update
+        (e.g. "Proxy model (Codex 号池对话)" vs "Proxy model (Codex 号池 AI Task)").
+        """
+        return f"Proxy model ({self._subentry.title})"
 
     @property
     def release_summary(self) -> str | None:

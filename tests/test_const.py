@@ -87,6 +87,14 @@ class TestDefaults:
     def test_default_reasoning_effort_in_reasoning_efforts(self) -> None:
         assert DEFAULT_REASONING_EFFORT in REASONING_EFFORTS
 
+    def test_default_reasoning_effort_value(self) -> None:
+        """Pin the exact DEFAULT_REASONING_EFFORT value.
+
+        Changing it would silently alter inference cost and latency for every
+        new subentry created after the change, so we guard it explicitly here.
+        """
+        assert DEFAULT_REASONING_EFFORT == "xhigh"
+
     def test_reasoning_efforts_contains_expected_values(self) -> None:
         for effort in ("none", "medium", "high", "xhigh"):
             assert effort in REASONING_EFFORTS
@@ -115,6 +123,12 @@ class TestIntervals:
 
     def test_coordinator_max_retries_positive(self) -> None:
         assert COORDINATOR_MAX_RETRIES > 0
+
+    def test_probe_timeout_less_than_coordinator_timeout(self) -> None:
+        """The probe timeout is intentionally shorter than the coordinator timeout:
+        the probe runs in the UI-blocking config flow, so speed matters more.
+        The coordinator runs in the background where a longer wait is acceptable."""
+        assert PROBE_TIMEOUT_S < COORDINATOR_TIMEOUT_S
 
     def test_coordinator_retry_delays_length_consistent(self) -> None:
         """Delay table must have exactly (max_retries - 1) entries.

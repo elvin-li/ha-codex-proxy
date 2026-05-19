@@ -87,6 +87,11 @@ class CodexChatModelCountSensor(_CodexSensorBase):
 
     @property
     def native_value(self) -> int:
+        """Count of chat-capable models from the last successful /v1/models poll.
+
+        Returns 0 when the coordinator has not yet completed its first poll or
+        when the proxy only returns image-generation models.
+        """
         return len(self.coordinator.chat_models)
 
 
@@ -98,4 +103,9 @@ class CodexLastRefreshSensor(_CodexSensorBase):
 
     @property
     def native_value(self) -> datetime | None:
+        """Datetime of the most recent successful /v1/models poll, or ``None``.
+
+        Returns ``None`` until the first successful poll completes so HA
+        displays "unknown" rather than a misleading epoch timestamp.
+        """
         return self.coordinator.last_update_success_time
