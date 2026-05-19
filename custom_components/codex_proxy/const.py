@@ -20,6 +20,12 @@ CONF_INSTALLATION_ID = "codex_installation_id"
 SUBENTRY_TYPE_CONVERSATION = "conversation"
 SUBENTRY_TYPE_AI_TASK = "ai_task_data"
 
+# Subentry types that carry an LLM model config (used by select + update entities)
+LLM_BEARING_SUBENTRY_TYPES: tuple[str, ...] = (
+    SUBENTRY_TYPE_CONVERSATION,
+    SUBENTRY_TYPE_AI_TASK,
+)
+
 # We deliberately do NOT ship a default base_url — every user must enter
 # their own proxy address (or paste their Codex CLI config.toml).
 DEFAULT_BASE_URL = ""

@@ -30,17 +30,11 @@ from .const import (
     DATA_COORDINATOR,
     DEFAULT_MODEL,
     DOMAIN,
-    SUBENTRY_TYPE_AI_TASK,
-    SUBENTRY_TYPE_CONVERSATION,
+    LLM_BEARING_SUBENTRY_TYPES,
 )
 from .coordinator import CodexModelCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-_LLM_BEARING_SUBENTRY_TYPES = (
-    SUBENTRY_TYPE_CONVERSATION,
-    SUBENTRY_TYPE_AI_TASK,
-)
 
 
 async def async_setup_entry(
@@ -55,7 +49,7 @@ async def async_setup_entry(
     entities = [
         CodexModelSelectEntity(coordinator, entry, subentry)
         for subentry in entry.subentries.values()
-        if subentry.subentry_type in _LLM_BEARING_SUBENTRY_TYPES
+        if subentry.subentry_type in LLM_BEARING_SUBENTRY_TYPES
     ]
     async_add_entities(entities)
 
