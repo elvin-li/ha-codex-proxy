@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.167] - 2026-05-19
+### Tests
+- `test_translations.py`: add `test_config_step_keys_exact_set` — pins config.step to exactly `{"user", "reconfigure"}`; the individual presence tests only verify those two exist and would not catch a stray extra step or a rename that added one while removing another
+
 ## [0.2.166] - 2026-05-19
 ### Tests
 - `test_translations.py`: add `test_config_error_keys_exact_set` — pins the canonical set of ten config error keys in strings.json; the existing consistency test only proves all three files agree with each other so a simultaneous change across all files would pass undetected

@@ -104,6 +104,21 @@ class TestTranslationKeyConsistency:
                 f"{fname} missing config.step.reconfigure"
             )
 
+    def test_config_step_keys_exact_set(self) -> None:
+        """strings.json must define exactly the two expected config step keys.
+
+        The individual presence tests above only check that 'user' and
+        'reconfigure' exist; they would not catch a stray extra step key
+        (e.g. a debug step left in from development) or a rename that removed
+        one step while adding another.  This test pins the full set."""
+        strings = _load("strings.json")
+        actual = set(strings["config"]["step"].keys())
+        expected = {"user", "reconfigure"}
+        assert actual == expected, (
+            f"Expected config step keys {expected!r}, got {actual!r} — "
+            "update this test when a step is intentionally added or removed"
+        )
+
     def test_no_empty_translation_values(self) -> None:
         """Spot-check that key translation strings are non-empty."""
         for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
