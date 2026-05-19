@@ -25,6 +25,7 @@ jobs:
         run: python -m ruff check custom_components/codex_proxy/
 
   test:
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       matrix:

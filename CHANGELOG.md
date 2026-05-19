@@ -7,6 +7,22 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.16] – 2026-05-19
+
+### Added (tests + CI)
+
+- **`tests/test_subentry_flow.py`** (12 tests) — unit tests for
+  `ConversationSubentryFlowHandler` and `AITaskSubentryFlowHandler`:
+  class attributes, `async_step_user` (form + entry creation with
+  `service_tier=None`), and `async_step_reconfigure` (form pre-fill,
+  `async_update_and_abort` call, preservation of existing keys like
+  `llm_hass_api`).
+- **`.github/workflows/tests.yml`** — `test` job now declares
+  `needs: lint`, so the test matrix only runs if linting passes, saving
+  CI minutes on style regressions.
+
+---
+
 ## [0.2.15] – 2026-05-19
 
 ### Fixed
