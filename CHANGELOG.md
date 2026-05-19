@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.50] – 2026-05-19
+
+### Added (tests)
+
+- `test_probe_proxy.py` — ``test_debug_log_emitted_at_probe_start``: verifies
+  that ``_probe_proxy`` emits exactly one ``DEBUG`` log referencing the proxy
+  URL before attempting the API call.  Ensures the observability improvement
+  from v0.2.49 has regression coverage.
+- `test_main_flow.py` — ``test_api_key_whitespace_stripped_in_flow``: end-to-end
+  guard for the v0.2.46 whitespace-stripping fix — confirms that a padded API
+  key (``"  sk-test  "``) is stored as ``"sk-test"`` in the config entry.
+
+---
+
 ## [0.2.49] – 2026-05-19
 
 ### Changed

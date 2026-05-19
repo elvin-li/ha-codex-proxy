@@ -125,6 +125,24 @@ class TestProbeProxySuccess:
             errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
         assert errors == {}
 
+    @pytest.mark.asyncio
+    async def test_debug_log_emitted_at_probe_start(self) -> None:
+        """A DEBUG log must be emitted before the probe attempt so users
+        can confirm which URL is being tested by checking HA's logs at DEBUG
+        level during setup troubleshooting."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        mock_log.debug.assert_called_once()
+        logged = str(mock_log.debug.call_args)
+        # The log must reference the URL being probed
+        assert _BASE_URL in logged or "proxy.example.com" in logged
+
 
 class TestProbeProxyAuthError:
     @pytest.mark.asyncio

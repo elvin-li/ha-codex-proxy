@@ -206,3 +206,18 @@ class TestEntryCreation:
             assert s["data"].get(_SERVICE_TIER_KEY) is None, (
                 f"Subentry {s['subentry_type']} has non-None service_tier"
             )
+
+    @pytest.mark.asyncio
+    async def test_api_key_whitespace_stripped_in_flow(self) -> None:
+        """An api_key submitted with surrounding whitespace must be stripped
+        before being stored — guards the v0.2.46 fix that prevents a pasted
+        key with leading/trailing spaces from producing a cryptic auth error."""
+        flow = _make_flow()
+        padded_input = {**_VALID_INPUT, CONF_API_KEY: "  sk-test  "}
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_user(padded_input)
+        call_kwargs = flow.async_create_entry.call_args[1]
+        assert call_kwargs["data"][CONF_API_KEY] == "sk-test"
