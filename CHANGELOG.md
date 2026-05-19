@@ -7,6 +7,43 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.6] – 2026-05-19
+
+### Added
+
+- **`build_codex_entry_device_info(entry)`** in `entity_utils.py` — shared helper
+  for entry-level device info (binary_sensor, button, sensor). Removes the
+  identical 5-line DeviceInfo block that was duplicated across all three files.
+- **`LLM_BEARING_SUBENTRY_TYPES`** in `const.py` — canonical tuple replacing private
+  `_LLM_BEARING_SUBENTRY_TYPES` defined identically in `select.py` and `update.py`.
+- **21 new tests** (231 total):
+  - `test_conversation_entity.py` (8) — `CodexConversationEntity` and `CodexAITaskEntity`
+    device_info wiring; required adding `_OpenAIConversationEntity` / `_OpenAITaskEntity`
+    real stubs to `ha_stubs.py` so the shim subclasses can be imported in tests.
+  - `test_platform_setup.py` (+6) — conversation and ai_task `async_setup_entry` entity
+    type, subentry filtering, and `config_subentry_id` forwarding.
+  - `test_entity_utils.py` (+5) — `build_codex_entry_device_info` identifier, name,
+    manufacturer, no-model-key, and uniqueness.
+  - `test_update_entity.py` (+2) — `CodexModelUpdate.title` property.
+
+### Fixed
+
+- **Dead `TYPE_CHECKING` import** and empty `if TYPE_CHECKING: pass` block removed
+  from `sensor.py`.
+
+### Changed
+
+- `binary_sensor.py`, `button.py`, `sensor.py` — use
+  `build_codex_entry_device_info` instead of inline DeviceInfo construction;
+  redundant `dr` imports and the private `_device_info()` function in `sensor.py`
+  removed.
+- `ha_stubs.py` — added `_OpenAIConversationEntity` and `_OpenAITaskEntity` real
+  Python classes; wired `openai_conversation.{conversation,ai_task,const}` submodule
+  attributes onto parent mock so attribute-lookup and `sys.modules` resolve the same
+  configured object.
+
+---
+
 ## [0.2.5] – 2026-05-19
 
 ### Added
