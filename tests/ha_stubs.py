@@ -92,6 +92,27 @@ class _SensorEntity:
     pass
 
 
+class _OpenAIConversationEntity:
+    """Minimal stand-in for OpenAIConversationEntity.
+
+    The real class requires a live HA setup.  For testing we only need it to
+    be a proper Python class (so `class CodexConversationEntity(...)` works)
+    and to store the constructor arguments.
+    """
+
+    def __init__(self, entry: Any, subentry: Any) -> None:
+        self._entry = entry
+        self._subentry = subentry
+
+
+class _OpenAITaskEntity:
+    """Minimal stand-in for OpenAITaskEntity."""
+
+    def __init__(self, entry: Any, subentry: Any) -> None:
+        self._entry = entry
+        self._subentry = subentry
+
+
 class _SensorEntityDescription:
     """Preserves all kwargs as attributes so entity.description.key works."""
 
@@ -186,6 +207,16 @@ if not isinstance(getattr(_SEN, "SensorEntity", None), type):
 if not isinstance(getattr(_SEN, "SensorEntityDescription", None), type):
     _SEN.SensorEntityDescription = _SensorEntityDescription
 
+# OpenAIConversationEntity / OpenAITaskEntity — real classes so that
+# `class CodexConversationEntity(OpenAIConversationEntity)` works at import time.
+_OAI_CONV = sys.modules["homeassistant.components.openai_conversation.conversation"]
+if not isinstance(getattr(_OAI_CONV, "OpenAIConversationEntity", None), type):
+    _OAI_CONV.OpenAIConversationEntity = _OpenAIConversationEntity
+
+_OAI_TASK = sys.modules["homeassistant.components.openai_conversation.ai_task"]
+if not isinstance(getattr(_OAI_TASK, "OpenAITaskEntity", None), type):
+    _OAI_TASK.OpenAITaskEntity = _OpenAITaskEntity
+
 # DeviceInfo as dict (simplest stand-in that works with **kwargs and indexing)
 _DR = sys.modules["homeassistant.helpers.device_registry"]
 if not isinstance(getattr(_DR, "DeviceInfo", None), type):
@@ -224,6 +255,15 @@ _COMPONENTS.button = sys.modules["homeassistant.components.button"]
 _COMPONENTS.diagnostics = sys.modules["homeassistant.components.diagnostics"]
 _COMPONENTS.openai_conversation = sys.modules[
     "homeassistant.components.openai_conversation"
+]
+_COMPONENTS.openai_conversation.conversation = sys.modules[
+    "homeassistant.components.openai_conversation.conversation"
+]
+_COMPONENTS.openai_conversation.ai_task = sys.modules[
+    "homeassistant.components.openai_conversation.ai_task"
+]
+_COMPONENTS.openai_conversation.const = sys.modules[
+    "homeassistant.components.openai_conversation.const"
 ]
 _COMPONENTS.select = sys.modules["homeassistant.components.select"]
 _COMPONENTS.sensor = sys.modules["homeassistant.components.sensor"]

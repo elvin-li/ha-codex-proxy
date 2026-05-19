@@ -224,3 +224,105 @@ class TestUpdateSetup:
 
         uids = [e._attr_unique_id for e in added]
         assert len(set(uids)) == 2
+
+
+# ---------------------------------------------------------------------------
+# conversation platform
+# ---------------------------------------------------------------------------
+
+
+class TestConversationSetup:
+    @pytest.mark.asyncio
+    async def test_setup_creates_one_entity_per_conversation_subentry(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """mock_entry has exactly one 'conversation' subentry → 1 entity."""
+        from custom_components.codex_proxy.conversation import (
+            async_setup_entry,
+            CodexConversationEntity,
+        )
+
+        add, added = _collecting_add_entities()
+        await async_setup_entry(MagicMock(), mock_entry, add)
+
+        assert len(added) == 1
+        assert isinstance(added[0], CodexConversationEntity)
+
+    @pytest.mark.asyncio
+    async def test_setup_skips_non_conversation_subentries(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """The ai_task_data subentry must NOT produce a conversation entity."""
+        from custom_components.codex_proxy.conversation import async_setup_entry
+
+        add, added = _collecting_add_entities()
+        await async_setup_entry(MagicMock(), mock_entry, add)
+
+        # Only the conversation subentry, not the ai_task one
+        assert len(added) == 1
+
+    @pytest.mark.asyncio
+    async def test_setup_passes_config_subentry_id(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """async_add_entities must be called with config_subentry_id kwarg."""
+        from custom_components.codex_proxy.conversation import async_setup_entry
+
+        calls: list = []
+
+        def _add(entities, config_subentry_id: str | None = None):
+            calls.append(config_subentry_id)
+
+        await async_setup_entry(MagicMock(), mock_entry, _add)
+
+        assert calls[0] == "sub-conv-1"
+
+
+# ---------------------------------------------------------------------------
+# ai_task platform
+# ---------------------------------------------------------------------------
+
+
+class TestAITaskSetup:
+    @pytest.mark.asyncio
+    async def test_setup_creates_one_entity_per_ai_task_subentry(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """mock_entry has exactly one 'ai_task_data' subentry → 1 entity."""
+        from custom_components.codex_proxy.ai_task import (
+            async_setup_entry,
+            CodexAITaskEntity,
+        )
+
+        add, added = _collecting_add_entities()
+        await async_setup_entry(MagicMock(), mock_entry, add)
+
+        assert len(added) == 1
+        assert isinstance(added[0], CodexAITaskEntity)
+
+    @pytest.mark.asyncio
+    async def test_setup_skips_non_ai_task_subentries(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """The conversation subentry must NOT produce an ai_task entity."""
+        from custom_components.codex_proxy.ai_task import async_setup_entry
+
+        add, added = _collecting_add_entities()
+        await async_setup_entry(MagicMock(), mock_entry, add)
+
+        assert len(added) == 1
+
+    @pytest.mark.asyncio
+    async def test_setup_passes_config_subentry_id(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        from custom_components.codex_proxy.ai_task import async_setup_entry
+
+        calls: list = []
+
+        def _add(entities, config_subentry_id: str | None = None):
+            calls.append(config_subentry_id)
+
+        await async_setup_entry(MagicMock(), mock_entry, _add)
+
+        assert calls[0] == "sub-task-1"
