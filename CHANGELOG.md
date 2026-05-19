@@ -13,6 +13,25 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.78] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_subentry_flow.py`** — two new tests verifying that the
+  user-selected model is stored correctly in the subentry data:
+  - `TestAsyncStepUser.test_chat_model_stored_in_entry_data` — the `chat_model`
+    key from the submitted form must appear in the created entry data.
+    Service tier, LLM API, and title were already pinned; the *primary* user-
+    visible outcome (model stored) was not. A refactor dropping the model key
+    from enrichment would have passed all existing tests silently.
+  - `TestAsyncStepReconfigure.test_chat_model_updated_after_reconfigure` — the
+    reconfigured model must overwrite the old value. Complements the existing
+    `test_reconfigure_preserves_existing_data_keys` test (which verifies that
+    *non-form* fields survive), by verifying that the *changed* primary field
+    is actually updated.
+
+---
+
 ## [0.2.77] – 2026-05-19
 
 ### Added (tests)

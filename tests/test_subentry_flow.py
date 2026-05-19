@@ -223,6 +223,24 @@ class TestAsyncStepUser:
         call_kwargs = flow.async_create_entry.call_args[1]
         assert call_kwargs["title"] == "Codex 号池 AI Task"
 
+    @pytest.mark.asyncio
+    async def test_chat_model_stored_in_entry_data(self) -> None:
+        """The user-selected model must appear in the created subentry data.
+
+        Tests for service_tier and llm_hass_api confirm the enrichment
+        plumbing, but the primary purpose of the subentry flow is model
+        selection.  Without this test a refactor that accidentally dropped
+        the chat_model key from the enrichment dict would go undetected
+        while all other assertions still passed."""
+        flow = _make_flow(ConversationSubentryFlowHandler)
+        await flow.async_step_user(_VALID_USER_INPUT)
+        data = flow.async_create_entry.call_args[1]["data"]
+        # _VALID_USER_INPUT has _CHAT_MODEL_KEY: "gpt-5.5"
+        assert data.get(_CHAT_MODEL_KEY) == "gpt-5.5", (
+            f"chat_model key {_CHAT_MODEL_KEY!r} missing or wrong in created "
+            f"entry data: {data!r}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # async_step_reconfigure
@@ -260,6 +278,30 @@ class TestAsyncStepReconfigure:
         # data is passed as keyword arg
         new_data = call_args[1].get("data") or call_args[0][-1]
         assert new_data[_SERVICE_TIER_KEY] is None
+
+    @pytest.mark.asyncio
+    async def test_chat_model_updated_after_reconfigure(self) -> None:
+        """The reconfigured model must overwrite the old value in the subentry data.
+
+        The existing test_reconfigure_preserves_existing_data_keys verifies that
+        *unlisted* keys (e.g. llm_hass_api) survive the update; this test
+        verifies the opposite: that the *changed* primary field (chat_model) is
+        actually updated rather than silently preserved from the old subentry."""
+        existing_sub = _make_subentry(
+            data={
+                _CHAT_MODEL_KEY: "gpt-5.5",  # old model
+                _SERVICE_TIER_KEY: None,
+            }
+        )
+        # Submit reconfigure form choosing the new model "gpt-5.6"
+        new_input = {**_VALID_USER_INPUT, _CHAT_MODEL_KEY: "gpt-5.6"}
+        flow = _make_flow(ConversationSubentryFlowHandler, subentry=existing_sub)
+        await flow.async_step_reconfigure(new_input)
+        call_args = flow.async_update_and_abort.call_args
+        new_data = call_args[1].get("data") or call_args[0][-1]
+        assert new_data.get(_CHAT_MODEL_KEY) == "gpt-5.6", (
+            f"chat_model was not updated after reconfigure — got {new_data.get(_CHAT_MODEL_KEY)!r}"
+        )
 
     @pytest.mark.asyncio
     async def test_reconfigure_preserves_existing_data_keys(self) -> None:
