@@ -207,6 +207,33 @@ class TestSensorSetup:
         assert len(set(uids)) == 2
 
     @pytest.mark.asyncio
+    async def test_sensor_unique_ids_exact_format(self, mock_entry, mock_coordinator) -> None:
+        """The two sensor unique_ids must be exactly
+        '<entry_id>_chat_model_count' and '<entry_id>_last_model_refresh'.
+
+        test_sensor_unique_ids_are_distinct only checks len(set(uids)) == 2 —
+        it passes even if the suffix is changed (e.g. '_count' instead of
+        '_chat_model_count').  The unique_id is the stable entity-registry key
+        in HA; any suffix change silently orphans existing automations and
+        dashboard cards that reference the old entity_id.  Pinning the exact
+        format catches that before it reaches users."""
+        from custom_components.codex_proxy.sensor import async_setup_entry
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        uids = {e._attr_unique_id for e in added}
+        expected = {
+            f"{mock_entry.entry_id}_chat_model_count",
+            f"{mock_entry.entry_id}_last_model_refresh",
+        }
+        assert uids == expected, (
+            f"Expected sensor unique_ids {expected}, got {uids}. "
+            f"Unexpected: {uids - expected}. Missing: {expected - uids}."
+        )
+
+    @pytest.mark.asyncio
     async def test_sensor_coordinator_reference(self, mock_entry, mock_coordinator) -> None:
         """Both sensor entities must reference the coordinator from hass.data
         so native_value reads coordinator.chat_models / last_update_success_time.

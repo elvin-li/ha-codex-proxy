@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.155] - 2026-05-19
+### Tests
+- `test_platform_setup.py`: add `TestSensorSetup.test_sensor_unique_ids_exact_format` — pins both sensor unique_ids to exact `{entry_id}_chat_model_count` / `{entry_id}_last_model_refresh` format, replacing the distinctness-only check
+
 ## [0.2.154] - 2026-05-19
 ### Tests
 - `test_enrich_subentry.py`: add `TestUpstreamKeys.test_upstream_keys_exact_values` — pins each logical key to its exact ha_stubs value, replacing the truthiness-only check that passed for any non-empty string
