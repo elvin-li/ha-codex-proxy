@@ -149,13 +149,21 @@ class TestMetadata:
         assert sensor._attr_translation_key == "proxy_reachable"
 
     def test_device_class_is_connectivity(self) -> None:
+        """_attr_device_class must be BinarySensorDeviceClass.CONNECTIVITY so the
+        entity renders as a connectivity sensor in HA's UI — not just 'defined'
+        (matches the value-pinning pattern used in test_button.py and test_sensor.py)."""
+        from homeassistant.components.binary_sensor import (  # type: ignore[attr-defined]
+            BinarySensorDeviceClass,
+        )
 
-        sensor = _make_sensor()
-        # The attribute is set at class level — just verify it is defined
-        assert hasattr(sensor, "_attr_device_class")
+        assert CodexProxyReachableSensor._attr_device_class is BinarySensorDeviceClass.CONNECTIVITY
 
     def test_entity_category_is_diagnostic(self) -> None:
-        assert hasattr(CodexProxyReachableSensor, "_attr_entity_category")
+        """_attr_entity_category must be EntityCategory.DIAGNOSTIC so the entity
+        lands in the Diagnostic section of the device card, not the primary card."""
+        from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
+        assert CodexProxyReachableSensor._attr_entity_category is EntityCategory.DIAGNOSTIC
 
     def test_has_entity_name_is_true(self) -> None:
         assert CodexProxyReachableSensor._attr_has_entity_name is True

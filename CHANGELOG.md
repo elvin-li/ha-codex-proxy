@@ -13,6 +13,23 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.67] – 2026-05-19
+
+### Changed (tests)
+
+- **`tests/test_binary_sensor.py`** — strengthened two `TestMetadata` tests from
+  `hasattr`-only guards to exact enum-value assertions, matching the stricter pattern
+  already used in `test_button.py` and `test_sensor.py`:
+  - `test_device_class_is_connectivity` now asserts
+    `_attr_device_class is BinarySensorDeviceClass.CONNECTIVITY` (was: `hasattr` check).
+  - `test_entity_category_is_diagnostic` now asserts
+    `_attr_entity_category is EntityCategory.DIAGNOSTIC` (was: `hasattr` check).
+  Both tests previously passed for any non-None value; they now catch an accidental
+  enum change that would cause HA to render the entity in the wrong section or with
+  the wrong device-class icon.
+
+---
+
 ## [0.2.66] – 2026-05-19
 
 ### Added (tests)
