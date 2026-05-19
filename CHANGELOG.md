@@ -13,6 +13,28 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.48] – 2026-05-19
+
+### Added
+
+- **`diagnostics.py`** — Coordinator section now includes ``last_error``:
+  the string representation of ``coordinator.last_exception`` when the most
+  recent ``/v1/models`` poll failed, or ``null`` when it succeeded.
+  ``DataUpdateCoordinator`` already tracks this; surfacing it in the
+  diagnostics download means users can self-diagnose proxy connectivity issues
+  without needing access to HA's log files.
+
+### Added (tests)
+
+- `test_diagnostics.py` — ``TestDiagnosticsLastError``: 4 tests verifying that
+  ``last_error`` is ``None`` on success, carries the exception message on
+  failure, is a ``str`` (JSON-serialisable), and is cleared after a successful
+  poll.
+- `test_diagnostics.py` — ``test_coordinator_section_includes_last_error_key``:
+  verifies the key is always present in the coordinator section.
+
+---
+
 ## [0.2.47] – 2026-05-19
 
 ### Added

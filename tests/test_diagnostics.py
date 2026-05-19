@@ -68,6 +68,7 @@ def _make_coordinator(
     latest_id: str | None = "gpt-5.5",
     models_data: list[dict[str, Any]] | None = None,
     update_interval: timedelta = timedelta(hours=6),
+    last_exception: Exception | None = None,
 ) -> MagicMock:
     coord = MagicMock()
     coord.last_update_success = last_success
@@ -76,6 +77,7 @@ def _make_coordinator(
     coord.latest_chat_model_id = latest_id
     coord.data = {"models": models_data or [{"id": "gpt-5.5"}]}
     coord.update_interval = update_interval
+    coord.last_exception = last_exception
     return coord
 
 
@@ -251,6 +253,71 @@ class TestDiagnosticsCoordinatorInfo:
         result = await async_get_config_entry_diagnostics(hass, entry)
 
         assert result["coordinator"]["update_interval"] == "0:30:00"
+
+    @pytest.mark.asyncio
+    async def test_coordinator_section_includes_last_error_key(self) -> None:
+        """last_error must always be present in the coordinator section —
+        None when the last update succeeded, a message string when it failed."""
+        coord = _make_coordinator()
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert "last_error" in result["coordinator"]
+
+
+class TestDiagnosticsLastError:
+    @pytest.mark.asyncio
+    async def test_last_error_is_none_when_no_exception(self) -> None:
+        """On a healthy coordinator (last_exception is None), last_error must
+        be None — not the string 'None'."""
+        coord = _make_coordinator(last_exception=None)
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["last_error"] is None
+
+    @pytest.mark.asyncio
+    async def test_last_error_contains_exception_message(self) -> None:
+        """When the coordinator's last update failed, last_error must contain
+        the exception message so the user can diagnose the failure from a
+        diagnostics download without needing access to HA's log files."""
+        err = Exception("Failed to fetch models: HTTP 503")
+        coord = _make_coordinator(last_exception=err)
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["last_error"] == "Failed to fetch models: HTTP 503"
+
+    @pytest.mark.asyncio
+    async def test_last_error_is_string_when_set(self) -> None:
+        """last_error must be a string (not an Exception object) in the
+        diagnostics dict so it is JSON-serialisable."""
+        err = Exception("connection refused")
+        coord = _make_coordinator(last_exception=err)
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert isinstance(result["coordinator"]["last_error"], str)
+
+    @pytest.mark.asyncio
+    async def test_last_error_cleared_after_success(self) -> None:
+        """When coordinator.last_exception is None (cleared on success),
+        last_error must be None — guards the ternary in diagnostics.py."""
+        coord = _make_coordinator(last_exception=None, last_success=True)
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["last_error"] is None
 
 
 class TestDiagnosticsSubentries:
