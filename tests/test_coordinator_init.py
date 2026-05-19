@@ -141,3 +141,14 @@ class TestCoordinatorInit:
         AttributeError on a freshly created coordinator."""
         coord = _make_coordinator()
         assert coord.last_exception is None
+
+    def test_last_update_success_time_initially_none(self) -> None:
+        """last_update_success_time must be None immediately after construction.
+
+        CodexProxyReachableSensor.is_on returns None (unknown state) until
+        last_update_success_time is set, preventing the sensor from prematurely
+        reporting 'connected' before any /v1/models poll has completed.  If this
+        attribute were truthy right out of the constructor, is_on would skip the
+        None guard and report the proxy as reachable before it has been checked."""
+        coord = _make_coordinator()
+        assert coord.last_update_success_time is None

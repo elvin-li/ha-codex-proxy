@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.84] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_init.py`** — `TestCoordinatorInit.test_last_update_success_time_initially_none`
+  guards the binary sensor's "unknown before first poll" invariant.
+  `CodexProxyReachableSensor.is_on` returns `None` (unknown) until
+  `last_update_success_time` is set; if the coordinator initialised with a truthy
+  value the sensor would prematurely report 'connected' before any poll completed.
+  Companion to the existing `test_last_exception_initially_none`.
+
+---
+
 ## [0.2.83] – 2026-05-19
 
 ### Added (tests)
