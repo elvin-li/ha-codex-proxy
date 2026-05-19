@@ -214,10 +214,13 @@ class TestCoordinatorNonTransient:
 
     @pytest.mark.asyncio
     async def test_bad_json_raises_immediately(self) -> None:
+        import json
+
         coord = _make_coordinator()
         bad_response = MagicMock()
         bad_response.raise_for_status.return_value = None
-        bad_response.json.side_effect = ValueError("bad json")
+        # httpx raises json.JSONDecodeError (subclass of ValueError) on bad JSON
+        bad_response.json.side_effect = json.JSONDecodeError("bad json", "", 0)
         coord._http.get = AsyncMock(return_value=bad_response)
 
         with pytest.raises(UpdateFailed):

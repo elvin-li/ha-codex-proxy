@@ -156,6 +156,22 @@ class TestTranslationKeyConsistency:
                 f"zh-Hans.json config_subentries.{subentry_type}.step mismatch: {s_steps ^ z_steps}"
             )
 
+    def test_no_empty_data_description_values(self) -> None:
+        """data_description fields in config_subentries steps must be non-empty.
+
+        A developer adding a new subentry field may forget to fill in the
+        description; this test catches empty strings before they reach users.
+        """
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            for subentry_type, subentry_data in data.get("config_subentries", {}).items():
+                for step_name, step_data in subentry_data.get("step", {}).items():
+                    for field_key, description in step_data.get("data_description", {}).items():
+                        assert description, (
+                            f"{fname} config_subentries.{subentry_type}.step."
+                            f"{step_name}.data_description.{field_key} is empty"
+                        )
+
     def test_all_translation_keys_in_sync(self) -> None:
         """Deep structural check: the full set of dotted key paths in strings.json,
         en.json, and zh-Hans.json must be identical. This catches any new key added

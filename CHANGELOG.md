@@ -13,6 +13,35 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.33] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** — The bare `except ValueError` around `r.json()` is
+  narrowed to `except json.JSONDecodeError`.  `json.JSONDecodeError` is a
+  subclass of `ValueError` and is the only exception `httpx` raises from
+  `.json()`.  Using the specific type documents intent and avoids accidentally
+  swallowing unrelated `ValueError`s (e.g. from a future refactor that adds
+  value parsing inside the same try block).  Requires `import json` added at
+  the top of the module.
+
+### Added (tests)
+
+- `test_model_select.py` — `test_null_display_name_falls_back_to_id`: passes a
+  model dict with `display_name=None` explicitly (not just a missing key) to
+  verify the `or mid` fallback in `_model_select_options`.
+- `test_diagnostics.py` — `test_models_empty_when_coordinator_data_is_empty_dict`:
+  verifies `coordinator.data = {}` (dict present, `"models"` key absent) returns
+  `models == []` instead of a `KeyError`.
+- `test_translations.py` — `test_no_empty_data_description_values`: iterates
+  all `config_subentries.<type>.step.<step>.data_description.*` values across all
+  three translation files and asserts none are empty strings.
+- `test_coordinator_retry.py` — `test_bad_json_raises_immediately` updated to
+  use `json.JSONDecodeError("bad json", "", 0)` instead of plain `ValueError` to
+  match the narrowed `except` clause and document real httpx behaviour.
+
+---
+
 ## [0.2.32] – 2026-05-19
 
 ### Fixed (stubs)

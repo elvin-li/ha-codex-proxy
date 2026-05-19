@@ -8,6 +8,7 @@ response (`'str' object has no attribute '_set_private_attributes'`).
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -92,7 +93,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 raise UpdateFailed(
                     f"Failed to fetch {self._url}: {type(err).__name__}: {err}"
                 ) from err
-            except ValueError as err:
+            except json.JSONDecodeError as err:
                 raise UpdateFailed(f"Bad JSON from {self._url}: {err}") from err
 
             # Transient error — sleep before next attempt (not after the last one)

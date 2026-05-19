@@ -96,6 +96,16 @@ class TestModelSelectOptions:
             opts = _model_select_options(_coord([_m("gpt-5.5")]), None)
         assert opts[0]["label"] == "gpt-5.5"
 
+    def test_null_display_name_falls_back_to_id(self) -> None:
+        """Explicit None for display_name (not just absent key) must still fall
+        back to the model id as label — tests the `or mid` branch."""
+        with _PATCH_SELECT_OPTION:
+            opts = _model_select_options(
+                _coord([{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": None}]),
+                None,
+            )
+        assert opts[0]["label"] == "gpt-5.5"
+
     def test_deduplication_by_id(self) -> None:
         # Two entries with same id — should only appear once
         with _PATCH_SELECT_OPTION:

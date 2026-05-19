@@ -278,6 +278,19 @@ class TestDiagnosticsEdgeCases:
         assert result["coordinator"]["models"] == []
 
     @pytest.mark.asyncio
+    async def test_models_empty_when_coordinator_data_is_empty_dict(self) -> None:
+        """When coordinator.data is {} (proxy returned empty/malformed response),
+        the models list must still be [] — not KeyError or similar crash."""
+        coord = _make_coordinator()
+        coord.data = {}  # dict present but no "models" key
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["models"] == []
+
+    @pytest.mark.asyncio
     async def test_last_update_success_false_reported(self) -> None:
         """A failed coordinator poll is reported as last_update_success=False."""
         coord = _make_coordinator(last_success=False, latest_id=None)
