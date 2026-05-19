@@ -354,6 +354,36 @@ class TestCoordinatorRetry:
             f"got: {msg!r} — the message must reference the actual retry count from the const"
         )
 
+    @pytest.mark.asyncio
+    async def test_exhausted_retries_message_exact_format(self) -> None:
+        """After all retries are exhausted, UpdateFailed must equal exactly:
+        'Failed to fetch {url} after 3 attempts (last error: TimeoutException: timed out)'
+
+        The three existing tests each check a different substring (URL, error
+        type, attempt count); together they constrain the message but leave the
+        surrounding prose unchecked.  For example, 'Could not reach {url} after
+        3 attempts [TimeoutException: timed out]' would pass all three substring
+        checks but use different wording that breaks log-parsing.  Exact equality
+        pins everything in a single assertion."""
+        from custom_components.codex_proxy.const import COORDINATOR_MAX_RETRIES
+
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            pytest.raises(UpdateFailed) as exc_info,
+        ):
+            await coord._async_update_data()
+
+        expected = (
+            f"Failed to fetch {coord._url} after {COORDINATOR_MAX_RETRIES} attempts "
+            f"(last error: TimeoutException: timed out)"
+        )
+        assert str(exc_info.value) == expected, (
+            f"Expected {expected!r}, got {str(exc_info.value)!r}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Non-transient errors (immediate failure)

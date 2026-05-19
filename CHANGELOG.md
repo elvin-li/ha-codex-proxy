@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.148] - 2026-05-19
+### Tests
+- `test_coordinator_retry.py`: add `TestCoordinatorRetry.test_exhausted_retries_message_exact_format` — pins the full `UpdateFailed` message after retry exhaustion to exact format, replacing three independent substring checks
+
 ## [0.2.147] - 2026-05-19
 ### Tests
 - `test_coordinator_retry.py`: add `TestCoordinatorNonTransient.test_connection_error_message_exact_format` — pins `UpdateFailed` message to exact `"Failed to fetch {url}: ConnectError: {detail}"` format, replacing the URL substring check
