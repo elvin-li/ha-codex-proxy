@@ -7,6 +7,38 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.22] – 2026-05-19
+
+### Changed
+
+- **`sensor.py`** — Both `SensorEntityDescription` objects now carry
+  `translation_key=` matching their `key=` value.  Previously only `name=`
+  (hard-coded English) was set; adding `translation_key` lets HA resolve entity
+  names from `strings.json` / `translations/` when a non-English locale is active.
+
+### Added (tests / CI)
+
+- **`tests/test_sensor.py`** — 3 new `TestEntityDescriptions` cases:
+  `test_chat_model_count_translation_key`,
+  `test_last_refresh_translation_key`,
+  `test_translation_keys_match_strings_json` (cross-checks `translation_key`
+  values against `strings.json entity.sensor`).
+- **`pytest-cov>=5.0`** added to `requirements_test.txt` and
+  `[tool.coverage]` section added to `pyproject.toml`.
+- **`.github/workflows/tests.yml`** — test step now runs with
+  `--cov=custom_components/codex_proxy --cov-report=term-missing` and
+  uploads `coverage.xml` as a CI artefact (Python 3.13 matrix only).
+
+### Refactored (tests)
+
+- **`tests/test_coordinator_logging.py`** — migrated from 35-line inline
+  HA-module stub to `import tests.ha_stubs`, matching all other test files.
+  The outdated comment "use the same inline-stub pattern as
+  test_coordinator_retry.py" has been corrected (both files now use
+  `ha_stubs`).
+
+---
+
 ## [0.2.21] – 2026-05-19
 
 ### Fixed

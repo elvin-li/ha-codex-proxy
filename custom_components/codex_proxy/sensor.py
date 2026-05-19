@@ -31,7 +31,7 @@ from .entity_utils import build_codex_entry_device_info
 
 _CHAT_MODEL_COUNT = SensorEntityDescription(
     key="chat_model_count",
-    name="Chat model count",
+    translation_key="chat_model_count",
     icon="mdi:format-list-numbered",
     state_class=SensorStateClass.MEASUREMENT,
     entity_category=EntityCategory.DIAGNOSTIC,
@@ -40,7 +40,7 @@ _CHAT_MODEL_COUNT = SensorEntityDescription(
 
 _LAST_REFRESH = SensorEntityDescription(
     key="last_model_refresh",
-    name="Last model refresh",
+    translation_key="last_model_refresh",
     device_class=SensorDeviceClass.TIMESTAMP,
     entity_category=EntityCategory.DIAGNOSTIC,
     entity_registry_enabled_default=False,

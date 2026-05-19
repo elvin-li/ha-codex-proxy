@@ -90,6 +90,12 @@ class TestEntityDescriptions:
 
         assert _CHAT_MODEL_COUNT.key == "chat_model_count"
 
+    def test_chat_model_count_translation_key(self) -> None:
+        """translation_key must match key so HA can find entity.sensor.<key>.name."""
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+
+        assert _CHAT_MODEL_COUNT.translation_key == "chat_model_count"
+
     def test_chat_model_count_disabled_by_default(self) -> None:
         from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
 
@@ -106,6 +112,12 @@ class TestEntityDescriptions:
 
         assert _LAST_REFRESH.key == "last_model_refresh"
 
+    def test_last_refresh_translation_key(self) -> None:
+        """translation_key must match key so HA can find entity.sensor.<key>.name."""
+        from custom_components.codex_proxy.sensor import _LAST_REFRESH
+
+        assert _LAST_REFRESH.translation_key == "last_model_refresh"
+
     def test_last_refresh_disabled_by_default(self) -> None:
         from custom_components.codex_proxy.sensor import _LAST_REFRESH
 
@@ -116,6 +128,29 @@ class TestEntityDescriptions:
         from homeassistant.components.sensor import SensorDeviceClass  # type: ignore[attr-defined]
 
         assert _LAST_REFRESH.device_class is SensorDeviceClass.TIMESTAMP
+
+    def test_translation_keys_match_strings_json(self) -> None:
+        """Verify translation_key values are present in strings.json entity.sensor."""
+        import json
+        import pathlib
+
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT, _LAST_REFRESH
+
+        strings_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "strings.json"
+        )
+        strings = json.loads(strings_path.read_text())
+        sensor_strings = strings.get("entity", {}).get("sensor", {})
+
+        assert _CHAT_MODEL_COUNT.translation_key in sensor_strings, (
+            f"'{_CHAT_MODEL_COUNT.translation_key}' missing from strings.json entity.sensor"
+        )
+        assert _LAST_REFRESH.translation_key in sensor_strings, (
+            f"'{_LAST_REFRESH.translation_key}' missing from strings.json entity.sensor"
+        )
 
 
 class TestChatModelCountSensor:

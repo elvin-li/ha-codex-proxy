@@ -46,5 +46,12 @@ jobs:
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
 
-      - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
+      - name: Run tests with coverage
+        run: python -m pytest tests/ -v --tb=short --cov=custom_components/codex_proxy --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml

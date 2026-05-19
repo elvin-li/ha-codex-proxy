@@ -8,53 +8,17 @@ from __future__ import annotations
 
 import sys
 import os
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import httpx
 
 # ---------------------------------------------------------------------------
-# Bootstrap — use the same inline-stub pattern as test_coordinator_retry.py
-# to keep coordinator import isolated from ha_stubs ordering constraints.
+# Bootstrap — must precede codex_proxy imports
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-
-_HA_MODULES = [
-    "homeassistant",
-    "homeassistant.components",
-    "homeassistant.components.openai_conversation",
-    "homeassistant.components.openai_conversation.const",
-    "homeassistant.config_entries",
-    "homeassistant.const",
-    "homeassistant.core",
-    "homeassistant.exceptions",
-    "homeassistant.helpers",
-    "homeassistant.helpers.device_registry",
-    "homeassistant.helpers.entity_platform",
-    "homeassistant.helpers.httpx_client",
-    "homeassistant.helpers.update_coordinator",
-]
-for _mod in _HA_MODULES:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
-
-
-class _DataUpdateCoordinatorBase:
-    def __class_getitem__(cls, item):  # type: ignore[override]
-        return cls
-
-    def __init__(self, hass, logger, name, update_interval):
-        self.hass = hass
-        self.logger = logger
-        self.name = name
-        self.update_interval = update_interval
-
-
-sys.modules[
-    "homeassistant.helpers.update_coordinator"
-].DataUpdateCoordinator = _DataUpdateCoordinatorBase
-sys.modules["homeassistant.helpers.update_coordinator"].UpdateFailed = Exception
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 
 from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
 

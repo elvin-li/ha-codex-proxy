@@ -2,6 +2,18 @@
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
+[tool.coverage.run]
+source = ["custom_components/codex_proxy"]
+omit = ["*/tests/*", "*/conftest.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+show_missing = true
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
