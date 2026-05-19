@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.109] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator.py`** —
+  `TestImageModelIdPrefixes.test_contains_exactly_three_prefixes` asserts
+  `set(IMAGE_MODEL_ID_PREFIXES) == {"gpt-image", "dall-e", "image-"}` using
+  exact set equality.  The existing `test_required_prefixes_present` uses `in`
+  checks — passes even if an extra prefix like `"gpt-"` is accidentally added,
+  which would silently exclude all GPT models from `chat_models`.
+
+---
+
 ## [0.2.108] – 2026-05-19
 
 ### Added (tests)

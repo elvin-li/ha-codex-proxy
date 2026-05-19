@@ -226,3 +226,17 @@ class TestImageModelIdPrefixes:
         assert "gpt-image" in IMAGE_MODEL_ID_PREFIXES
         assert "dall-e" in IMAGE_MODEL_ID_PREFIXES
         assert "image-" in IMAGE_MODEL_ID_PREFIXES
+
+    def test_contains_exactly_three_prefixes(self) -> None:
+        """IMAGE_MODEL_ID_PREFIXES must contain exactly the three expected
+        prefixes — no more, no less.
+
+        test_required_prefixes_present uses ``in`` checks that pass even if
+        extra prefixes are accidentally added.  An extra prefix like ``"gpt-"``
+        would silently exclude all GPT models from chat_models, making the
+        integration appear to have zero models after every fetch.  Exact set
+        equality catches that before it reaches production."""
+        assert set(IMAGE_MODEL_ID_PREFIXES) == {"gpt-image", "dall-e", "image-"}, (
+            f"Unexpected prefixes in IMAGE_MODEL_ID_PREFIXES: "
+            f"{set(IMAGE_MODEL_ID_PREFIXES) - {'gpt-image', 'dall-e', 'image-'}}"
+        )
