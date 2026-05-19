@@ -1,3 +1,8 @@
 pytest>=8.0
 pytest-asyncio>=0.23
+httpx>=0.24
+ruff>=0.4
+# pytest-homeassistant-custom-component is not needed by our ha_stubs-based
+# test suite, but keeping it here allows testing against the real HA runtime
+# (e.g. pytest --hacs or integration tests in a full HA environment).
 pytest-homeassistant-custom-component>=2024.10.0
