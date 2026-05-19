@@ -283,6 +283,44 @@ class TestPayloadFormats:
         result = await coord._async_update_data()
         assert result["models"] == []
 
+    @pytest.mark.asyncio
+    async def test_non_numeric_created_field_does_not_crash(self) -> None:
+        """If a proxy returns a non-numeric 'created' value (e.g. an ISO date
+        string), the coordinator must degrade gracefully to created=0 rather
+        than raising ValueError and crashing the entire update."""
+        coord = _make_coordinator()
+        response = _make_response(
+            200,
+            {"data": [{"id": "gpt-5.5", "created": "2024-01-01"}]},
+        )
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+
+        assert len(result["models"]) == 1
+        assert result["models"][0]["id"] == "gpt-5.5"
+        assert result["models"][0]["created"] == 0  # fell back to 0
+
+    @pytest.mark.asyncio
+    async def test_numeric_string_created_is_parsed(self) -> None:
+        """A stringified epoch timestamp must still sort correctly."""
+        coord = _make_coordinator()
+        response = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": "1700000000"},
+                    {"id": "gpt-5.4", "created": "1600000000"},
+                ]
+            },
+        )
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+
+        assert result["models"][0]["id"] == "gpt-5.5"  # newer first
+        assert result["models"][0]["created"] == 1_700_000_000
+
 
 # ---------------------------------------------------------------------------
 # Retry delay safe access

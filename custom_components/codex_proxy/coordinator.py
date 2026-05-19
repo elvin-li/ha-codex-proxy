@@ -116,10 +116,17 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if not mid or mid in seen_ids:
                 continue
             seen_ids.add(mid)
+            # Defensive int() — some proxies return created as a string
+            # (e.g. "1700000000") or an unexpected type; fall back to 0
+            # rather than crashing the entire coordinator update.
+            try:
+                created = int(m.get("created") or 0)
+            except (ValueError, TypeError):
+                created = 0
             models.append(
                 {
                     "id": mid,
-                    "created": int(m.get("created") or 0),
+                    "created": created,
                     "owned_by": str(m.get("owned_by") or ""),
                     "display_name": str(m.get("display_name") or mid),
                 }

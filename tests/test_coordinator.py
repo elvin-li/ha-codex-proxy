@@ -55,10 +55,14 @@ def _process_models(payload_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not mid or mid in seen_ids:
             continue
         seen_ids.add(mid)
+        try:
+            created = int(m.get("created") or 0)
+        except (ValueError, TypeError):
+            created = 0
         models.append(
             {
                 "id": mid,
-                "created": int(m.get("created") or 0),
+                "created": created,
                 "owned_by": str(m.get("owned_by") or ""),
                 "display_name": str(m.get("display_name") or mid),
             }
@@ -113,6 +117,26 @@ class TestModelProcessing:
         data = [{"id": "gpt-5.5", "created": 0, "display_name": "GPT-5.5 Preview"}]
         models = _process_models(data)
         assert models[0]["display_name"] == "GPT-5.5 Preview"
+
+    def test_numeric_string_created_is_accepted(self) -> None:
+        """Some proxies return created as a string — int() should convert it."""
+        data = [{"id": "gpt-5.5", "created": "1700000000"}]
+        models = _process_models(data)
+        assert models[0]["created"] == 1_700_000_000
+
+    def test_non_numeric_string_created_falls_back_to_zero(self) -> None:
+        """A non-numeric created field (e.g. ISO date) must not crash the
+        coordinator — it should silently fall back to 0 so sorting still works."""
+        data = [{"id": "gpt-5.5", "created": "2024-01-01"}]
+        models = _process_models(data)
+        assert models[0]["created"] == 0
+        assert models[0]["id"] == "gpt-5.5"
+
+    def test_none_created_is_zero(self) -> None:
+        """Explicit None on the created field falls back to 0."""
+        data = [{"id": "gpt-5.5", "created": None}]
+        models = _process_models(data)
+        assert models[0]["created"] == 0
 
 
 class TestChatModelFilter:

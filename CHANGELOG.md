@@ -7,6 +7,29 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.21] – 2026-05-19
+
+### Fixed
+
+- **`coordinator.py`** — `_async_update_data` now wraps `int(m["created"] or 0)`
+  in a `try/(ValueError, TypeError)` guard. Previously, a proxy returning
+  `"created": "2024-01-01"` (ISO date string) would raise `ValueError` outside
+  the retry try/except block and crash the entire coordinator update; now it
+  falls back gracefully to `created=0` so sorting still works.
+
+### Added (tests)
+
+- **`tests/test_coordinator.py`** — 3 new `TestModelProcessing` cases:
+  `test_numeric_string_created_is_accepted`,
+  `test_non_numeric_string_created_falls_back_to_zero`,
+  `test_none_created_is_zero`.
+- **`tests/test_coordinator_retry.py`** — 2 new `TestPayloadFormats` cases:
+  `test_non_numeric_created_field_does_not_crash` (end-to-end via the actual
+  `_async_update_data` method),
+  `test_numeric_string_created_is_parsed` (verifies sort order still correct).
+
+---
+
 ## [0.2.20] – 2026-05-19
 
 ### Added (tests)
