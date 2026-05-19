@@ -208,6 +208,46 @@ class TestEntryCreation:
             )
 
     @pytest.mark.asyncio
+    async def test_probe_called_with_user_credentials(self) -> None:
+        """_probe_proxy must receive the api_key and base_url from user input.
+
+        A regression that probed with hardcoded or default values would silently
+        validate the wrong credentials and store the user-supplied ones.  This
+        test pins that the probe positional arguments match the submitted form."""
+        flow = _make_flow()
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ) as mock_probe:
+            await flow.async_step_user(_VALID_INPUT)
+
+        mock_probe.assert_awaited_once()
+        probe_args = mock_probe.call_args[0]
+        assert probe_args[1] == "sk-test", (
+            f"probe received wrong api_key: {probe_args[1]!r}"
+        )
+        assert probe_args[2] == "https://proxy.example.com", (
+            f"probe received wrong base_url: {probe_args[2]!r}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_unique_id_set_to_base_url(self) -> None:
+        """async_set_unique_id must be called with the base_url so HA prevents
+        duplicate config entries pointing at the same proxy endpoint.
+
+        Without this call, a user could add the same proxy twice, causing two
+        sets of entities to poll the same /v1/models endpoint and fill the
+        Devices & Services page with duplicates."""
+        flow = _make_flow()
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_user(_VALID_INPUT)
+
+        flow.async_set_unique_id.assert_awaited_once_with("https://proxy.example.com")
+
+    @pytest.mark.asyncio
     async def test_api_key_whitespace_stripped_in_flow(self) -> None:
         """An api_key submitted with surrounding whitespace must be stripped
         before being stored — guards the v0.2.46 fix that prevents a pasted

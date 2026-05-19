@@ -13,6 +13,23 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.77] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_main_flow.py`** — two new `TestEntryCreation` tests mirroring the
+  pattern from v0.2.76's reconfigure additions:
+  - `test_probe_called_with_user_credentials` — asserts `_probe_proxy` receives
+    the api_key and base_url from the submitted form, not hardcoded or default
+    values. Guards the same class of regression: wrong credentials probed, right
+    ones stored, runtime failure on first API call.
+  - `test_unique_id_set_to_base_url` — asserts `async_set_unique_id` is called
+    with the base_url so HA can detect duplicate entries pointing at the same
+    proxy. Without this call a user could add the same proxy twice without any
+    warning and produce duplicate entities in every subentry.
+
+---
+
 ## [0.2.76] – 2026-05-19
 
 ### Added (tests)
