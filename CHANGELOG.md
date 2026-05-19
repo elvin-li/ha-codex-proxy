@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.54] – 2026-05-19
+
+### Changed (tests)
+
+- `test_parse_toml_validate.py` — all test methods in ``TestManualInput``,
+  ``TestTomlInput``, and ``TestApiKeyStripping`` now use named field access
+  (``result.api_key``, ``result.errors``, etc.) instead of positional
+  unpacking with ``_`` placeholders.  The backward-compat
+  ``test_positional_unpacking_still_works`` test in
+  ``TestParseResultNamedAccess`` is kept as the one explicit guard for that
+  invariant.  The refactoring makes the test file consistent with the
+  ``config_flow.py`` production-code changes landed in v0.2.53.
+
+---
+
 ## [0.2.53] – 2026-05-19
 
 ### Changed

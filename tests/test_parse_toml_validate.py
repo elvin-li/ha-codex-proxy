@@ -62,60 +62,54 @@ def _input(
 
 class TestManualInput:
     def test_valid_input_no_errors(self) -> None:
-        errors, api_key, base_url, model, _, _ = _parse_toml_and_validate(
+        result = _parse_toml_and_validate(
             _input(api_key="sk-abc", base_url="https://proxy.example.com")
         )
-        assert not errors
-        assert api_key == "sk-abc"
-        assert base_url == "https://proxy.example.com"
+        assert not result.errors
+        assert result.api_key == "sk-abc"
+        assert result.base_url == "https://proxy.example.com"
 
     def test_trailing_slash_stripped_from_base_url(self) -> None:
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="https://proxy.example.com/")
-        )
-        assert not errors
-        assert base_url == "https://proxy.example.com"
+        result = _parse_toml_and_validate(_input(base_url="https://proxy.example.com/"))
+        assert not result.errors
+        assert result.base_url == "https://proxy.example.com"
 
     def test_model_defaults_when_empty(self) -> None:
-        errors, _, _, model, _, _ = _parse_toml_and_validate(_input(model=""))
-        assert model == DEFAULT_MODEL
+        result = _parse_toml_and_validate(_input(model=""))
+        assert result.model == DEFAULT_MODEL
 
     def test_model_preserved_when_set(self) -> None:
-        errors, _, _, model, _, _ = _parse_toml_and_validate(_input(model="gpt-5.6"))
-        assert model == "gpt-5.6"
+        result = _parse_toml_and_validate(_input(model="gpt-5.6"))
+        assert result.model == "gpt-5.6"
 
     def test_missing_base_url_returns_required_error(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url=""))
-        assert CONF_BASE_URL in errors
-        assert errors[CONF_BASE_URL] == "required"
+        result = _parse_toml_and_validate(_input(base_url=""))
+        assert CONF_BASE_URL in result.errors
+        assert result.errors[CONF_BASE_URL] == "required"
 
     def test_ftp_scheme_returns_invalid_url_scheme(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="ftp://proxy.example.com"))
-        assert errors.get(CONF_BASE_URL) == "invalid_url_scheme"
+        result = _parse_toml_and_validate(_input(base_url="ftp://proxy.example.com"))
+        assert result.errors.get(CONF_BASE_URL) == "invalid_url_scheme"
 
     def test_no_scheme_returns_invalid_url_scheme(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="proxy.example.com"))
-        assert errors.get(CONF_BASE_URL) == "invalid_url_scheme"
+        result = _parse_toml_and_validate(_input(base_url="proxy.example.com"))
+        assert result.errors.get(CONF_BASE_URL) == "invalid_url_scheme"
 
     def test_https_no_host_returns_invalid_url(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="https://"))
-        assert errors.get(CONF_BASE_URL) == "invalid_url"
+        result = _parse_toml_and_validate(_input(base_url="https://"))
+        assert result.errors.get(CONF_BASE_URL) == "invalid_url"
 
     def test_http_url_valid(self) -> None:
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="http://localhost:8080")
-        )
-        assert not errors
-        assert "localhost" in base_url
+        result = _parse_toml_and_validate(_input(base_url="http://localhost:8080"))
+        assert not result.errors
+        assert "localhost" in result.base_url
 
     def test_base_url_with_surrounding_whitespace_stripped(self) -> None:
         """A manually pasted URL with extra leading/trailing spaces must be
         accepted and stripped — a common paste-from-browser artifact."""
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="  https://proxy.example.com  ")
-        )
-        assert not errors
-        assert base_url == "https://proxy.example.com"
+        result = _parse_toml_and_validate(_input(base_url="  https://proxy.example.com  "))
+        assert not result.errors
+        assert result.base_url == "https://proxy.example.com"
 
 
 # ---------------------------------------------------------------------------
@@ -129,67 +123,65 @@ class TestTomlInput:
 [model_providers.p]
 base_url = "https://from-toml.example.com"
 """
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
-        assert not errors
-        assert base_url == "https://from-toml.example.com"
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert not result.errors
+        assert result.base_url == "https://from-toml.example.com"
 
     def test_toml_overrides_manual_base_url(self) -> None:
         toml = """
 [model_providers.p]
 base_url = "https://from-toml.example.com"
 """
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
+        result = _parse_toml_and_validate(
             _input(base_url="https://manual.example.com", toml=toml)
         )
-        assert not errors
-        assert base_url == "https://from-toml.example.com"
+        assert not result.errors
+        assert result.base_url == "https://from-toml.example.com"
 
     def test_toml_sets_model(self) -> None:
         toml = 'model = "gpt-5.6"\n[model_providers.p]\nbase_url = "https://x.com"\n'
-        errors, _, _, model, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
-        assert not errors
-        assert model == "gpt-5.6"
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert not result.errors
+        assert result.model == "gpt-5.6"
 
     def test_toml_sets_reasoning_effort(self) -> None:
         toml = (
             'model_reasoning_effort = "medium"\n[model_providers.p]\nbase_url = "https://x.com"\n'
         )
-        errors, _, _, _, reasoning_effort, _ = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
-        assert not errors
-        assert reasoning_effort == "medium"
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert not result.errors
+        assert result.reasoning_effort == "medium"
 
     def test_toml_sets_store_responses_false(self) -> None:
         toml = 'disable_response_storage = true\n[model_providers.p]\nbase_url = "https://x.com"\n'
-        errors, _, _, _, _, store = _parse_toml_and_validate(_input(base_url="", toml=toml))
-        assert not errors
-        assert store is False
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert not result.errors
+        assert result.store_responses is False
 
     def test_toml_no_base_url_returns_error(self) -> None:
         toml = 'model = "gpt-5.5"\n'  # no model_providers table
-        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
-        assert errors.get("base") == "toml_no_base_url"
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert result.errors.get("base") == "toml_no_base_url"
 
     def test_bad_toml_returns_bad_toml_error(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(
+        result = _parse_toml_and_validate(
             _input(base_url="", toml="this [ is not [ valid toml")
         )
-        assert errors.get("base") == "bad_toml"
+        assert result.errors.get("base") == "bad_toml"
 
     def test_toml_trailing_slash_stripped(self) -> None:
         toml = '[model_providers.p]\nbase_url = "https://x.example.com/"\n'
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
-        assert not errors
-        assert not base_url.endswith("/")
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert not result.errors
+        assert not result.base_url.endswith("/")
 
     def test_defaults_preserved_when_toml_empty_string(self) -> None:
-        errors, _, _, _, reasoning_effort, store = _parse_toml_and_validate(
+        result = _parse_toml_and_validate(
             _input(base_url="https://proxy.example.com", toml="")
         )
-        assert not errors
-        assert reasoning_effort == DEFAULT_REASONING_EFFORT
-        assert store == DEFAULT_STORE
+        assert not result.errors
+        assert result.reasoning_effort == DEFAULT_REASONING_EFFORT
+        assert result.store_responses == DEFAULT_STORE
 
     def test_invalid_reasoning_effort_from_toml_uses_default(self) -> None:
         """A TOML with an unrecognised model_reasoning_effort value must not
@@ -199,11 +191,9 @@ base_url = "https://from-toml.example.com"
             'model_reasoning_effort = "turbo"\n'
             '[model_providers.p]\nbase_url = "https://proxy.example.com"\n'
         )
-        errors, _, _, _, reasoning_effort, _ = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
-        assert not errors
-        assert reasoning_effort == DEFAULT_REASONING_EFFORT
+        result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+        assert not result.errors
+        assert result.reasoning_effort == DEFAULT_REASONING_EFFORT
 
     def test_valid_reasoning_effort_from_toml_used(self) -> None:
         """Known effort values from TOML are accepted without any error."""
@@ -214,11 +204,9 @@ base_url = "https://from-toml.example.com"
                 f'model_reasoning_effort = "{effort}"\n'
                 '[model_providers.p]\nbase_url = "https://proxy.example.com"\n'
             )
-            errors, _, _, _, reasoning_effort, _ = _parse_toml_and_validate(
-                _input(base_url="", toml=toml)
-            )
-            assert not errors, f"unexpected error for effort={effort}: {errors}"
-            assert reasoning_effort == effort
+            result = _parse_toml_and_validate(_input(base_url="", toml=toml))
+            assert not result.errors, f"unexpected error for effort={effort}: {result.errors}"
+            assert result.reasoning_effort == effort
 
 
 # ---------------------------------------------------------------------------
@@ -230,30 +218,30 @@ class TestApiKeyStripping:
     def test_api_key_leading_whitespace_stripped(self) -> None:
         """A key pasted with a leading space must be silently trimmed so the
         user doesn't receive a cryptic 'invalid_auth' from the proxy."""
-        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="  sk-abc"))
-        assert api_key == "sk-abc"
+        result = _parse_toml_and_validate(_input(api_key="  sk-abc"))
+        assert result.api_key == "sk-abc"
 
     def test_api_key_trailing_whitespace_stripped(self) -> None:
         """Trailing whitespace (common when copy-pasting from a terminal) must
         be stripped before the key is stored or used in the probe."""
-        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="sk-abc  "))
-        assert api_key == "sk-abc"
+        result = _parse_toml_and_validate(_input(api_key="sk-abc  "))
+        assert result.api_key == "sk-abc"
 
     def test_api_key_surrounding_whitespace_stripped(self) -> None:
         """Both leading and trailing whitespace stripped in one pass."""
-        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="  sk-abc  "))
-        assert api_key == "sk-abc"
+        result = _parse_toml_and_validate(_input(api_key="  sk-abc  "))
+        assert result.api_key == "sk-abc"
 
     def test_api_key_no_whitespace_unchanged(self) -> None:
         """A key without whitespace is returned as-is — strip is a no-op."""
-        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="sk-abc-123"))
-        assert api_key == "sk-abc-123"
+        result = _parse_toml_and_validate(_input(api_key="sk-abc-123"))
+        assert result.api_key == "sk-abc-123"
 
     def test_api_key_internal_whitespace_preserved(self) -> None:
         """strip() must NOT remove internal spaces (unusual but possible in
         custom proxy keys). Only leading/trailing whitespace is removed."""
-        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key=" sk abc "))
-        assert api_key == "sk abc"
+        result = _parse_toml_and_validate(_input(api_key=" sk abc "))
+        assert result.api_key == "sk abc"
 
 
 # ---------------------------------------------------------------------------
