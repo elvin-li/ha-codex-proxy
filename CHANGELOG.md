@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.159] - 2026-05-19
+### Tests
+- `test_probe_proxy.py`: add `TestProbeProxySuccess.test_debug_log_format_string_exact` — pins `args[0]` of the probe debug call to the exact format string "Probing proxy at %s with model %s", closing the gap left by the positional-arg tests that never checked the template wording
+
 ## [0.2.158] - 2026-05-19
 ### Tests
 - `test_coordinator_logging.py`: add `TestRetryLogging.test_retry_log_error_type_arg_exact_for_timeout` — pins `args[3]` of the timeout retry debug call to exactly `"TimeoutException"`, replacing a combined-string `in` check

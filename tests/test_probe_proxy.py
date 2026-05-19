@@ -214,6 +214,29 @@ class TestProbeProxySuccess:
         )
 
     @pytest.mark.asyncio
+    async def test_debug_log_format_string_exact(self) -> None:
+        """args[0] of the probe debug call must be the exact format string.
+
+        test_debug_log_base_url_as_format_arg pins args[1] (base_url) and
+        test_debug_log_model_as_format_arg pins args[2] (model), but neither
+        checks args[0] — the format string itself.  If the wording changed to
+        e.g. 'Testing proxy %s using model %s', both positional-arg tests still
+        pass while the operator-visible log message changes silently."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        fmt = mock_log.debug.call_args.args[0]
+        assert fmt == "Probing proxy at %s with model %s", (
+            f"Expected exact format string 'Probing proxy at %s with model %s', "
+            f"got {fmt!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_debug_log_does_not_leak_api_key(self) -> None:
         """The API key must NEVER appear in any log call — including the
         probe debug message — because HA log files are routinely shared in
