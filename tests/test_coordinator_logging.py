@@ -194,6 +194,65 @@ class TestSuccessLogging:
         assert call_args[3] == 0, f"Expected 0 chat-capable, got {call_args[3]}"
 
     @pytest.mark.asyncio
+    async def test_success_log_includes_proxy_url(self) -> None:
+        """The success 'Fetched …' debug message must include the proxy URL.
+
+        Operators running multiple Codex entries (different proxy providers)
+        need to identify which proxy's fetch just succeeded from a single HA
+        log line.  The existing test_debug_logged_on_success only verifies the
+        model count appears; this test pins that the URL is also present."""
+        coord = _make_coordinator()
+        ok = _make_response(
+            200,
+            {"data": [{"id": "gpt-5.5", "created": 100}]},
+        )
+        coord._http.get = AsyncMock(return_value=ok)
+
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = True
+            await coord._async_update_data()
+
+        debug_calls = mock_log.debug.call_args_list
+        fetched_calls = [c for c in debug_calls if "Fetched" in str(c)]
+        assert fetched_calls, "Expected a 'Fetched … models' debug log"
+        # The second positional format-arg must be the coordinator URL so an
+        # operator with two entries can distinguish "proxy-a fetched 0 models"
+        # from "proxy-b fetched 5 models" without reading the entry_id.
+        call_args = fetched_calls[-1][0]
+        assert coord._url in call_args, (
+            f"Proxy URL {coord._url!r} missing from success debug log — "
+            "operators cannot identify which proxy succeeded in multi-entry setups"
+        )
+
+    @pytest.mark.asyncio
+    async def test_coordinator_logs_never_leak_api_key(self) -> None:
+        """No log call emitted by _async_update_data must contain the API key.
+
+        The Authorization header ('Bearer sk-…') stored in _headers must never
+        appear in any log output because HA log files are routinely shared in
+        bug reports.  This is a regression guard — the current code does not log
+        headers, but a future refactor adding diagnostic header-dump logging
+        would be caught here before reaching production."""
+        _API_KEY = "sk-super-secret-key"
+        coord = _make_coordinator()
+        coord._headers["Authorization"] = f"Bearer {_API_KEY}"
+        ok = _make_response(
+            200,
+            {"data": [{"id": "gpt-5.5", "created": 100}]},
+        )
+        coord._http.get = AsyncMock(return_value=ok)
+
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = True
+            await coord._async_update_data()
+
+        all_logged = " ".join(str(c) for c in mock_log.mock_calls)
+        assert _API_KEY not in all_logged, (
+            f"API key {_API_KEY!r} appeared in a coordinator log call — "
+            "credentials must never be written to HA's log files"
+        )
+
+    @pytest.mark.asyncio
     async def test_debug_block_skipped_when_logging_disabled(self) -> None:
         """When isEnabledFor(DEBUG) returns False the expensive chat-count
         sum() and debug() call are both skipped — the coordinator still returns

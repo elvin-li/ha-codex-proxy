@@ -13,6 +13,25 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.75] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_logging.py`** — two new `TestSuccessLogging` tests:
+  - `test_success_log_includes_proxy_url` — the "Fetched … models" debug message
+    must include `self._url` so operators with multiple Codex entries can identify
+    which proxy's fetch just succeeded from a single log line. The existing
+    `test_debug_logged_on_success` only checked for the model count; this test
+    pins that the URL is also present as the second positional format argument.
+  - `test_coordinator_logs_never_leak_api_key` — security regression guard
+    asserting the Authorization header value (`Bearer sk-…`) never appears in
+    any log call emitted by `_async_update_data`. The current code does not log
+    headers, but this test catches a future refactor that adds diagnostic
+    header-dump logging before it reaches production. Matches the pattern from
+    `test_probe_proxy.py::test_debug_log_does_not_leak_api_key` (v0.2.71).
+
+---
+
 ## [0.2.74] – 2026-05-19
 
 ### Added (tests)
