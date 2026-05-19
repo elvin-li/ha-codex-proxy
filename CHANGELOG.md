@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.101] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_update_entity.py`** —
+  `TestAsyncInstall.test_install_log_model_positions_in_format_args` checks
+  that the model-install info log passes `(target, title, installed_version)`
+  as positional format args at indices 1, 2, and 3.  The existing string-based
+  log tests would pass even if the args were reordered; the new test pins each
+  position to match the format string
+  `"Installing model '%s' on subentry '%s' (was '%s'); reloading entry"`.
+
+---
+
 ## [0.2.100] – 2026-05-19
 
 ### Added (tests)

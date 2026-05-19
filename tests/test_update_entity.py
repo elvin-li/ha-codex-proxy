@@ -240,6 +240,35 @@ class TestAsyncInstall:
         )
 
     @pytest.mark.asyncio
+    async def test_install_log_model_positions_in_format_args(self) -> None:
+        """The install info log must pass (target, title, old) as positional
+        format args at indices 1, 2, and 3 respectively.
+
+        The existing tests for new model, old model, and title each use
+        str(call_args) — they pass even if the args are reordered so the
+        rendered message scrambles 'Installing … on … (was …)'.  This test
+        pins the exact positions so a refactor that swaps the arg order is
+        immediately caught:
+          args[1] = target (new model)
+          args[2] = subentry title
+          args[3] = installed_version (old model)"""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        with patch("custom_components.codex_proxy.update._LOGGER") as mock_log:
+            await entity.async_install(version="gpt-5.6", backup=False)
+        call_args = mock_log.info.call_args
+        assert call_args.args[1] == "gpt-5.6", (
+            f"Expected new model 'gpt-5.6' at args[1], got {call_args.args[1]!r}"
+        )
+        assert call_args.args[2] == "Test Agent", (
+            f"Expected subentry title 'Test Agent' at args[2], got {call_args.args[2]!r}"
+        )
+        assert call_args.args[3] == "gpt-5.5", (
+            f"Expected old model 'gpt-5.5' at args[3], got {call_args.args[3]!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_no_log_on_noop_install(self) -> None:
         """No log when version is already installed."""
         from unittest.mock import patch
