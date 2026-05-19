@@ -13,6 +13,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.95] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_enrich_subentry.py`** — `TestEnrichSubentryData.test_base_dict_not_mutated`
+  verifies that the caller's `base` dict is not mutated when
+  `_enrich_subentry_data` writes new keys.  Callers pass a live subentry's
+  `.data` dict as `base` during reconfigure; a refactor that removed the
+  `dict(base)` copy would silently persist changes back into the caller's dict.
+
+---
+
 ## [0.2.94] – 2026-05-19
 
 ### Added (tests)

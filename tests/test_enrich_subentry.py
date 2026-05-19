@@ -65,6 +65,24 @@ class TestEnrichSubentryData:
         result = _enrich_subentry_data({"chat_model": "gpt-5.6"}, base=base)
         assert result["chat_model"] == "gpt-5.6"
 
+    def test_base_dict_not_mutated(self) -> None:
+        """The caller's ``base`` dict must not be mutated by _enrich_subentry_data.
+
+        The function creates a copy (``dict(base)``) before applying updates;
+        callers typically pass a live subentry's ``.data`` dict as ``base`` when
+        reconfiguring.  A refactor that removed the copy (writing directly into
+        ``base``) would silently persist service_tier=None and the new model
+        into the caller's dict between calls — caught here, invisible to
+        test_user_input_overrides_base_chat_model which only checks the return
+        value."""
+        base = {"chat_model": "gpt-5.5", "reasoning_effort": "high"}
+        original_base_copy = dict(base)
+        _enrich_subentry_data({"chat_model": "gpt-5.6"}, base=base)
+        assert base == original_base_copy, (
+            "base dict was mutated — _enrich_subentry_data must copy base "
+            "before applying updates so the caller's original data is preserved"
+        )
+
 
 # ---------------------------------------------------------------------------
 # _upstream_keys caching
