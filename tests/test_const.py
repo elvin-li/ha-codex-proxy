@@ -139,6 +139,22 @@ class TestImageModelPrefixes:
     def test_is_tuple(self) -> None:
         assert isinstance(IMAGE_MODEL_ID_PREFIXES, tuple)
 
+    def test_no_empty_prefix(self) -> None:
+        """An empty-string prefix would cause every model to be filtered out
+        (since every string starts with ``""``). Guard against accidental
+        introduction of an empty prefix."""
+        assert all(len(p) > 0 for p in IMAGE_MODEL_ID_PREFIXES), (
+            "IMAGE_MODEL_ID_PREFIXES must not contain an empty string"
+        )
+
+    def test_all_prefixes_are_lowercase(self) -> None:
+        """``startswith`` is case-sensitive and real OpenAI/proxy model IDs
+        use lowercase.  An uppercase prefix (e.g. ``"GPT-Image"``) would
+        silently fail to filter the intended models."""
+        assert all(p == p.lower() for p in IMAGE_MODEL_ID_PREFIXES), (
+            "All IMAGE_MODEL_ID_PREFIXES must be lowercase"
+        )
+
 
 class TestCodexHeaders:
     def test_user_agent_contains_codex(self) -> None:

@@ -13,6 +13,26 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.41] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** (`latest_chat_model_id` docstring) — Added comprehensive
+  docstring documenting the `(-created, id)` sort invariant, the two ``None``
+  return conditions (coordinator unpopulated / image-only proxy), and the
+  relationship to `_async_update_data`'s sort guarantee.
+
+### Added (tests)
+
+- `test_coordinator_properties.py` — `test_filter_does_not_reorder_chat_models`:
+  verifies `chat_models` preserves input order and never re-sorts after filtering.
+- `test_coordinator_properties.py` — `test_alphabetically_first_returned_when_timestamps_equal`:
+  confirms `latest_chat_model_id` returns the first element of `chat_models` when
+  all models carry the same `created` timestamp; input is pre-sorted to match the
+  invariant `_async_update_data` guarantees.
+
+---
+
 ## [0.2.40] – 2026-05-19
 
 ### Added

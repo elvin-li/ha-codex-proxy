@@ -183,12 +183,18 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @property
     def chat_models(self) -> list[dict[str, Any]]:
-        """Chat-capable models (image-only excluded), newest first.
+        """Chat-capable models (image-only excluded), in stored order.
 
-        Sorted by ``created`` descending, with alphabetical ``id`` as a
-        tiebreaker so the list is deterministic when the proxy reports the
-        same timestamp for multiple models (e.g. all-zero from a local
-        gateway).
+        This property only **filters** — it does not sort.  The list is
+        returned in the same order as ``self.data["models"]``, which
+        ``_async_update_data`` always stores sorted by ``(-created, id)``:
+        newest first, alphabetical ``id`` as a tiebreaker for equal timestamps.
+
+        Returns an empty list when:
+
+        * ``self.data`` is ``None`` or ``{}`` (coordinator not yet populated), or
+        * every model in ``self.data["models"]`` matches an
+          ``IMAGE_MODEL_ID_PREFIXES`` prefix.
         """
         if not self.data:
             return []

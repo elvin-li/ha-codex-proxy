@@ -77,13 +77,23 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
 
     @property
     def installed_version(self) -> str | None:
+        """The chat model currently configured on this subentry.
+
+        Reads ``subentry.data[UPSTREAM_CONF_CHAT_MODEL]`` and falls back to
+        ``DEFAULT_MODEL`` when the key is absent (e.g. fresh subentry created
+        before the model was explicitly set by the user).
+        """
         return self._subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL)
 
     @property
     def latest_version(self) -> str | None:
-        # When the coordinator hasn't returned data yet (or proxy is down),
-        # report installed_version so HA doesn't render "update available"
-        # against a phantom None.
+        """The newest chat model advertised by the proxy, or ``installed_version``.
+
+        Falls back to ``installed_version`` when the coordinator hasn't
+        completed its first successful poll yet (``latest_chat_model_id`` is
+        ``None``), preventing HA from rendering a spurious "update available"
+        badge against a phantom ``None`` version.
+        """
         return self.coordinator.latest_chat_model_id or self.installed_version
 
     @property

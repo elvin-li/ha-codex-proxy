@@ -92,6 +92,17 @@ class TestChatModelsProperty:
         ids = [m["id"] for m in coord.chat_models]
         assert ids == ["gpt-z", "gpt-a"]  # order from data preserved; image excluded
 
+    def test_chat_models_returns_empty_when_models_key_absent(self) -> None:
+        """data dict present but lacking a 'models' key — must return [].
+
+        A coordinator update that returns an unexpected payload shape (e.g.
+        {"status": "ok"} with no "models" key) must not raise; the property
+        should degrade gracefully to an empty list.
+        """
+        coord = object.__new__(CodexModelCoordinator)
+        coord.data = {"status": "ok"}  # valid dict but no 'models' key
+        assert coord.chat_models == []
+
 
 # ---------------------------------------------------------------------------
 # latest_chat_model_id property
