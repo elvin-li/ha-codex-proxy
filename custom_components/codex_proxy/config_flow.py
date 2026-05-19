@@ -354,7 +354,9 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_mismatch()
         return self.async_update_reload_and_abort(
             entry,
-            data={CONF_API_KEY: api_key, CONF_BASE_URL: base_url},
+            # Merge with existing data to preserve CONF_INSTALLATION_ID and any
+            # future fields that may have been added since initial setup.
+            data={**entry.data, CONF_API_KEY: api_key, CONF_BASE_URL: base_url},
         )
 
     @classmethod

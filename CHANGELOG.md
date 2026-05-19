@@ -7,6 +7,30 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.15] – 2026-05-19
+
+### Fixed
+
+- **`config_flow.py` — `async_step_reconfigure` preserves `CONF_INSTALLATION_ID`**:
+  Previously, the reconfigure step passed only `{CONF_API_KEY: ..., CONF_BASE_URL: ...}`
+  to `async_update_reload_and_abort`, silently dropping `CONF_INSTALLATION_ID`
+  (and any other existing entry fields). On the next reload, `async_setup_entry`
+  would generate a fresh UUID, resetting proxy-side quota/session tracking.
+  Fixed by spreading `**entry.data` so all existing fields are preserved and
+  only the changed keys are overwritten.
+
+### Added (tests)
+
+- **`tests/ha_stubs.py`** — added real `_ConfigFlow` and `_ConfigSubentryFlow`
+  stub classes so that `class CodexConfigFlow(ConfigFlow, domain=DOMAIN)` in
+  config_flow.py produces a genuine Python class (not a MagicMock), enabling
+  direct unit tests of the flow methods.
+- **`tests/test_reconfigure_flow.py`** (5 tests) — verifies that
+  `async_step_reconfigure` passes `{**entry.data, api_key: ..., base_url: ...}`
+  to HA, preserving `CONF_INSTALLATION_ID` and any other future entry fields.
+
+---
+
 ## [0.2.14] – 2026-05-19
 
 ### Changed

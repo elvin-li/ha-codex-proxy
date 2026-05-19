@@ -113,6 +113,67 @@ class _OpenAITaskEntity:
         self._subentry = subentry
 
 
+class _ConfigFlow:
+    """Stub ConfigFlow that supports `class Foo(ConfigFlow, domain=...)` syntax.
+
+    The real HA ConfigFlow uses ``__init_subclass__(domain=...)`` to register
+    the flow handler. Our stub accepts and ignores the keyword so that
+    ``class CodexConfigFlow(ConfigFlow, domain=DOMAIN)`` produces a real class
+    rather than a MagicMock — enabling unit tests that instantiate the class.
+    """
+
+    def __init_subclass__(cls, domain: Any = None, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+
+    # Methods called in async_step_user / async_step_reconfigure
+    def add_suggested_values_to_schema(self, schema: Any, suggested: Any) -> Any:
+        return schema
+
+    def async_show_form(self, *, step_id: str = "", **kw: Any) -> dict:
+        return {"type": "form", "step_id": step_id}
+
+    async def async_set_unique_id(self, uid: Any, **kw: Any) -> None:
+        pass
+
+    def _abort_if_unique_id_configured(self, **kw: Any) -> None:
+        pass
+
+    def _abort_if_unique_id_mismatch(self) -> None:
+        pass
+
+    def _get_reconfigure_entry(self) -> Any:
+        raise NotImplementedError
+
+    def async_create_entry(self, *, title: str = "", data: Any = None, **kw: Any) -> dict:
+        return {"type": "create_entry", "title": title, "data": data}
+
+    def async_update_reload_and_abort(
+        self, entry: Any, *, data: Any = None, **kw: Any
+    ) -> dict:
+        return {"type": "abort"}
+
+
+class _ConfigSubentryFlow:
+    """Stub ConfigSubentryFlow (base for ConversationSubentryFlowHandler etc.)."""
+
+    def _get_reconfigure_subentry(self) -> Any:
+        raise NotImplementedError
+
+    def _get_entry(self) -> Any:
+        raise NotImplementedError
+
+    def async_show_form(self, *, step_id: str = "", **kw: Any) -> dict:
+        return {"type": "form", "step_id": step_id}
+
+    def async_create_entry(self, *, title: str = "", data: Any = None, **kw: Any) -> dict:
+        return {"type": "create_entry", "title": title, "data": data}
+
+    def async_update_and_abort(
+        self, entry: Any, subentry: Any, *, data: Any = None, **kw: Any
+    ) -> dict:
+        return {"type": "abort"}
+
+
 class _SensorEntityDescription:
     """Preserves all kwargs as attributes so entity.description.key works."""
 
@@ -173,6 +234,14 @@ if not isinstance(_OAI_CONST.CONF_CHAT_MODEL, str):
 _CONST = sys.modules["homeassistant.const"]
 if not isinstance(_CONST.CONF_LLM_HASS_API, str):
     _CONST.CONF_LLM_HASS_API = "llm_hass_api"
+
+# ConfigFlow / ConfigSubentryFlow — real classes so subclasses can be defined
+# with `class Foo(ConfigFlow, domain="...")` without becoming MagicMocks.
+_CE = sys.modules["homeassistant.config_entries"]
+if not isinstance(getattr(_CE, "ConfigFlow", None), type):
+    _CE.ConfigFlow = _ConfigFlow
+if not isinstance(getattr(_CE, "ConfigSubentryFlow", None), type):
+    _CE.ConfigSubentryFlow = _ConfigSubentryFlow
 
 # DataUpdateCoordinator / CoordinatorEntity — real subscriptable classes
 _UPD = sys.modules["homeassistant.helpers.update_coordinator"]
