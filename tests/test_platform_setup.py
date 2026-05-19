@@ -76,6 +76,27 @@ class TestBinarySensorSetup:
         assert mock_entry.entry_id in added[0]._attr_unique_id
 
     @pytest.mark.asyncio
+    async def test_entity_unique_id_exact_format(self, mock_entry, mock_coordinator) -> None:
+        """The binary sensor unique_id must be exactly '<entry_id>_proxy_reachable'.
+
+        test_entity_unique_id_contains_entry_id only checks that entry_id is a
+        substring — 'prefix_<entry_id>' or '<entry_id>_something_else' both
+        pass the ``in`` check.  Pinning the exact format catches a refactor
+        that changes the suffix (e.g. to '_reachable' or '_health'), which
+        would orphan any automations or dashboard cards that target the old
+        entity_id derived from the unique_id."""
+        from custom_components.codex_proxy.binary_sensor import async_setup_entry
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        expected_uid = f"{mock_entry.entry_id}_proxy_reachable"
+        assert added[0]._attr_unique_id == expected_uid, (
+            f"Expected unique_id {expected_uid!r}, got {added[0]._attr_unique_id!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_binary_sensor_coordinator_reference(
         self, mock_entry, mock_coordinator
     ) -> None:
