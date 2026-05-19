@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.116] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_update_entity.py`** —
+  `TestReleaseSummary.test_update_available_new_model_labeled_as_available`
+  checks that the new model's string position comes before the old model's in the
+  summary.  The existing `test_update_available` uses two `in` checks that pass
+  even if the models are swapped in the message; the new test pins the order
+  so `'available: <new>'` always precedes `'installed: <old>'`.
+
+---
+
 ## [0.2.115] – 2026-05-19
 
 ### Added (tests)

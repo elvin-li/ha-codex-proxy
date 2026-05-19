@@ -126,6 +126,26 @@ class TestReleaseSummary:
         entity = _make_entity("gpt-5.5", "gpt-5.6")
         assert "Click Install" in entity.release_summary
 
+    def test_update_available_new_model_labeled_as_available(self) -> None:
+        """The new (latest) model must be described as 'available' and the old
+        (installed) model must be described as 'installed' — not the other way.
+
+        test_update_available uses two ``in`` checks that pass even if the
+        models are swapped in the message (both strings still appear).  This test
+        verifies their relative positions: 'available: gpt-5.6' must precede
+        'installed: gpt-5.5' so the summary reads correctly in the HA update card.
+
+        Expected format: '… available: gpt-5.6 (installed: gpt-5.5). …'"""
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        summary = entity.release_summary
+        available_pos = summary.find("gpt-5.6")
+        installed_pos = summary.find("gpt-5.5")
+        assert available_pos < installed_pos, (
+            f"New model 'gpt-5.6' (pos {available_pos}) must appear before "
+            f"old model 'gpt-5.5' (pos {installed_pos}) in the summary — "
+            "the format is '… available: <new> (installed: <old>) …'"
+        )
+
 
 # ---------------------------------------------------------------------------
 # release_url
