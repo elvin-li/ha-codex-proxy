@@ -63,6 +63,24 @@ class TestModelSelectOptions:
         assert "gpt-5.5" in values
         assert "gpt-5.4" in values
 
+    def test_coordinator_models_exact_values_and_order(self) -> None:
+        """The options list must contain exactly the coordinator's models in the
+        same order they are provided.
+
+        test_coordinator_models_listed uses two ``in`` checks that pass even if
+        there are extra options in the list (e.g. a duplicate, a spurious
+        DEFAULT_MODEL prepended, or a stale fallback entry), or if the order is
+        reversed.  Exact list equality here catches both extra items and ordering
+        changes in a single assertion, matching the pattern used in
+        test_model_select.py::test_current_model_not_duplicated_if_already_present
+        which already uses values.count() to guard against duplication."""
+        opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.4")]), None)
+        values = [o["value"] for o in opts]
+        assert values == ["gpt-5.5", "gpt-5.4"], (
+            f"Expected exactly ['gpt-5.5', 'gpt-5.4'] in that order, got {values!r} — "
+            "the select options must preserve coordinator model order without extras"
+        )
+
     def test_current_model_prepended_if_not_in_coordinator(self) -> None:
         opts = _model_select_options(_coord([_m("gpt-5.5")]), "gpt-5.3-turbo")
         assert opts[0]["value"] == "gpt-5.3-turbo"

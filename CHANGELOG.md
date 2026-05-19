@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.124] - 2026-05-19
+### Tests
+- `test_model_select.py`: add `TestModelSelectOptions.test_coordinator_models_exact_values_and_order` — exact list equality on options values, catching extra items or ordering changes the two prior `in` checks would miss
+
 ## [0.2.123] - 2026-05-19
 ### Tests
 - `test_probe_proxy.py`: add `TestProbeProxySuccess.test_debug_log_model_as_format_arg` — pins model at `args[2]`, complementing the base_url pin at `args[1]` added in v0.2.99
