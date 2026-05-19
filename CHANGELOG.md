@@ -7,6 +7,17 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.14] – 2026-05-19
+
+### Changed
+
+- **`sensor.py`** — use `AddConfigEntryEntitiesCallback` instead of the
+  deprecated `AddEntitiesCallback` for consistency with all other platform
+  files (`button.py`, `select.py`, `update.py`, `conversation.py`,
+  `ai_task.py`).
+
+---
+
 ## [0.2.13] – 2026-05-19
 
 ### Added (tests)
