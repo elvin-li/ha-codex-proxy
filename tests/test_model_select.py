@@ -15,47 +15,7 @@ from unittest.mock import MagicMock
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-
-_HA_MODULES = [
-    "homeassistant",
-    "homeassistant.components",
-    "homeassistant.components.openai_conversation",
-    "homeassistant.components.openai_conversation.const",
-    "homeassistant.config_entries",
-    "homeassistant.const",
-    "homeassistant.core",
-    "homeassistant.exceptions",
-    "homeassistant.helpers",
-    "homeassistant.helpers.device_registry",
-    "homeassistant.helpers.entity_platform",
-    "homeassistant.helpers.httpx_client",
-    "homeassistant.helpers.selector",
-    "homeassistant.helpers.update_coordinator",
-]
-for _mod in _HA_MODULES:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
-
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_CHAT_MODEL = "chat_model"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_PROMPT = "prompt"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_REASONING_EFFORT = "reasoning_effort"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_STORE_RESPONSES = "store_responses"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_SERVICE_TIER = "service_tier"
-sys.modules["homeassistant.const"].CONF_LLM_HASS_API = "llm_hass_api"
-
-for _mod in ["openai", "voluptuous"]:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 
 from unittest.mock import patch  # noqa: E402
 
