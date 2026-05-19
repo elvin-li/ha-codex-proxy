@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.132] - 2026-05-19
+### Tests
+- `test_const.py`: add `TestIntervals.test_coordinator_max_retries_exact_value` and `test_coordinator_retry_delays_exact_values` — exact equality pins the retry count to 3 and the delay tuple to (5, 30), replacing weak `> 0` and per-element type checks that would pass on any positive values
+
 ## [0.2.131] - 2026-05-19
 ### Tests
 - `test_const.py`: add `TestCodexHeaders.test_openai_beta_exact_value` and `test_originator_exact_value` — exact string equality for both constants, replacing weak substring/type checks

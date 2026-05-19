@@ -183,6 +183,38 @@ class TestIntervals:
             assert isinstance(delay, int), f"COORDINATOR_RETRY_DELAYS[{i}] is not int: {delay!r}"
             assert delay > 0, f"COORDINATOR_RETRY_DELAYS[{i}] is not positive: {delay}"
 
+    def test_coordinator_max_retries_exact_value(self) -> None:
+        """Pin COORDINATOR_MAX_RETRIES to exactly 3.
+
+        test_coordinator_max_retries_positive only checks > 0 — any positive
+        integer passes.  COORDINATOR_MAX_RETRIES drives the retry loop bound in
+        the coordinator and the length invariant of COORDINATOR_RETRY_DELAYS;
+        changing it without a deliberate review would alter retry behaviour and
+        break the delay-table length assertion at import time.  Exact equality
+        makes the intent explicit and catches an accidental bump (e.g. 4) that
+        would require a matching COORDINATOR_RETRY_DELAYS entry."""
+        assert COORDINATOR_MAX_RETRIES == 3, (
+            f"COORDINATOR_MAX_RETRIES must be 3, got {COORDINATOR_MAX_RETRIES!r} — "
+            "changing this alters the coordinator retry loop bound and requires a "
+            "matching update to COORDINATOR_RETRY_DELAYS"
+        )
+
+    def test_coordinator_retry_delays_exact_values(self) -> None:
+        """Pin COORDINATOR_RETRY_DELAYS to exactly (5, 30).
+
+        test_coordinator_retry_delays_all_positive_ints only checks that every
+        element is a positive int — (1, 1) or (999, 999) both pass.  The delays
+        directly control how long the coordinator waits between transient-error
+        retries; making them too short hammers the proxy on flaky networks, too
+        long makes the integration appear unresponsive after startup.  Pinning
+        the exact tuple catches an accidental edit (e.g. swapping 5 and 30 or
+        inflating both values) before it reaches production."""
+        assert COORDINATOR_RETRY_DELAYS == (5, 30), (
+            f"COORDINATOR_RETRY_DELAYS must be (5, 30), got {COORDINATOR_RETRY_DELAYS!r} — "
+            "these are the inter-attempt sleep durations; changing them alters retry "
+            "backoff behaviour without a corresponding protocol review"
+        )
+
 
 class TestImageModelPrefixes:
     def test_gpt_image_prefix_present(self) -> None:
