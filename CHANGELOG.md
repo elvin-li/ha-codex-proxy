@@ -13,6 +13,30 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.59] – 2026-05-19
+
+### Fixed (tests)
+
+- **`tests/test_binary_sensor.py`** — renamed misleading test
+  ``test_none_when_only_exception_and_no_timestamp_or_model`` to
+  ``test_last_error_only_when_no_timestamp_or_model``.  The old name contained
+  "none_when" but the test body asserted the result was **non-None** (because
+  ``last_exception`` alone makes the attributes dict non-empty and
+  ``extra_state_attributes`` returns it rather than ``None``).  This
+  contradiction would cause confusion when reading a future test failure.
+- Updated ``test_none_when_both_time_and_model_are_none`` docstring to
+  explicitly state that all three optional attributes — including
+  ``last_exception=None`` — must be absent for ``extra_state_attributes`` to
+  return ``None``.  The previous docstring only mentioned the timestamp and
+  model, omitting the requirement that ``last_exception`` is also ``None``.
+- Strengthened the ``test_last_error_only_when_no_timestamp_or_model``
+  assertion from checking ``attrs is not None`` + ``attrs["last_error"]``
+  separately to ``attrs == {"last_error": "never polled"}`` — verifying the
+  dict contains *exactly* the expected key and value, not just that the key is
+  present.
+
+---
+
 ## [0.2.58] – 2026-05-19
 
 ### Fixed

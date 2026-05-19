@@ -189,10 +189,16 @@ def _make_sensor_with_coord(
 
 class TestExtraStateAttributes:
     def test_none_when_both_time_and_model_are_none(self) -> None:
-        """Returns None when neither last_checked nor latest_model is available."""
+        """Returns None when all three optional attributes are absent.
+
+        Requires ``last_update_success_time=None``, ``latest_chat_model_id=None``,
+        **and** ``last_exception=None`` — if any one of them is set the dict is
+        non-empty and ``extra_state_attributes`` returns it rather than ``None``.
+        """
         s = _make_sensor_with_coord(
             last_update_success_time=None,
             latest_chat_model_id=None,
+            last_exception=None,
         )
         assert s.extra_state_attributes is None
 
@@ -295,15 +301,16 @@ class TestExtraStateAttributes:
         attrs = s.extra_state_attributes
         assert isinstance(attrs["last_error"], str)
 
-    def test_none_when_only_exception_and_no_timestamp_or_model(self) -> None:
-        """If all three attributes are absent, extra_state_attributes returns None
-        even when last_exception is set (last_error alone would produce attrs)."""
+    def test_last_error_only_when_no_timestamp_or_model(self) -> None:
+        """When only ``last_exception`` is set (no timestamp, no latest model),
+        ``extra_state_attributes`` returns a non-None dict containing just the
+        ``last_error`` key.  This exercises the branch where ``last_error`` is
+        the sole attribute that makes the dict non-empty."""
         s = _make_sensor_with_coord(
             last_update_success_time=None,
             latest_chat_model_id=None,
             last_exception=Exception("never polled"),
         )
-        # last_exception alone should produce a non-None attrs dict
         attrs = s.extra_state_attributes
         assert attrs is not None
-        assert attrs["last_error"] == "never polled"
+        assert attrs == {"last_error": "never polled"}
