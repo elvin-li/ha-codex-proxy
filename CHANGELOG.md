@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.137] - 2026-05-19
+### Tests
+- `test_conversation_entity.py`: add `test_device_info_identifiers_exact_set` to both `TestCodexConversationEntity` and `TestCodexAITaskEntity` — exact set equality on `identifiers`, replacing the `in` check that passes with extra identifiers
+
 ## [0.2.136] - 2026-05-19
 ### Tests
 - `test_main_flow.py`: add `TestEntryCreation.test_subentry_types_exact_set` — exact set equality on created subentry types, catching unexpected extras missed by two independent `in` checks

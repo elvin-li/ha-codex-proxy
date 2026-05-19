@@ -55,6 +55,23 @@ class TestCodexConversationEntity:
         entity = CodexConversationEntity(entry, sub)
         assert (DOMAIN, "sub-conv") in entity._attr_device_info["identifiers"]
 
+    def test_device_info_identifiers_exact_set(self) -> None:
+        """identifiers must be exactly {(DOMAIN, subentry_id)} — no more, no less.
+
+        test_device_info_identifiers_use_domain_and_subentry_id uses ``in``
+        which passes even if an extra identifier is accidentally included (e.g.
+        a duplicate or a misapplied entry-level identifier).  Exact set equality
+        catches additions without requiring enumeration of every possible extra
+        identifier value."""
+        entry = _make_entry()
+        sub = _make_subentry("sub-conv")
+        entity = CodexConversationEntity(entry, sub)
+        expected = {(DOMAIN, "sub-conv")}
+        assert entity._attr_device_info["identifiers"] == expected, (
+            f"Expected identifiers {expected!r}, "
+            f"got {entity._attr_device_info['identifiers']!r}"
+        )
+
     def test_device_info_name_matches_subentry_title(self) -> None:
         entry = _make_entry()
         sub = _make_subentry(title="Codex 对话")
@@ -102,6 +119,21 @@ class TestCodexAITaskEntity:
         sub = _make_subentry("sub-task")
         entity = CodexAITaskEntity(entry, sub)
         assert (DOMAIN, "sub-task") in entity._attr_device_info["identifiers"]
+
+    def test_device_info_identifiers_exact_set(self) -> None:
+        """identifiers must be exactly {(DOMAIN, subentry_id)} — no more, no less.
+
+        Parity with TestCodexConversationEntity.test_device_info_identifiers_exact_set.
+        test_device_info_identifiers_use_domain_and_subentry_id uses ``in``
+        which passes with extra identifiers; exact set equality catches additions."""
+        entry = _make_entry()
+        sub = _make_subentry("sub-task")
+        entity = CodexAITaskEntity(entry, sub)
+        expected = {(DOMAIN, "sub-task")}
+        assert entity._attr_device_info["identifiers"] == expected, (
+            f"Expected identifiers {expected!r}, "
+            f"got {entity._attr_device_info['identifiers']!r}"
+        )
 
     def test_device_info_name_matches_subentry_title(self) -> None:
         entry = _make_entry()
