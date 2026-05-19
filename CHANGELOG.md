@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.150] - 2026-05-19
+### Tests
+- `test_subentry_flow.py`: add `TestBuildSchemaWithCoordinator.test_coordinator_model_options_exact_list` — exact list equality for coordinator model options, replacing two `in` membership checks
+
 ## [0.2.149] - 2026-05-19
 ### Tests
 - `test_parse_toml_validate.py`: add `TestParseResultNamedAccess.test_store_responses_default_is_false` — pins `store_responses` default to exactly `False`, replacing the `isinstance(bool)` check that passes for either bool value

@@ -140,6 +140,24 @@ class TestBuildSchemaWithCoordinator:
         assert "gpt-5.5" in option_values
         assert "gpt-5.6" in option_values
 
+    def test_coordinator_model_options_exact_list(self) -> None:
+        """_model_select_options must return exactly the coordinator's models in
+        coordinator order — no extras, no duplicates.
+
+        test_coordinator_model_options uses two ``in`` checks which pass even if
+        option_values contains a spurious DEFAULT_MODEL prepend or a duplicate
+        (e.g. from a buggy dedup branch).  Exact list equality here verifies the
+        happy-path output is clean."""
+        from custom_components.codex_proxy.config_flow import _model_select_options
+
+        coord = _make_coordinator_with_models(["gpt-5.5", "gpt-5.6"])
+        options = _model_select_options(coord, None)
+        option_values = [o["value"] for o in options]
+        assert option_values == ["gpt-5.5", "gpt-5.6"], (
+            f"Expected exactly ['gpt-5.5', 'gpt-5.6'] in coordinator order, "
+            f"got {option_values!r}"
+        )
+
     @pytest.mark.asyncio
     async def test_empty_coordinator_falls_back_to_default(self) -> None:
         """When the coordinator has no chat models, the dropdown falls back to
