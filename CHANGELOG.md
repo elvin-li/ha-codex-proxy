@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.90] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_logging.py`** — `TestSuccessLogging.test_success_log_chat_count_when_all_are_chat_models`
+  directly checks `call_args[3] == 2` when all fetched models are chat-capable.
+  The companion `test_success_log_shows_zero_for_image_only` already pins
+  `call_args[3] == 0` for image-only payloads; the only "positive" test was
+  `test_debug_logged_on_success` which uses an OR condition (`"2" in str OR
+  "model" in str`) that can pass even if the count arg is wrong.  Together
+  the two positional-arg tests cover both ends of the chat-count range.
+
+---
+
 ## [0.2.89] – 2026-05-19
 
 ### Added (tests)
