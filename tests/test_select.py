@@ -130,6 +130,14 @@ class TestCurrentOption:
         entity._subentry.data = {}
         assert entity.current_option == DEFAULT_MODEL
 
+    def test_falls_back_to_default_when_value_is_none(self) -> None:
+        """Explicit None stored in subentry data (e.g., written by an older
+        version) must produce DEFAULT_MODEL, not None, so HA never warns about
+        current_option not being in options."""
+        entity = _make_entity()
+        entity._subentry.data = {"chat_model": None}
+        assert entity.current_option == DEFAULT_MODEL
+
 
 # ---------------------------------------------------------------------------
 # async_select_option

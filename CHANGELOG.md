@@ -13,6 +13,36 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.29] – 2026-05-19
+
+### Fixed
+
+- **`select.py`** — `current_option` now returns `DEFAULT_MODEL` when the
+  stored value is explicitly `None` (not just when the key is absent).  An
+  older version of the integration could write `None` into subentry data; with
+  this fix the entity will never surface `None` as `current_option`, which
+  would cause HA to log a "current option not in options" warning.
+  Return type is narrowed from `str | None` to `str`.
+
+- **`entity_utils.py`** — The broad `except Exception` guard around the
+  manifest-version read is now `except (OSError, ValueError, KeyError)`.
+  This still catches all realistic file-I/O and JSON-parse failures while
+  avoiding suppression of unexpected errors (e.g. `MemoryError`, `SystemExit`).
+
+### Added (tests)
+
+- **`tests/test_select.py`** — `test_falls_back_to_default_when_value_is_none`
+  verifies that `current_option` returns `DEFAULT_MODEL` when the subentry
+  stores an explicit `None`.
+
+- **`tests/test_setup_entry.py`** — `test_httpx_http_error_is_non_fatal`
+  verifies that `httpx.HTTPError` during `async_config_entry_first_refresh` is
+  caught by the `except (httpx.HTTPError, UpdateFailed)` clause in
+  `async_setup_entry` and does not prevent the entry from loading.  (Only
+  `UpdateFailed` was covered before.)
+
+---
+
 ## [0.2.28] – 2026-05-19
 
 ### Fixed

@@ -15,7 +15,7 @@ from .const import DEFAULT_MODEL, DOMAIN
 _MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.json"
 try:
     _INTEGRATION_VERSION: str | None = json.loads(_MANIFEST_PATH.read_text()).get("version")
-except Exception:  # noqa: BLE001 — non-critical, degrade gracefully  # pragma: no cover
+except (OSError, ValueError, KeyError):  # pragma: no cover
     _INTEGRATION_VERSION = None  # pragma: no cover
 
 

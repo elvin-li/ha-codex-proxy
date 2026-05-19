@@ -19,6 +19,7 @@ import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import httpx  # noqa: E402, I001
 import tests.ha_stubs  # noqa: F401, E402, I001
 from custom_components.codex_proxy import async_setup_entry  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
@@ -186,3 +187,20 @@ class TestCoordinatorFailurePath:
             await async_setup_entry(hass, entry)
 
         assert DATA_COORDINATOR in hass.data[DOMAIN]["entry-fail2"]
+
+    @pytest.mark.asyncio
+    async def test_httpx_http_error_is_non_fatal(self) -> None:
+        """httpx.HTTPError during first refresh is caught and treated as
+        non-fatal — the except clause in __init__.py covers both UpdateFailed
+        and httpx.HTTPError."""
+        entry = _make_entry("entry-fail3", installation_id="iid-fail3")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator(
+            first_refresh_side_effect=httpx.ConnectError("connection refused")
+        )
+
+        with patcher:
+            result = await async_setup_entry(hass, entry)
+
+        assert result is True
+        assert DATA_COORDINATOR in hass.data[DOMAIN]["entry-fail3"]
