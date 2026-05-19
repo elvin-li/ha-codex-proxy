@@ -130,7 +130,7 @@ wire_api = "responses"
 
 | 实体 | 类型 | 说明 |
 |---|---|---|
-| `binary_sensor.codex_*_proxy_reachable` | 连通性诊断 | 反代可达时为 `on`，最近一次 `/v1/models` 拉取失败时为 `off`；`extra_state_attributes.last_checked` 记录上次成功检查时间 |
+| `binary_sensor.codex_*_proxy_reachable` | 连通性诊断 | 反代可达时为 `on`，最近一次 `/v1/models` 拉取失败时为 `off`；`extra_state_attributes` 包含 `last_checked`（上次成功检查时间）和 `latest_model`（当前最新对话模型 ID） |
 | `button.codex_*_refresh_models` | 操作 | 立即触发一次 `/v1/models` 刷新，无需等待 6 小时周期 |
 | `update.codex_*_model_update` | 更新 | 反代出现新模型时显示 "有更新"，点安装即切换子代理模型 |
 

@@ -13,6 +13,35 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.25] – 2026-05-19
+
+### Added
+
+- **`binary_sensor.py`** — `extra_state_attributes` now includes
+  `latest_model` (the newest chat-capable model id known to the coordinator)
+  alongside the existing `last_checked` timestamp.  Previously, automations
+  that wanted to act on the current model had to enable the select or update
+  entity; now the reachability sensor itself carries that information.
+
+  Both attributes are omitted individually when the coordinator doesn't have
+  data yet (`last_checked` absent before first successful poll;
+  `latest_model` absent when there are no chat models).  The property returns
+  `None` only when both would be absent.
+
+### Added (tests)
+
+- **`tests/test_binary_sensor.py`** — 5 new `TestExtraStateAttributes` cases
+  replacing the old 3: `test_latest_model_present_when_coordinator_has_model`,
+  `test_latest_model_absent_when_coordinator_has_no_model`,
+  `test_both_attributes_present_after_successful_poll`,
+  `test_only_latest_model_when_no_timestamp`,
+  `test_none_when_both_time_and_model_are_none`.
+
+  Also extracted a shared `_make_sensor_with_coord()` helper to eliminate
+  per-test boilerplate.
+
+---
+
 ## [0.2.24] – 2026-05-19
 
 ### Added

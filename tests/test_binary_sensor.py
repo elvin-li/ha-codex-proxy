@@ -126,37 +126,39 @@ class TestMetadata:
 # ---------------------------------------------------------------------------
 
 
+def _make_sensor_with_coord(
+    last_update_success: bool = True,
+    last_update_success_time=None,
+    latest_chat_model_id=None,
+) -> CodexProxyReachableSensor:
+    from tests.ha_stubs import _CoordinatorEntity
+
+    coord = MagicMock()
+    coord.last_update_success = last_update_success
+    coord.last_update_success_time = last_update_success_time
+    coord.latest_chat_model_id = latest_chat_model_id
+
+    s = object.__new__(CodexProxyReachableSensor)
+    _CoordinatorEntity.__init__(s, coord)
+    s._attr_unique_id = "e_proxy_reachable"
+    s._attr_device_info = {}
+    return s
+
+
 class TestExtraStateAttributes:
-    def test_none_when_last_update_success_time_is_none(self) -> None:
-        from tests.ha_stubs import _CoordinatorEntity
-        from unittest.mock import MagicMock
-
-        coord = MagicMock()
-        coord.last_update_success = True
-        coord.last_update_success_time = None
-
-        s = object.__new__(CodexProxyReachableSensor)
-        _CoordinatorEntity.__init__(s, coord)
-        s._attr_unique_id = "e_proxy_reachable"
-        s._attr_device_info = {}
-
+    def test_none_when_both_time_and_model_are_none(self) -> None:
+        """Returns None when neither last_checked nor latest_model is available."""
+        s = _make_sensor_with_coord(
+            last_update_success_time=None,
+            latest_chat_model_id=None,
+        )
         assert s.extra_state_attributes is None
 
     def test_returns_isoformat_timestamp(self) -> None:
         from datetime import datetime, timezone
-        from tests.ha_stubs import _CoordinatorEntity
-        from unittest.mock import MagicMock
 
         ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=timezone.utc)
-        coord = MagicMock()
-        coord.last_update_success = True
-        coord.last_update_success_time = ts
-
-        s = object.__new__(CodexProxyReachableSensor)
-        _CoordinatorEntity.__init__(s, coord)
-        s._attr_unique_id = "e_proxy_reachable"
-        s._attr_device_info = {}
-
+        s = _make_sensor_with_coord(last_update_success_time=ts)
         attrs = s.extra_state_attributes
         assert attrs is not None
         assert "last_checked" in attrs
@@ -164,18 +166,54 @@ class TestExtraStateAttributes:
 
     def test_last_checked_is_string(self) -> None:
         from datetime import datetime, timezone
-        from tests.ha_stubs import _CoordinatorEntity
-        from unittest.mock import MagicMock
 
         ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        coord = MagicMock()
-        coord.last_update_success = False
-        coord.last_update_success_time = ts
-
-        s = object.__new__(CodexProxyReachableSensor)
-        _CoordinatorEntity.__init__(s, coord)
-        s._attr_unique_id = "e_proxy_reachable"
-        s._attr_device_info = {}
-
+        s = _make_sensor_with_coord(last_update_success=False, last_update_success_time=ts)
         attrs = s.extra_state_attributes
         assert isinstance(attrs["last_checked"], str)
+
+    def test_latest_model_present_when_coordinator_has_model(self) -> None:
+        """latest_model attribute appears when the coordinator knows the latest model."""
+        s = _make_sensor_with_coord(latest_chat_model_id="gpt-5.6")
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert "latest_model" in attrs
+        assert attrs["latest_model"] == "gpt-5.6"
+
+    def test_latest_model_absent_when_coordinator_has_no_model(self) -> None:
+        """latest_model is not included when the coordinator has no chat models yet."""
+        from datetime import datetime, timezone
+
+        ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=timezone.utc)
+        s = _make_sensor_with_coord(
+            last_update_success_time=ts,
+            latest_chat_model_id=None,
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert "latest_model" not in attrs
+
+    def test_both_attributes_present_after_successful_poll(self) -> None:
+        """After a successful poll both last_checked and latest_model are present."""
+        from datetime import datetime, timezone
+
+        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=timezone.utc)
+        s = _make_sensor_with_coord(
+            last_update_success_time=ts,
+            latest_chat_model_id="gpt-5.5",
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert "last_checked" in attrs
+        assert "latest_model" in attrs
+
+    def test_only_latest_model_when_no_timestamp(self) -> None:
+        """When only latest_model_id is known (no timestamp yet), attrs is non-None."""
+        s = _make_sensor_with_coord(
+            last_update_success_time=None,
+            latest_chat_model_id="gpt-5.5",
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert attrs["latest_model"] == "gpt-5.5"
+        assert "last_checked" not in attrs

@@ -65,8 +65,18 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose last_checked timestamp so automations can use it directly."""
+        """Expose last_checked timestamp and latest_model for automations.
+
+        ``last_checked`` is an ISO-8601 string of the most recent successful
+        ``/v1/models`` poll.  ``latest_model`` is the newest chat-capable model
+        id known to the coordinator — both attributes are absent when the
+        coordinator has not yet completed its first successful poll.
+        """
+        attrs: dict[str, Any] = {}
         t = self.coordinator.last_update_success_time
-        if t is None:
-            return None
-        return {"last_checked": t.isoformat()}
+        if t is not None:
+            attrs["last_checked"] = t.isoformat()
+        latest = self.coordinator.latest_chat_model_id
+        if latest is not None:
+            attrs["latest_model"] = latest
+        return attrs or None
