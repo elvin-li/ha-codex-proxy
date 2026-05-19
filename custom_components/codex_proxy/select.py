@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from homeassistant.core import callback
 from homeassistant.components.openai_conversation.const import (
     CONF_CHAT_MODEL as UPSTREAM_CONF_CHAT_MODEL,
 )
@@ -142,3 +143,16 @@ class CodexModelSelectEntity(
             option,
         )
         await self.hass.config_entries.async_reload(self._entry.entry_id)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Re-read the subentry so current_option reflects external changes.
+
+        If the user reconfigures the subentry via the config flow (which
+        doesn't go through this entity), ``self._subentry`` would otherwise
+        be stale and ``current_option`` would return the pre-change model.
+        """
+        live = self._entry.subentries.get(self._subentry.subentry_id)
+        if live is not None:
+            self._subentry = live
+        super()._handle_coordinator_update()

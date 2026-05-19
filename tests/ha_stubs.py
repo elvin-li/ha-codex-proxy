@@ -180,10 +180,12 @@ _DR = sys.modules["homeassistant.helpers.device_registry"]
 if not isinstance(getattr(_DR, "DeviceInfo", None), type):
     _DR.DeviceInfo = dict
 
-# core.callback is just an identity decorator
+# core.callback is just an identity decorator.
+# NOTE: Do NOT guard this with `if not callable(...)` — MagicMock objects are
+# always callable, so that guard would never fire and @callback would apply a
+# MagicMock as a decorator, replacing decorated methods with MagicMock instances.
 _CORE = sys.modules["homeassistant.core"]
-if not callable(getattr(_CORE, "callback", None)):
-    _CORE.callback = lambda f: f
+_CORE.callback = lambda f: f
 
 # ---------------------------------------------------------------------------
 # Wire submodule attributes onto parent mocks.

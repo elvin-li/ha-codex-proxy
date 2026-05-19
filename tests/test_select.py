@@ -156,3 +156,34 @@ class TestAsyncSelectOption:
         # Third positional arg or keyword 'data' contains the new subentry data
         new_data = call_kwargs[1].get("data") or call_kwargs[0][2]
         assert new_data["chat_model"] == "gpt-5.6"
+
+
+# ---------------------------------------------------------------------------
+# _handle_coordinator_update
+# ---------------------------------------------------------------------------
+
+
+class TestHandleCoordinatorUpdate:
+    def test_subentry_refreshed_from_entry_on_update(self) -> None:
+        """When the coordinator fires an update, _subentry should be re-read
+        from _entry.subentries so stale external changes are picked up."""
+        entity = _make_entity("gpt-5.5", ["gpt-5.5"])
+
+        updated_sub = _make_subentry("gpt-5.6")
+        updated_sub.subentry_id = "sub-1"
+        entity._entry.subentries = {"sub-1": updated_sub}
+
+        entity._handle_coordinator_update()
+
+        assert entity._subentry is updated_sub
+
+    def test_subentry_unchanged_when_not_in_entry(self) -> None:
+        """If the subentry_id is no longer in entry.subentries (e.g., it was
+        deleted), _subentry should not change."""
+        entity = _make_entity("gpt-5.5", ["gpt-5.5"])
+        original_sub = entity._subentry
+        entity._entry.subentries = {}  # subentry removed
+
+        entity._handle_coordinator_update()
+
+        assert entity._subentry is original_sub
