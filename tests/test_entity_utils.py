@@ -79,6 +79,17 @@ class TestBuildCodexDeviceInfo:
         info_b = build_codex_device_info(sub_b, "chat_model")
         assert info_a["identifiers"] != info_b["identifiers"]
 
+    def test_sw_version_is_present(self) -> None:
+        """sw_version should be populated from the manifest (not missing/absent).
+
+        Symmetry with build_codex_entry_device_info which has always included it.
+        """
+        sub = _make_subentry()
+        info = build_codex_device_info(sub, "chat_model")
+        assert "sw_version" in info
+        # Value is either a non-empty string (real run) or None (manifest read failed).
+        assert info["sw_version"] is None or isinstance(info["sw_version"], str)
+
 
 # ---------------------------------------------------------------------------
 # build_codex_entry_device_info

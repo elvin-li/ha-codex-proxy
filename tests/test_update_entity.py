@@ -141,6 +141,12 @@ class TestAsyncInstall:
         await entity.async_install(version="gpt-5.6", backup=False)
         entity.hass.config_entries.async_update_subentry.assert_called_once()
         entity.hass.config_entries.async_reload.assert_awaited_once_with("entry-1")
+        # Verify the correct data key is written into the subentry
+        _, call_kwargs = entity.hass.config_entries.async_update_subentry.call_args
+        new_data = call_kwargs.get("data", {})
+        from custom_components.codex_proxy.update import UPSTREAM_CONF_CHAT_MODEL
+
+        assert new_data[UPSTREAM_CONF_CHAT_MODEL] == "gpt-5.6"
 
     @pytest.mark.asyncio
     async def test_install_uses_latest_when_version_is_none(self) -> None:

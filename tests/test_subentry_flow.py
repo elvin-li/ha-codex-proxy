@@ -142,6 +142,17 @@ class TestAsyncStepUser:
         assert data[_SERVICE_TIER_KEY] is None
 
     @pytest.mark.asyncio
+    async def test_llm_hass_api_defaults_to_empty_list(self) -> None:
+        """llm_hass_api must default to [] so HA Assist is opt-in, not opt-out."""
+        from custom_components.codex_proxy.config_flow import _upstream_keys
+
+        keys = _upstream_keys()
+        flow = _make_flow(ConversationSubentryFlowHandler)
+        await flow.async_step_user(_VALID_USER_INPUT)
+        data = flow.async_create_entry.call_args[1]["data"]
+        assert data.get(keys.get("llm_hass_api", "llm_hass_api"), []) == []
+
+    @pytest.mark.asyncio
     async def test_ai_task_entry_title_is_correct(self) -> None:
         flow = _make_flow(AITaskSubentryFlowHandler)
         await flow.async_step_user(_VALID_USER_INPUT)
@@ -206,3 +217,35 @@ class TestAsyncStepReconfigure:
         # llm_hass_api was in the base and not in user_input — must survive
         assert "llm_hass_api" in new_data
         assert new_data["llm_hass_api"] == ["assist"]
+
+
+# ---------------------------------------------------------------------------
+# AITaskSubentryFlowHandler — reconfigure parity smoke test
+# ---------------------------------------------------------------------------
+
+
+class TestAITaskReconfigure:
+    @pytest.mark.asyncio
+    async def test_shows_form_when_input_is_none(self) -> None:
+        """AITaskSubentryFlowHandler.async_step_reconfigure shows a form (smoke test
+        verifying parity with ConversationSubentryFlowHandler via shared base class)."""
+        flow = _make_flow(AITaskSubentryFlowHandler)
+        result = await flow.async_step_reconfigure(None)
+        assert result["type"] == "form"
+        flow.async_show_form.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_update_and_abort_called_on_submit(self) -> None:
+        """Submitting the AI Task reconfigure form calls async_update_and_abort."""
+        flow = _make_flow(AITaskSubentryFlowHandler)
+        await flow.async_step_reconfigure(_VALID_USER_INPUT)
+        flow.async_update_and_abort.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_service_tier_none_after_ai_task_reconfigure(self) -> None:
+        """service_tier must remain None after AI Task reconfigure (not 'auto')."""
+        flow = _make_flow(AITaskSubentryFlowHandler)
+        await flow.async_step_reconfigure(_VALID_USER_INPUT)
+        call_args = flow.async_update_and_abort.call_args
+        new_data = call_args[1].get("data") or call_args[0][-1]
+        assert new_data[_SERVICE_TIER_KEY] is None

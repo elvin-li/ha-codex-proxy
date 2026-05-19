@@ -23,7 +23,8 @@ def build_codex_device_info(subentry: ConfigSubentry, chat_model_key: str) -> dr
     """Return DeviceInfo for a *subentry*-level entity (conversation / AI task).
 
     Both conversation and AI-task entities use this so any future change
-    (e.g. adding sw_version) only needs to happen in one place.
+    only needs to happen in one place.  ``sw_version`` is populated from the
+    manifest so the device card in HA always shows the installed version.
     """
     return dr.DeviceInfo(
         identifiers={(DOMAIN, subentry.subentry_id)},
@@ -31,6 +32,7 @@ def build_codex_device_info(subentry: ConfigSubentry, chat_model_key: str) -> dr
         manufacturer="OpenAI Codex Token Pool",
         model=subentry.data.get(chat_model_key, DEFAULT_MODEL),
         entry_type=dr.DeviceEntryType.SERVICE,
+        sw_version=_INTEGRATION_VERSION,
     )
 
 

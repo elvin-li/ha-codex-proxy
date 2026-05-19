@@ -191,7 +191,7 @@ async def _probe_proxy(
     except openai.UnprocessableEntityError as err:
         errors["base"] = "unknown_model" if "model" in str(err).lower() else "unknown"
     except openai.RateLimitError:
-        errors["base"] = "cannot_connect"
+        errors["base"] = "rate_limited"
     except openai.InternalServerError:
         errors["base"] = "cannot_connect"
     except openai.APIConnectionError:
@@ -328,6 +328,10 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             )
 
+        # reasoning_effort and store_responses from TOML are intentionally
+        # ignored here — reconfigure only updates the connection credentials
+        # (api_key / base_url); subentry-level LLM settings are managed via
+        # the subentry reconfigure flow instead.
         errors, api_key, base_url, model, _, _ = _parse_toml_and_validate(user_input)
 
         if errors:

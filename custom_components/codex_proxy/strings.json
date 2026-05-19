@@ -41,7 +41,8 @@
       "required": "Required.",
       "invalid_url_scheme": "URL must start with http:// or https://.",
       "invalid_url": "Enter a valid URL including the scheme (e.g. https://your-proxy.example.com).",
-      "toml_no_base_url": "TOML parsed OK but no base_url was found. Enter the proxy URL manually."
+      "toml_no_base_url": "TOML parsed OK but no base_url was found. Enter the proxy URL manually.",
+      "rate_limited": "The proxy returned HTTP 429 — your API quota is exhausted. Wait before retrying."
     },
     "abort": {
       "already_configured": "This proxy is already configured.",

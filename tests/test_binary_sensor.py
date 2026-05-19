@@ -27,11 +27,19 @@ def _make_sensor(
     last_update_success: bool = True,
     entry_id: str = "entry-1",
 ) -> CodexProxyReachableSensor:
-    """Build a CodexProxyReachableSensor with a minimal mocked coordinator."""
+    """Build a CodexProxyReachableSensor with a minimal mocked coordinator.
+
+    Sets last_update_success_time to a real datetime so the post-poll branch
+    of is_on is exercised (not the "unknown before first poll" guard).
+    """
+    from datetime import datetime
+
     from tests.ha_stubs import _CoordinatorEntity
 
     coord = MagicMock()
     coord.last_update_success = last_update_success
+    # Explicit non-None timestamp so is_on exercises the post-poll branch.
+    coord.last_update_success_time = datetime(2026, 1, 1, tzinfo=UTC)
 
     entry = MagicMock()
     entry.entry_id = entry_id

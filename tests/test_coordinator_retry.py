@@ -167,6 +167,8 @@ class TestCoordinatorRetry:
 
     @pytest.mark.asyncio
     async def test_raises_update_failed_after_max_retries(self) -> None:
+        from custom_components.codex_proxy.const import COORDINATOR_MAX_RETRIES
+
         coord = _make_coordinator()
         coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
 
@@ -175,6 +177,10 @@ class TestCoordinatorRetry:
             pytest.raises(UpdateFailed),
         ):
             await coord._async_update_data()
+
+        # Must have attempted exactly COORDINATOR_MAX_RETRIES times (catches off-by-one
+        # if the retry range is accidentally changed).
+        assert coord._http.get.call_count == COORDINATOR_MAX_RETRIES
 
     @pytest.mark.asyncio
     async def test_sleep_called_between_retries(self) -> None:

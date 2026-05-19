@@ -103,9 +103,13 @@ class TestIntervals:
         assert COORDINATOR_MAX_RETRIES > 0
 
     def test_coordinator_retry_delays_length_consistent(self) -> None:
-        """Number of delays must be at least (max_retries - 1) so every retry
-        except the final one has a configured delay."""
-        assert len(COORDINATOR_RETRY_DELAYS) >= COORDINATOR_MAX_RETRIES - 1
+        """Delay table must have exactly (max_retries - 1) entries.
+
+        Using == (not >=) so that adding an extra delay without bumping
+        COORDINATOR_MAX_RETRIES is caught immediately rather than silently
+        leaving dead entries in the table.
+        """
+        assert len(COORDINATOR_RETRY_DELAYS) == COORDINATOR_MAX_RETRIES - 1
 
 
 class TestImageModelPrefixes:

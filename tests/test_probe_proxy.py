@@ -189,11 +189,12 @@ class TestProbeProxyPermissionDenied:
 
 class TestProbeProxyRateLimit:
     @pytest.mark.asyncio
-    async def test_rate_limit_returns_cannot_connect(self) -> None:
-        """HTTP 429 rate-limit during setup should surface as cannot_connect."""
+    async def test_rate_limit_returns_rate_limited(self) -> None:
+        """HTTP 429 rate-limit during setup must surface as 'rate_limited', not
+        'cannot_connect' — the proxy is reachable; the quota is exhausted."""
         with _patch_openai(_FakeRateLimitError()):
             errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
-        assert errors.get("base") == "cannot_connect"
+        assert errors.get("base") == "rate_limited"
 
 
 class TestProbeProxyInternalServerError:

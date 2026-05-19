@@ -13,6 +13,54 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.31] – 2026-05-19
+
+### Fixed
+
+- **`config_flow.py`** — `openai.RateLimitError` (HTTP 429) during the proxy
+  probe now returns the new `"rate_limited"` error key instead of
+  `"cannot_connect"`.  The old message ("Cannot reach the proxy…") was
+  misleading — the proxy is reachable, but the API quota is exhausted.
+  New message: "The proxy returned HTTP 429 — your API quota is exhausted.
+  Wait before retrying."
+
+- **`entity_utils.py`** — `build_codex_device_info` (subentry-level devices)
+  now includes `sw_version=_INTEGRATION_VERSION`, matching the entry-level
+  helper.  Both device cards in HA's UI now show the installed version.
+
+- **`config_flow.py`** — Added inline comment explaining why `reasoning_effort`
+  and `store_responses` from a pasted TOML are intentionally discarded in the
+  main-entry reconfigure step (they belong to subentry-level config).
+
+### Changed (tests)
+
+- `test_probe_proxy.py` — `test_rate_limit_returns_cannot_connect` renamed to
+  `test_rate_limit_returns_rate_limited` and assertion updated to `"rate_limited"`.
+- `test_binary_sensor.py` — `_make_sensor()` now explicitly sets
+  `coord.last_update_success_time` to a datetime so the post-poll branch of
+  `is_on` is actually exercised (not the "unknown before first poll" guard via a
+  truthy `MagicMock()`).
+- `test_const.py` — `test_coordinator_retry_delays_length_consistent` now uses
+  `==` instead of `>=`; any future drift between the delay table and retry count
+  is caught immediately rather than silently leaving dead entries.
+- `test_update_entity.py` — `test_install_updates_subentry_and_reloads` now
+  inspects the `data` kwarg passed to `async_update_subentry` and asserts
+  `data[UPSTREAM_CONF_CHAT_MODEL] == "gpt-5.6"`.
+- `test_coordinator_retry.py` — `test_raises_update_failed_after_max_retries`
+  now asserts `coord._http.get.call_count == COORDINATOR_MAX_RETRIES`.
+- `test_subentry_flow.py` — Added `test_llm_hass_api_defaults_to_empty_list`
+  and three `TestAITaskReconfigure` smoke tests covering the AI Task subentry
+  reconfigure path (form display, submit, service_tier=None invariant).
+- `test_entity_utils.py` — `test_sw_version_is_present` added to
+  `TestBuildCodexDeviceInfo`.
+
+### Added (strings)
+
+- `"rate_limited"` error key in `strings.json`, `translations/en.json`, and
+  `translations/zh-Hans.json`.
+
+---
+
 ## [0.2.30] – 2026-05-19
 
 ### Fixed

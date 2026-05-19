@@ -41,7 +41,8 @@
       "required": "必填。",
       "invalid_url_scheme": "URL 必须以 http:// 或 https:// 开头。",
       "invalid_url": "请输入包含协议头的完整 URL（例如 https://your-proxy.example.com）。",
-      "toml_no_base_url": "TOML 解析成功但未找到 base_url，请手动填写反代地址。"
+      "toml_no_base_url": "TOML 解析成功但未找到 base_url，请手动填写反代地址。",
+      "rate_limited": "反代返回 HTTP 429 — API 配额已耗尽，请稍后重试。"
     },
     "abort": {
       "already_configured": "该反代已经配置过。",
