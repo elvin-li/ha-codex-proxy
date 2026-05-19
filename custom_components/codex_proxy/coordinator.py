@@ -49,6 +49,19 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         entry: ConfigEntry,
         installation_id: str,
     ) -> None:
+        """Initialise the coordinator.
+
+        Builds and caches the invariant HTTP request components (URL and
+        headers) so that ``_async_update_data`` only needs to issue the GET
+        request without reconstructing them on every poll.
+
+        Args:
+            hass: The Home Assistant instance.
+            entry: The config entry that holds ``api_key`` and ``base_url``.
+            installation_id: A stable UUID assigned to this HA instance,
+                sent as ``x-codex-installation-id`` to help proxy operators
+                distinguish traffic from different HA installations.
+        """
         super().__init__(
             hass,
             _LOGGER,

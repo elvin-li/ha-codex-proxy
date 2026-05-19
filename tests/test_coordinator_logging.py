@@ -192,3 +192,30 @@ class TestSuccessLogging:
         # Third positional arg is the chat-capable count
         call_args = fetched_calls[-1][0]  # positional args tuple
         assert call_args[3] == 0, f"Expected 0 chat-capable, got {call_args[3]}"
+
+    @pytest.mark.asyncio
+    async def test_debug_block_skipped_when_logging_disabled(self) -> None:
+        """When isEnabledFor(DEBUG) returns False the expensive chat-count
+        sum() and debug() call are both skipped — the coordinator still returns
+        correct data; the guard purely avoids unnecessary computation."""
+        coord = _make_coordinator()
+        ok = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": 100},
+                    {"id": "gpt-5.4", "created": 50},
+                ]
+            },
+        )
+        coord._http.get = AsyncMock(return_value=ok)
+
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = False
+            result = await coord._async_update_data()
+
+        # Data returned correctly even when debug logging is disabled.
+        assert len(result["models"]) == 2
+        # The guard prevented any 'Fetched …' debug call.
+        fetched_calls = [c for c in mock_log.debug.call_args_list if "Fetched" in str(c)]
+        assert not fetched_calls, "debug() must not be called when isEnabledFor returns False"

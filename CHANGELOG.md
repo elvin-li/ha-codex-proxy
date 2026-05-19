@@ -13,6 +13,24 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.36] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** — Added a full docstring to
+  `CodexModelCoordinator.__init__` explaining the `hass`, `entry`, and
+  `installation_id` parameters and the motivation for pre-building `_url`
+  and `_headers` at init time.
+
+### Added (tests)
+
+- `test_coordinator_logging.py` — `test_debug_block_skipped_when_logging_disabled`:
+  when `_LOGGER.isEnabledFor(DEBUG)` returns False the expensive `sum()` and
+  `debug()` call must both be skipped, but the coordinator must still return
+  the correct model list.
+
+---
+
 ## [0.2.35] – 2026-05-19
 
 ### Fixed
