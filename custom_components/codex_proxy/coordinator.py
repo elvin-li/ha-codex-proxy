@@ -81,7 +81,9 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Transient errors (5xx, timeout) — retry with back-off
                 last_err = err
                 if attempt < COORDINATOR_MAX_RETRIES - 1:
-                    delay = COORDINATOR_RETRY_DELAYS[attempt]
+                    delay = COORDINATOR_RETRY_DELAYS[
+                        min(attempt, len(COORDINATOR_RETRY_DELAYS) - 1)
+                    ]
                     _LOGGER.debug(
                         "Transient error on attempt %d/%d (%s) — retrying in %ds",
                         attempt + 1,

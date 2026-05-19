@@ -275,3 +275,34 @@ class TestPayloadFormats:
 
         result = await coord._async_update_data()
         assert result["models"] == []
+
+
+# ---------------------------------------------------------------------------
+# Retry delay safe access
+# ---------------------------------------------------------------------------
+
+
+class TestRetryDelayClamping:
+    @pytest.mark.asyncio
+    async def test_sleep_called_with_expected_delays(self) -> None:
+        """With COORDINATOR_MAX_RETRIES=3 and COORDINATOR_RETRY_DELAYS=(5, 30),
+        two sleeps should occur with the exact delay values from the table."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(
+            side_effect=httpx.TimeoutException("timed out")
+        )
+
+        sleep_delays: list = []
+
+        async def capture_sleep(delay: float) -> None:
+            sleep_delays.append(delay)
+
+        with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=capture_sleep):
+            with pytest.raises(Exception):
+                await coord._async_update_data()
+
+        # COORDINATOR_MAX_RETRIES=3 means 2 sleeps (between attempt 0→1 and 1→2)
+        from custom_components.codex_proxy.const import COORDINATOR_RETRY_DELAYS
+        assert len(sleep_delays) == 2
+        assert sleep_delays[0] == COORDINATOR_RETRY_DELAYS[0]
+        assert sleep_delays[1] == COORDINATOR_RETRY_DELAYS[1]

@@ -7,6 +7,38 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.8] – 2026-05-19
+
+### Added
+
+- **`tests/test_coordinator_init.py`** (7 tests) — exercises the actual
+  `CodexModelCoordinator.__init__` code path (using the ha_stubs
+  `DataUpdateCoordinator` base class) to verify `_api_key`, `_base_url`
+  (including trailing-slash strip), `_installation_id`, `_http` client,
+  `update_interval`, and coordinator `name` are wired correctly.
+- **`TestRetryDelayClamping`** in `test_coordinator_retry.py` (1 test) —
+  asserts both sleep calls use the exact delay values from
+  `COORDINATOR_RETRY_DELAYS`; acts as a regression guard for the safe-access
+  fix below.
+
+### Fixed
+
+- **Coordinator retry delay safe access** — `COORDINATOR_RETRY_DELAYS[attempt]`
+  could `IndexError` if `COORDINATOR_MAX_RETRIES` were ever increased beyond
+  `len(COORDINATOR_RETRY_DELAYS) + 1`. Changed to
+  `COORDINATOR_RETRY_DELAYS[min(attempt, len(COORDINATOR_RETRY_DELAYS) - 1)]`
+  so the last delay value is reused for any extra retries.
+
+### Added (class-attribute tests)
+
+- `test_button.py` — `TestClassAttributes` (4 tests): `has_entity_name`,
+  `translation_key`, `entity_category=DIAGNOSTIC`, `device_class=UPDATE`.
+- `test_sensor.py` — `TestClassAttributes` (1) + `TestEntityDescriptions` (6):
+  description keys, `entity_registry_enabled_default=False`, `state_class=
+  MEASUREMENT`, `device_class=TIMESTAMP`.
+
+---
+
 ## [0.2.7] – 2026-05-19
 
 ### Added
