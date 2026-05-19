@@ -344,3 +344,37 @@ class TestCoordinatorFailurePath:
             "operators need the root-cause text to diagnose startup failures "
             "without enabling coordinator DEBUG logging"
         )
+
+    @pytest.mark.asyncio
+    async def test_warning_log_format_string_exact(self) -> None:
+        """args[0] of the coordinator-failure warning must be the exact format string.
+
+        test_warning_log_prefix_is_initial_model_refresh_failed checks that
+        'Initial model refresh failed' appears in str(call_args) — a substring
+        check that passes even if it is embedded in the exception text rather
+        than in the format string (e.g. UpdateFailed('Initial model refresh
+        failed: proxy unreachable') would satisfy the substring).
+
+        test_warning_log_includes_exception_message covers the exception-text
+        arg; this test covers args[0] — the format string 'Initial model
+        refresh failed: %s' — ensuring the wording is split correctly between
+        template and argument."""
+        from unittest.mock import patch
+
+        entry = _make_entry(installation_id="iid-fmtpin")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator(
+            first_refresh_side_effect=UpdateFailed("proxy unreachable")
+        )
+
+        with (
+            patcher,
+            patch("custom_components.codex_proxy._LOGGER") as mock_log,
+        ):
+            await async_setup_entry(hass, entry)
+
+        fmt = mock_log.warning.call_args.args[0]
+        assert fmt == "Initial model refresh failed: %s", (
+            f"Expected format string 'Initial model refresh failed: %s', got {fmt!r} — "
+            "the format string must pass the exception as a %s arg, not interpolate it"
+        )

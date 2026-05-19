@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.161] - 2026-05-19
+### Tests
+- `test_setup_entry.py`: add `TestCoordinatorRefreshFails.test_warning_log_format_string_exact` — pins `args[0]` of the coordinator-failure warning to the exact format string "Initial model refresh failed: %s", closing the gap left by two substring checks that verified content but never the template structure
+
 ## [0.2.160] - 2026-05-19
 ### Tests
 - `test_init.py`: add `TestConstants.test_codex_user_agent_exact_value` and `test_codex_openai_beta_exact_value` — pin both HTTP header constants to their exact strings, replacing substring membership checks
