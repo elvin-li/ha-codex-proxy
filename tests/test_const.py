@@ -267,6 +267,21 @@ class TestCodexHeaders:
     def test_user_agent_contains_codex(self) -> None:
         assert "codex" in CODEX_USER_AGENT.lower()
 
+    def test_user_agent_exact_value(self) -> None:
+        """CODEX_USER_AGENT must equal exactly
+        'codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)'.
+
+        test_user_agent_contains_codex uses a case-insensitive 'codex' substring
+        check — it passes if the version number or suffix changes (e.g.
+        'codex_cli_rs/1.0.0' or just 'codex').  Parity with
+        test_openai_beta_exact_value and test_originator_exact_value; pinning the
+        full User-Agent string ensures the proxy-side logging that fingerprints
+        the integration version receives the documented value."""
+        assert CODEX_USER_AGENT == "codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)", (
+            f"CODEX_USER_AGENT must be "
+            f"'codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)', got {CODEX_USER_AGENT!r}"
+        )
+
     def test_openai_beta_references_responses(self) -> None:
         assert "responses" in CODEX_OPENAI_BETA
 

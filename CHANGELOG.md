@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.164] - 2026-05-19
+### Tests
+- `test_const.py`: add `TestCodexHeaders.test_user_agent_exact_value` — pins `CODEX_USER_AGENT` to its exact string, achieving parity with the existing exact-value tests for `CODEX_OPENAI_BETA` and `CODEX_ORIGINATOR`
+
 ## [0.2.163] - 2026-05-19
 ### Tests
 - `test_coordinator_logging.py`: add `TestSuccessLogging.test_success_log_format_string_exact` — pins the 'Fetched' debug log to the exact format string "Fetched %d models from %s (%d chat-capable after filtering)", replacing the `startswith('Fetched')` prefix-only check
