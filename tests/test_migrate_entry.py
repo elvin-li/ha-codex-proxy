@@ -81,3 +81,21 @@ class TestAsyncMigrateEntry:
         await async_migrate_entry(hass, entry)
 
         hass.config_entries.async_reload.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_emits_debug_log_with_version(self) -> None:
+        """``async_migrate_entry`` must emit a debug log carrying the entry
+        version so operators can confirm the migration code path was reached
+        when diagnosing startup issues."""
+        from unittest.mock import patch
+
+        hass = _make_hass()
+        entry = _make_entry(version=42)
+
+        with patch("custom_components.codex_proxy._LOGGER") as mock_logger:
+            await async_migrate_entry(hass, entry)
+
+        mock_logger.debug.assert_called_once()
+        call_args = mock_logger.debug.call_args
+        # First positional arg is the format string; second is the version
+        assert "42" in str(call_args) or call_args.args[1] == 42

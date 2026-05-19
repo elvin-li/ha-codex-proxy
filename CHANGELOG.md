@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.61] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_migrate_entry.py`** — `test_emits_debug_log_with_version` added to
+  `TestAsyncMigrateEntry`: patches `custom_components.codex_proxy._LOGGER` and
+  asserts that `_LOGGER.debug` is called exactly once with the entry version during
+  `async_migrate_entry`.  Documents the operator-facing invariant that the migration
+  code path emits a debug log (useful for diagnosing startup issues) and catches any
+  future refactor that silently drops or renames the log call.
+
+---
+
 ## [0.2.60] – 2026-05-19
 
 ### Added (tests)
