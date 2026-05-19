@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.65] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_const.py`** — three new constant-type contract tests:
+  - `test_reasoning_efforts_is_tuple` — verifies `REASONING_EFFORTS` is `tuple`, not
+    `list`; pins immutability intent and catches accidental conversion to mutable list.
+  - `test_coordinator_retry_delays_is_tuple` — same guarantee for `COORDINATOR_RETRY_DELAYS`;
+    the coordinator indexes it directly, so mutability would be a silent hazard.
+  - `test_coordinator_retry_delays_all_positive_ints` — asserts every delay is a
+    positive `int`, preventing `asyncio.sleep` from receiving a no-op or type-error
+    argument if a future edit introduces a zero or float value.
+
+---
+
 ## [0.2.64] – 2026-05-19
 
 ### Added (tests)

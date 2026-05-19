@@ -99,6 +99,17 @@ class TestDefaults:
         for effort in ("none", "medium", "high", "xhigh"):
             assert effort in REASONING_EFFORTS
 
+    def test_reasoning_efforts_is_tuple(self) -> None:
+        """REASONING_EFFORTS must be a tuple, not a list.
+
+        voluptuous schemas and HA's SelectSelector both accept
+        an iterable of strings, but pinning the type to tuple documents
+        the intent that this constant is immutable and catches any accidental
+        conversion to a mutable list that could introduce subtle ordering
+        or mutation bugs at runtime.
+        """
+        assert isinstance(REASONING_EFFORTS, tuple)
+
     def test_default_store_is_false(self) -> None:
         assert DEFAULT_STORE is False
 
@@ -138,6 +149,21 @@ class TestIntervals:
         leaving dead entries in the table.
         """
         assert len(COORDINATOR_RETRY_DELAYS) == COORDINATOR_MAX_RETRIES - 1
+
+    def test_coordinator_retry_delays_is_tuple(self) -> None:
+        """COORDINATOR_RETRY_DELAYS must be a tuple so it is immutable — the
+        coordinator indexes it directly by attempt number; a mutable list
+        could be accidentally modified at runtime and silently change retry
+        behaviour."""
+        assert isinstance(COORDINATOR_RETRY_DELAYS, tuple)
+
+    def test_coordinator_retry_delays_all_positive_ints(self) -> None:
+        """Every delay must be a positive integer so asyncio.sleep receives a
+        valid argument; a non-positive or non-integer delay would either be a
+        no-op sleep or raise TypeError at runtime."""
+        for i, delay in enumerate(COORDINATOR_RETRY_DELAYS):
+            assert isinstance(delay, int), f"COORDINATOR_RETRY_DELAYS[{i}] is not int: {delay!r}"
+            assert delay > 0, f"COORDINATOR_RETRY_DELAYS[{i}] is not positive: {delay}"
 
 
 class TestImageModelPrefixes:
