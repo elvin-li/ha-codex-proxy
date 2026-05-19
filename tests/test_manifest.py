@@ -36,6 +36,18 @@ class TestManifestValidity:
         name = _load()["name"]
         assert isinstance(name, str) and name
 
+    def test_name_exact_value(self) -> None:
+        """name must be exactly 'Codex Token Pool'.
+
+        test_name_is_non_empty_string only checks type and truthiness — any
+        non-empty string passes.  The name appears in HA's Integrations list,
+        HACS, and community forum posts; an accidental rename (e.g. via
+        copy-paste from another integration) would confuse existing users.
+        Exact equality catches a rename before it ships."""
+        assert _load()["name"] == "Codex Token Pool", (
+            f"manifest.json name must be 'Codex Token Pool', got {_load()['name']!r}"
+        )
+
     def test_version_is_semver(self) -> None:
         """Version must be X.Y.Z (HACS and HA enforce this)."""
         version = _load()["version"]

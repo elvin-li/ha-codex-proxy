@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.141] - 2026-05-19
+### Tests
+- `test_manifest.py`: add `TestManifestValidity.test_name_exact_value` — pins `name` to exactly `"Codex Token Pool"`, replacing the type/truthiness check that passes for any non-empty string
+
 ## [0.2.140] - 2026-05-19
 ### Tests
 - `test_update_entity.py`: add `TestReleaseSummary.test_up_to_date_exact_release_summary` — pins the up-to-date release_summary to exactly `"Already on the latest model from the proxy."`, replacing the substring check that passes for any message containing that phrase
