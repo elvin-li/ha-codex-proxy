@@ -28,11 +28,9 @@ LLM_BEARING_SUBENTRY_TYPES: tuple[str, ...] = (
 
 # We deliberately do NOT ship a default base_url — every user must enter
 # their own proxy address (or paste their Codex CLI config.toml).
-DEFAULT_BASE_URL = ""
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_REASONING_EFFORT = "xhigh"
 DEFAULT_STORE = False
-DEFAULT_CONTEXT_WINDOW = 1_000_000
 DEFAULT_PROMPT = ""
 
 REASONING_EFFORTS: tuple[str, ...] = ("none", "medium", "high", "xhigh")

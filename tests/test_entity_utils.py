@@ -119,3 +119,29 @@ class TestBuildCodexEntryDeviceInfo:
         info_a = build_codex_entry_device_info(_make_entry("e-1"))
         info_b = build_codex_entry_device_info(_make_entry("e-2"))
         assert info_a["identifiers"] != info_b["identifiers"]
+
+    def test_sw_version_is_populated(self) -> None:
+        """sw_version should be a non-empty string read from manifest.json."""
+        entry = _make_entry()
+        info = build_codex_entry_device_info(entry)
+        # _INTEGRATION_VERSION is read from the real manifest.json at import time;
+        # it must be a non-None, non-empty string in any checkout that has the file.
+        assert info.get("sw_version") is not None
+        assert isinstance(info["sw_version"], str)
+        assert len(info["sw_version"]) > 0
+
+    def test_sw_version_matches_manifest(self) -> None:
+        """sw_version must match the version field in manifest.json exactly."""
+        import json
+        import pathlib
+
+        manifest_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "manifest.json"
+        )
+        expected = json.loads(manifest_path.read_text()).get("version")
+        entry = _make_entry()
+        info = build_codex_entry_device_info(entry)
+        assert info["sw_version"] == expected

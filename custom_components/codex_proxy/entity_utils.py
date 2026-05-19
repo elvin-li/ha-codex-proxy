@@ -1,10 +1,23 @@
 """Shared helpers for Codex Token Pool entity construction."""
 from __future__ import annotations
 
+import json
+import pathlib
+
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.helpers import device_registry as dr
 
 from .const import DEFAULT_MODEL, DOMAIN
+
+# Read sw_version once at import time from the manifest so the device card in
+# HA reflects the installed integration version without manual maintenance.
+_MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.json"
+try:
+    _INTEGRATION_VERSION: str | None = json.loads(_MANIFEST_PATH.read_text()).get(
+        "version"
+    )
+except Exception:  # noqa: BLE001 — non-critical, degrade gracefully
+    _INTEGRATION_VERSION = None
 
 
 def build_codex_device_info(
@@ -29,12 +42,14 @@ def build_codex_entry_device_info(entry: ConfigEntry) -> dr.DeviceInfo:
 
     button.py, binary_sensor.py, and sensor.py all attach their entities to the
     top-level config entry device rather than a subentry device. This helper
-    centralises that identical 5-line block so future changes (e.g. adding
-    ``hw_version``) only need one edit.
+    centralises that identical 5-line block so future changes only need one edit.
+    ``sw_version`` is populated from the manifest so HA's device card always
+    shows the installed integration version.
     """
     return dr.DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
         name=entry.title,
         manufacturer="OpenAI Codex Token Pool",
         entry_type=dr.DeviceEntryType.SERVICE,
+        sw_version=_INTEGRATION_VERSION,
     )

@@ -7,6 +7,27 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.18] – 2026-05-19
+
+### Changed
+
+- **`entity_utils.py`** — `build_codex_entry_device_info` now populates
+  `sw_version` from `manifest.json` (read once at import time with a
+  graceful fallback), so the HA device card always shows the installed
+  integration version without manual maintenance.
+- **`const.py`** — removed two dead constants that were defined but never
+  imported anywhere: `DEFAULT_CONTEXT_WINDOW = 1_000_000` and
+  `DEFAULT_BASE_URL = ""`.
+
+### Added (tests)
+
+- **`tests/test_entity_utils.py`** — 2 new tests:
+  `test_sw_version_is_populated` and `test_sw_version_matches_manifest`,
+  verifying that the device card `sw_version` is non-empty and matches
+  the manifest exactly.
+
+---
+
 ## [0.2.17] – 2026-05-19
 
 ### Added (tests)
