@@ -157,6 +157,29 @@ class TestAsyncSelectOption:
         new_data = call_kwargs[1].get("data") or call_kwargs[0][2]
         assert new_data["chat_model"] == "gpt-5.6"
 
+    @pytest.mark.asyncio
+    async def test_info_logged_on_model_change(self) -> None:
+        """_LOGGER.info is called once when the model is changed."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
+        with patch("custom_components.codex_proxy.select._LOGGER") as mock_log:
+            await entity.async_select_option("gpt-5.6")
+        mock_log.info.assert_called_once()
+        # Log message should mention both old and new model
+        logged = str(mock_log.info.call_args)
+        assert "gpt-5.6" in logged
+
+    @pytest.mark.asyncio
+    async def test_no_log_on_noop(self) -> None:
+        """No log should be emitted when the same model is re-selected."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", ["gpt-5.5"])
+        with patch("custom_components.codex_proxy.select._LOGGER") as mock_log:
+            await entity.async_select_option("gpt-5.5")
+        mock_log.info.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # _handle_coordinator_update
