@@ -157,3 +157,23 @@ class TestRefreshModelsButton:
             f"Button debug log message {fmt!r} must mention 'refresh' — "
             "operators look for this keyword when triaging manual-refresh events"
         )
+
+    @pytest.mark.asyncio
+    async def test_press_debug_log_exact_format_string(self) -> None:
+        """async_press must log exactly 'Manual /v1/models refresh requested'.
+
+        test_press_debug_log_mentions_refresh uses a case-insensitive substring
+        check — any message containing 'refresh' passes, including a generic
+        'refresh done' that drops the '/v1/models' endpoint detail operators
+        need to identify which API call was triggered.  Pinning the exact string
+        catches any wording change before it reaches production log streams."""
+        from unittest.mock import patch
+
+        btn = _make_button()
+        with patch("custom_components.codex_proxy.button._LOGGER") as mock_log:
+            await btn.async_press()
+        fmt = mock_log.debug.call_args.args[0]
+        assert fmt == "Manual /v1/models refresh requested", (
+            f"Expected exact log message 'Manual /v1/models refresh requested', "
+            f"got {fmt!r}"
+        )

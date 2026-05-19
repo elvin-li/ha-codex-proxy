@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.138] - 2026-05-19
+### Tests
+- `test_button.py`: add `TestRefreshModelsButton.test_press_debug_log_exact_format_string` — pins the async_press debug log to exactly `"Manual /v1/models refresh requested"`, replacing the case-insensitive substring check
+
 ## [0.2.137] - 2026-05-19
 ### Tests
 - `test_conversation_entity.py`: add `test_device_info_identifiers_exact_set` to both `TestCodexConversationEntity` and `TestCodexAITaskEntity` — exact set equality on `identifiers`, replacing the `in` check that passes with extra identifiers
