@@ -11,7 +11,6 @@ the user explicitly enables them.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -28,9 +27,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DATA_COORDINATOR, DOMAIN
 from .coordinator import CodexModelCoordinator
-
-if TYPE_CHECKING:
-    pass
 
 _CHAT_MODEL_COUNT = SensorEntityDescription(
     key="chat_model_count",
