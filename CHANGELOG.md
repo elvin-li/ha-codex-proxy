@@ -13,6 +13,68 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.40] – 2026-05-19
+
+### Added
+
+- **`strings.json` / `translations/en.json` / `translations/zh-Hans.json`** —
+  `state_attributes` block added to `entity.binary_sensor.proxy_reachable`
+  with human-readable names for `last_checked` and `latest_model`.  HA uses
+  these to render proper labels in the More Info dialog and template editors.
+- **`coordinator.py`** — Comprehensive docstring for `_async_update_data`
+  documenting the retry policy (transient vs non-transient errors), the
+  composite sort key, and the return shape.
+
+### Added (tests)
+
+- `test_translations.py` — `test_binary_sensor_state_attributes_documented`:
+  verifies all three files declare `state_attributes` for `proxy_reachable`
+  with `last_checked` and `latest_model`.
+
+---
+
+## [0.2.39] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** (`chat_models` docstring) — Documents the alphabetical
+  `id` tiebreaker introduced in v0.2.38 so the sort policy is visible without
+  reading the implementation.
+
+### Added (tests)
+
+- `test_coordinator_retry.py` — `test_equal_timestamps_sorted_alphabetically`:
+  exercises `_async_update_data` directly with same-timestamp models and
+  confirms deterministic alphabetical ordering.
+- `test_parse_toml_validate.py` — `test_base_url_with_surrounding_whitespace_stripped`:
+  covers the `.strip()` call in `_parse_toml_and_validate` for manually
+  entered base URLs (not from TOML).
+
+---
+
+## [0.2.38] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** — Sort key changed from
+  `sort(..., reverse=True)` (unstable when timestamps tie) to
+  `sort(key=lambda x: (-x["created"], x["id"]))` (stable: highest
+  timestamp first, alphabetical `id` as tiebreaker). Prevents spurious
+  "update available" flicker on proxies that report `created=0` for all models.
+- **`update.py`** — Converted inline comment on `_handle_coordinator_update`
+  to a proper docstring matching the style used in `select.py`.
+- **`sensor.py`** / **`binary_sensor.py`** / **`button.py`** — Added
+  one-line docstrings to each `async_setup_entry` function.
+
+### Added (tests)
+
+- `test_coordinator.py` — `test_same_created_sorted_alphabetically_by_id`:
+  pins the tiebreaker behaviour at the data-processing helper level.
+- `test_const.py` — `test_default_model_value`: pins `DEFAULT_MODEL == "gpt-5.5"`;
+  a silent change to this value would revert users' configurations.
+
+---
+
 ## [0.2.37] – 2026-05-19
 
 ### Changed

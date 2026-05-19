@@ -79,6 +79,19 @@ class TestChatModelsProperty:
         ids = [m["id"] for m in coord.chat_models]
         assert ids == ["gpt-5.6", "gpt-5.5"]
 
+    def test_filter_does_not_reorder_chat_models(self) -> None:
+        """chat_models must preserve the order of self.data['models'] after
+        filtering — it must NOT sort independently.  The sort invariant is
+        maintained by _async_update_data; chat_models only filters."""
+        models = [
+            _m("gpt-z", 100),  # higher timestamp but alphabetically last
+            _m("gpt-a", 50),
+            _m("gpt-image-1", 200),  # image model — should be excluded
+        ]
+        coord = _make_coordinator(models)
+        ids = [m["id"] for m in coord.chat_models]
+        assert ids == ["gpt-z", "gpt-a"]  # order from data preserved; image excluded
+
 
 # ---------------------------------------------------------------------------
 # latest_chat_model_id property
@@ -106,3 +119,16 @@ class TestLatestChatModelId:
     def test_image_model_skipped_to_find_chat(self) -> None:
         coord = _make_coordinator([_m("gpt-image-1"), _m("gpt-5.5")])
         assert coord.latest_chat_model_id == "gpt-5.5"
+
+    def test_alphabetically_first_returned_when_timestamps_equal(self) -> None:
+        """When all models carry the same created timestamp (e.g. 0) the stable
+        (-created, id) sort in _async_update_data means data is stored in
+        alphabetical order.  latest_chat_model_id must return the first element
+        of chat_models — which is the alphabetically-first id in this case.
+
+        Note: _make_coordinator bypasses _async_update_data, so we pre-sort the
+        input to match the invariant that _async_update_data guarantees.
+        """
+        # Pre-sorted as (-created, id): gpt-a, gpt-m, gpt-z all have created=0
+        coord = _make_coordinator([_m("gpt-a", 0), _m("gpt-m", 0), _m("gpt-z", 0)])
+        assert coord.latest_chat_model_id == "gpt-a"

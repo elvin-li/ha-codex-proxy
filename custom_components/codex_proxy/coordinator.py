@@ -200,5 +200,14 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @property
     def latest_chat_model_id(self) -> str | None:
+        """Id of the newest chat-capable model, or ``None`` if none are known.
+
+        "Newest" follows the ``(-created, id)`` sort applied by
+        ``_async_update_data`` — highest timestamp first, alphabetical id as a
+        tiebreaker.  Returns ``None`` when:
+
+        * the coordinator has not yet completed its first successful poll, or
+        * the proxy only advertises image-generation models.
+        """
         chat = self.chat_models
         return chat[0]["id"] if chat else None
