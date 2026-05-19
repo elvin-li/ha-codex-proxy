@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.160] - 2026-05-19
+### Tests
+- `test_init.py`: add `TestConstants.test_codex_user_agent_exact_value` and `test_codex_openai_beta_exact_value` — pin both HTTP header constants to their exact strings, replacing substring membership checks
+
 ## [0.2.159] - 2026-05-19
 ### Tests
 - `test_probe_proxy.py`: add `TestProbeProxySuccess.test_debug_log_format_string_exact` — pins `args[0]` of the probe debug call to the exact format string "Probing proxy at %s with model %s", closing the gap left by the positional-arg tests that never checked the template wording

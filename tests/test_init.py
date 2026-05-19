@@ -170,5 +170,28 @@ class TestConstants:
     def test_openai_beta_is_responses(self) -> None:
         assert "responses" in CODEX_OPENAI_BETA
 
+    def test_codex_user_agent_exact_value(self) -> None:
+        """CODEX_USER_AGENT must be exactly 'codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)'.
+
+        test_codex_user_agent_contains_version only checks 'codex_cli_rs/' as a
+        substring — it passes if the version is changed (e.g. 0.22.0) or the
+        suffix is dropped.  Pinning the exact string ensures the User-Agent
+        header sent to the proxy is well-known and operator-documented."""
+        assert CODEX_USER_AGENT == "codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)", (
+            f"Expected 'codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)', "
+            f"got {CODEX_USER_AGENT!r}"
+        )
+
+    def test_codex_openai_beta_exact_value(self) -> None:
+        """CODEX_OPENAI_BETA must be exactly 'responses=experimental'.
+
+        test_openai_beta_is_responses only checks 'responses' as a substring —
+        it passes if the value changes to 'responses=stable' or 'responses' alone.
+        Pinning the exact string ensures the OpenAI-Beta header matches what the
+        Codex proxy expects to enable the responses API."""
+        assert CODEX_OPENAI_BETA == "responses=experimental", (
+            f"Expected 'responses=experimental', got {CODEX_OPENAI_BETA!r}"
+        )
+
     def test_conf_installation_id_key(self) -> None:
         assert CONF_INSTALLATION_ID == "codex_installation_id"
