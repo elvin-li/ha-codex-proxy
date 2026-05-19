@@ -108,6 +108,15 @@ class TestManualInput:
         assert not errors
         assert "localhost" in base_url
 
+    def test_base_url_with_surrounding_whitespace_stripped(self) -> None:
+        """A manually pasted URL with extra leading/trailing spaces must be
+        accepted and stripped — a common paste-from-browser artifact."""
+        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
+            _input(base_url="  https://proxy.example.com  ")
+        )
+        assert not errors
+        assert base_url == "https://proxy.example.com"
+
 
 # ---------------------------------------------------------------------------
 # Tests: TOML input

@@ -134,6 +134,31 @@ class TestCoordinatorSuccess:
 
         assert len(result["models"]) == 1
 
+    @pytest.mark.asyncio
+    async def test_equal_timestamps_sorted_alphabetically(self) -> None:
+        """When all proxy-reported models carry the same 'created' timestamp
+        (commonly 0 from local gateways), _async_update_data must return them
+        in deterministic alphabetical order by model id so that
+        latest_chat_model_id is stable across polls even when the proxy
+        changes its iteration order."""
+        coord = _make_coordinator()
+        response = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-z-model", "created": 0},
+                    {"id": "gpt-a-model", "created": 0},
+                    {"id": "gpt-m-model", "created": 0},
+                ]
+            },
+        )
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+
+        ids = [m["id"] for m in result["models"]]
+        assert ids == ["gpt-a-model", "gpt-m-model", "gpt-z-model"]
+
 
 # ---------------------------------------------------------------------------
 # Retry / back-off (transient errors)

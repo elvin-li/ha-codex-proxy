@@ -170,7 +170,13 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @property
     def chat_models(self) -> list[dict[str, Any]]:
-        """Chat-capable models (image-only excluded), newest first."""
+        """Chat-capable models (image-only excluded), newest first.
+
+        Sorted by ``created`` descending, with alphabetical ``id`` as a
+        tiebreaker so the list is deterministic when the proxy reports the
+        same timestamp for multiple models (e.g. all-zero from a local
+        gateway).
+        """
         if not self.data:
             return []
         return [
