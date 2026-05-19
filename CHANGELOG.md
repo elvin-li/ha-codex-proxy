@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.125] - 2026-05-19
+### Tests
+- `test_coordinator_properties.py`: add `test_dall_e_filter_preserves_remaining_chat_models` and `test_image_prefix_filter_preserves_remaining_chat_models` — exact list equality confirms filters are surgical
+
 ## [0.2.124] - 2026-05-19
 ### Tests
 - `test_model_select.py`: add `TestModelSelectOptions.test_coordinator_models_exact_values_and_order` — exact list equality on options values, catching extra items or ordering changes the two prior `in` checks would miss

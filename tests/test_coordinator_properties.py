@@ -67,11 +67,41 @@ class TestChatModelsProperty:
         ids = [m["id"] for m in coord.chat_models]
         assert "dall-e-3" not in ids
 
+    def test_dall_e_filter_preserves_remaining_chat_models(self) -> None:
+        """Filtering dall-e-3 must keep 'gpt-5.5' — not drop all models.
+
+        test_filters_dall_e_prefix only asserts the excluded model is absent;
+        it passes even if the filter is over-aggressive and returns [].  Exact
+        list equality here verifies the filter is surgical: only the dall-e
+        model is removed, leaving the chat-capable model intact.  Mirrors the
+        companion test for the gpt-image filter (test_filters_gpt_image_prefix
+        already checks both 'not in' and 'in')."""
+        models = [_m("dall-e-3"), _m("gpt-5.5")]
+        coord = _make_coordinator(models)
+        ids = [m["id"] for m in coord.chat_models]
+        assert ids == ["gpt-5.5"], (
+            f"Expected exactly ['gpt-5.5'] after dall-e filter, got {ids!r} — "
+            "the filter must exclude only dall-e models, not chat-capable ones"
+        )
+
     def test_filters_image_prefix(self) -> None:
         models = [_m("image-alpha-001"), _m("gpt-5.5")]
         coord = _make_coordinator(models)
         ids = [m["id"] for m in coord.chat_models]
         assert "image-alpha-001" not in ids
+
+    def test_image_prefix_filter_preserves_remaining_chat_models(self) -> None:
+        """Filtering image-alpha-001 must keep 'gpt-5.5' — not drop all models.
+
+        test_filters_image_prefix only asserts the excluded model is absent;
+        exact list equality here verifies the filter is surgical."""
+        models = [_m("image-alpha-001"), _m("gpt-5.5")]
+        coord = _make_coordinator(models)
+        ids = [m["id"] for m in coord.chat_models]
+        assert ids == ["gpt-5.5"], (
+            f"Expected exactly ['gpt-5.5'] after image- filter, got {ids!r} — "
+            "the filter must exclude only image- models, not chat-capable ones"
+        )
 
     def test_preserves_order(self) -> None:
         models = [_m("gpt-5.6", 200), _m("gpt-5.5", 100)]
