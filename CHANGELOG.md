@@ -13,6 +13,27 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.79] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_update_entity.py`** — two new `TestAsyncInstall` tests pinning
+  the install info log format:
+  - `test_install_log_includes_old_model` — the old model name (`"was …"`) must
+    appear alongside the new model in the install log.  The existing
+    `test_install_logs_on_change` only checked the new version; dropping the
+    third format arg (installed_version) from the log call would have silently
+    removed operator context. Mirrors the pattern from
+    `test_select.py::test_info_logged_on_model_change` which already checks
+    both old and new model.
+  - `test_install_log_includes_subentry_title` — the subentry title must appear
+    in the install log so operators with multiple subentries (conversation +
+    ai_task) can identify which agent's model was upgraded. Without the title,
+    simultaneous upgrades produce identical log lines with no distinguishing
+    information.
+
+---
+
 ## [0.2.78] – 2026-05-19
 
 ### Added (tests)

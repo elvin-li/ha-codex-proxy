@@ -196,6 +196,50 @@ class TestAsyncInstall:
         assert "gpt-5.6" in logged
 
     @pytest.mark.asyncio
+    async def test_install_log_includes_old_model(self) -> None:
+        """The install info log must mention the OLD model ('was …') alongside
+        the new model so operators can understand what was replaced.
+
+        The log format is 'Installing model … (was …)'.  The existing test
+        test_install_logs_on_change only verifies the NEW model appears; without
+        this test a refactor that dropped the third format arg would silently
+        remove the 'was' context — matching the gap that was fixed for the
+        select entity (test_select.py::test_info_logged_on_model_change already
+        checks both old and new)."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        with patch("custom_components.codex_proxy.update._LOGGER") as mock_log:
+            await entity.async_install(version="gpt-5.6", backup=False)
+        logged = str(mock_log.info.call_args)
+        # Old installed model must appear so the operator knows what was replaced
+        assert "gpt-5.5" in logged, (
+            "Old model 'gpt-5.5' missing from install log — "
+            "operators cannot identify what was replaced without the 'was …' context"
+        )
+
+    @pytest.mark.asyncio
+    async def test_install_log_includes_subentry_title(self) -> None:
+        """The install info log must mention the subentry title so operators
+        with multiple subentries (conversation + ai_task) can identify which
+        agent's model was upgraded.
+
+        Without the title, two simultaneous upgrades would produce identical
+        log lines 'Installing model gpt-5.6 (was gpt-5.5)' with no way to
+        distinguish which agent changed."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        # _make_subentry() uses title "Test Agent"
+        with patch("custom_components.codex_proxy.update._LOGGER") as mock_log:
+            await entity.async_install(version="gpt-5.6", backup=False)
+        logged = str(mock_log.info.call_args)
+        assert "Test Agent" in logged, (
+            "Subentry title missing from install log — "
+            "operators cannot identify which agent was upgraded in multi-subentry setups"
+        )
+
+    @pytest.mark.asyncio
     async def test_no_log_on_noop_install(self) -> None:
         """No log when version is already installed."""
         from unittest.mock import patch
