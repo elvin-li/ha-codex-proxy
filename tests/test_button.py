@@ -43,6 +43,22 @@ def _make_button(entry_id: str = "entry-1") -> CodexRefreshModelsButton:
 # ---------------------------------------------------------------------------
 
 
+class TestClassAttributes:
+    def test_has_entity_name_is_true(self) -> None:
+        assert CodexRefreshModelsButton._attr_has_entity_name is True
+
+    def test_translation_key(self) -> None:
+        assert CodexRefreshModelsButton._attr_translation_key == "refresh_models"
+
+    def test_entity_category_is_diagnostic(self) -> None:
+        from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+        assert CodexRefreshModelsButton._attr_entity_category is EntityCategory.DIAGNOSTIC
+
+    def test_device_class_is_update(self) -> None:
+        from homeassistant.components.button import ButtonDeviceClass  # type: ignore[attr-defined]
+        assert CodexRefreshModelsButton._attr_device_class is ButtonDeviceClass.UPDATE
+
+
 class TestRefreshModelsButton:
     def test_unique_id_uses_entry_id(self) -> None:
         btn = _make_button(entry_id="my-entry-42")

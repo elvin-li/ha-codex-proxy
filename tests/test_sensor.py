@@ -77,6 +77,40 @@ def _make_refresh_sensor(
 # ---------------------------------------------------------------------------
 
 
+class TestClassAttributes:
+    def test_has_entity_name_is_true(self) -> None:
+        assert CodexChatModelCountSensor._attr_has_entity_name is True
+        assert CodexLastRefreshSensor._attr_has_entity_name is True
+
+
+class TestEntityDescriptions:
+    def test_chat_model_count_key(self) -> None:
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+        assert _CHAT_MODEL_COUNT.key == "chat_model_count"
+
+    def test_chat_model_count_disabled_by_default(self) -> None:
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+        assert _CHAT_MODEL_COUNT.entity_registry_enabled_default is False
+
+    def test_chat_model_count_state_class_is_measurement(self) -> None:
+        from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+        from homeassistant.components.sensor import SensorStateClass  # type: ignore[attr-defined]
+        assert _CHAT_MODEL_COUNT.state_class is SensorStateClass.MEASUREMENT
+
+    def test_last_refresh_key(self) -> None:
+        from custom_components.codex_proxy.sensor import _LAST_REFRESH
+        assert _LAST_REFRESH.key == "last_model_refresh"
+
+    def test_last_refresh_disabled_by_default(self) -> None:
+        from custom_components.codex_proxy.sensor import _LAST_REFRESH
+        assert _LAST_REFRESH.entity_registry_enabled_default is False
+
+    def test_last_refresh_device_class_is_timestamp(self) -> None:
+        from custom_components.codex_proxy.sensor import _LAST_REFRESH
+        from homeassistant.components.sensor import SensorDeviceClass  # type: ignore[attr-defined]
+        assert _LAST_REFRESH.device_class is SensorDeviceClass.TIMESTAMP
+
+
 class TestChatModelCountSensor:
     def test_zero_when_no_models(self) -> None:
         sensor = _make_count_sensor(chat_models=[])
