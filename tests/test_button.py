@@ -89,6 +89,21 @@ class TestRefreshModelsButton:
         btn = _make_button(entry_id="my-entry-42")
         assert "my-entry-42" in btn._attr_unique_id
 
+    def test_unique_id_exact_format(self) -> None:
+        """unique_id must be '{entry_id}_refresh_models' exactly.
+
+        The suffix distinguishes this entity from other entry-level entities
+        (binary_sensor uses '_proxy_reachable').  Pinning the full format catches
+        a refactor that changes the separator or drops the suffix — the existing
+        substring test only verifies the entry_id is present, not the full shape.
+        This test builds via the real __init__ so a change in the constructor is
+        caught directly rather than by the helper's manual assignment."""
+        entry = MagicMock()
+        entry.entry_id = "pin-entry-99"
+        btn = object.__new__(CodexRefreshModelsButton)
+        CodexRefreshModelsButton.__init__(btn, _make_coordinator(), entry)
+        assert btn._attr_unique_id == "pin-entry-99_refresh_models"
+
     @pytest.mark.asyncio
     async def test_press_calls_async_request_refresh(self) -> None:
         btn = _make_button()

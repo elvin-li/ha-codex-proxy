@@ -13,6 +13,29 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.73] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_button.py`** — `TestRefreshModelsButton.test_unique_id_exact_format`:
+  pins the full unique_id format `"{entry_id}_refresh_models"` by calling the real
+  `__init__`, not the helper that manually assigns the attribute. The existing
+  substring check only verifies the entry_id is present; this test catches a suffix
+  change that would silently create a duplicate entity in the HA entity registry.
+- **`tests/test_select.py`** — `TestDeviceInfo.test_unique_id_exact_format`:
+  pins `"{subentry_id}_model_select"`. No unique_id test existed at all for the
+  select entity before this change.
+- **`tests/test_update_entity.py`** — `TestDeviceInfo.test_unique_id_exact_format`:
+  pins `"{subentry_id}_model_update"`. No unique_id test existed at all for the
+  update entity before this change.
+
+  All three tests exercise the real entity constructor (not test helpers) so any
+  change to the `__init__` assignment is caught directly. Unique_id format changes
+  are silent registry-breaking bugs: HA creates a new entity and orphans the old one
+  without warning.
+
+---
+
 ## [0.2.72] – 2026-05-19
 
 ### Added (tests)

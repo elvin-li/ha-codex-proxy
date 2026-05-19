@@ -277,6 +277,18 @@ class TestDeviceInfo:
         entity = self._make_full_entity()
         assert "sw_version" in entity._attr_device_info
 
+    def test_unique_id_exact_format(self) -> None:
+        """unique_id must be '{subentry_id}_model_select' exactly.
+
+        Pinning the full format catches a refactor that changes the suffix or
+        separator — a breaking change because HA uses the unique_id as a stable
+        entity registry key, so any format change silently creates a duplicate
+        entity and orphans the old one.  This test builds via the real __init__
+        so a change in the constructor is caught directly."""
+        entity = self._make_full_entity()
+        # _make_subentry sets subentry_id = "sub-1"
+        assert entity._attr_unique_id == "sub-1_model_select"
+
 
 class TestHandleCoordinatorUpdate:
     def test_subentry_refreshed_from_entry_on_update(self) -> None:
