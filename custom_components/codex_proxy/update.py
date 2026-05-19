@@ -22,7 +22,6 @@ from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -33,6 +32,7 @@ from .const import (
     LLM_BEARING_SUBENTRY_TYPES,
 )
 from .coordinator import CodexModelCoordinator
+from .entity_utils import build_codex_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,9 +71,7 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
         self._entry = entry
         self._subentry = subentry
         self._attr_unique_id = f"{subentry.subentry_id}_model_update"
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, subentry.subentry_id)},
-        )
+        self._attr_device_info = build_codex_device_info(subentry, UPSTREAM_CONF_CHAT_MODEL)
 
     @property
     def installed_version(self) -> str | None:

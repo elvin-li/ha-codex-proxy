@@ -13,6 +13,30 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.51] – 2026-05-19
+
+### Changed
+
+- **`select.py`** — ``CodexModelSelectEntity.__init__`` now calls
+  ``build_codex_device_info(subentry, UPSTREAM_CONF_CHAT_MODEL)`` instead of a
+  bare ``dr.DeviceInfo(identifiers=...)`` stub.  The device card in HA now shows
+  the correct name, manufacturer, model, and integration version for model-select
+  entities, consistent with conversation and AI-task entities.  The redundant
+  ``from homeassistant.helpers import device_registry as dr`` import is removed.
+- **`update.py`** — same fix as ``select.py``: ``CodexModelUpdate.__init__``
+  now uses ``build_codex_device_info`` so the update entity's device card is
+  fully populated.  Dead ``dr`` import removed.
+
+### Added (tests)
+
+- `test_select.py` — ``TestDeviceInfo``: 3 tests verifying that the select
+  entity's ``_attr_device_info`` contains ``manufacturer``, ``name`` (matching
+  the subentry title), and ``sw_version`` after construction.
+- `test_update_entity.py` — ``TestDeviceInfo``: same 3 tests for the update
+  entity.
+
+---
+
 ## [0.2.50] – 2026-05-19
 
 ### Added (tests)

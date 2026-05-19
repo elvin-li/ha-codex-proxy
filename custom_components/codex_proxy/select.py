@@ -21,7 +21,6 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -32,6 +31,7 @@ from .const import (
     LLM_BEARING_SUBENTRY_TYPES,
 )
 from .coordinator import CodexModelCoordinator
+from .entity_utils import build_codex_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -75,9 +75,7 @@ class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEnt
         self._entry = entry
         self._subentry = subentry
         self._attr_unique_id = f"{subentry.subentry_id}_model_select"
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, subentry.subentry_id)},
-        )
+        self._attr_device_info = build_codex_device_info(subentry, UPSTREAM_CONF_CHAT_MODEL)
 
     # ------------------------------------------------------------------
     # State

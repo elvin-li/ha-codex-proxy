@@ -222,6 +222,38 @@ class TestClassAttributes:
         assert CodexModelSelectEntity._attr_entity_category is EntityCategory.CONFIG
 
 
+class TestDeviceInfo:
+    """Device info must use build_codex_device_info for full metadata."""
+
+    def _make_full_entity(self, model: str = "gpt-5.5", title: str = "My Agent") -> CodexModelSelectEntity:
+        """Build an entity via __init__ so device_info is set by the real constructor."""
+        coord = _make_coordinator([])
+        entry = _make_entry()
+        subentry = _make_subentry(model)
+        subentry.title = title
+
+        entity = object.__new__(CodexModelSelectEntity)
+        CodexModelSelectEntity.__init__(entity, coord, entry, subentry)
+        entity.hass = MagicMock()
+        entity.hass.config_entries.async_reload = AsyncMock()
+        return entity
+
+    def test_manufacturer_is_set(self) -> None:
+        """select entity device_info must include manufacturer (not bare identifiers-only)."""
+        entity = self._make_full_entity()
+        assert entity._attr_device_info.get("manufacturer") == "OpenAI Codex Token Pool"
+
+    def test_name_matches_subentry_title(self) -> None:
+        """Device name must reflect the subentry title so HA shows a readable card."""
+        entity = self._make_full_entity(title="Codex Test Agent")
+        assert entity._attr_device_info.get("name") == "Codex Test Agent"
+
+    def test_sw_version_is_present(self) -> None:
+        """sw_version must be present so the device card shows the integration version."""
+        entity = self._make_full_entity()
+        assert "sw_version" in entity._attr_device_info
+
+
 class TestHandleCoordinatorUpdate:
     def test_subentry_refreshed_from_entry_on_update(self) -> None:
         """When the coordinator fires an update, _subentry should be re-read
