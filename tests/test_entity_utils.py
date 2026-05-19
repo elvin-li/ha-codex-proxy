@@ -111,6 +111,20 @@ class TestBuildCodexDeviceInfo:
         info = build_codex_device_info(sub, "chat_model")
         assert info["sw_version"] == expected
 
+    def test_entry_type_is_service(self) -> None:
+        """entry_type must be DeviceEntryType.SERVICE so HA categorises this as a
+        cloud service rather than a physical device.
+
+        Without this field (or with the wrong entry_type) HA allows users to
+        assign the device to an area — which is meaningless for a proxy service.
+        A refactor removing entry_type or changing it to SERVICE would make all
+        subentry-level devices behave like physical hardware in the UI."""
+        from homeassistant.helpers import device_registry as dr  # type: ignore[attr-defined]
+
+        sub = _make_subentry()
+        info = build_codex_device_info(sub, "chat_model")
+        assert info.get("entry_type") is dr.DeviceEntryType.SERVICE
+
 
 # ---------------------------------------------------------------------------
 # build_codex_entry_device_info
@@ -176,6 +190,20 @@ class TestBuildCodexEntryDeviceInfo:
         entry = _make_entry()
         info = build_codex_entry_device_info(entry)
         assert info["sw_version"] == expected
+
+    def test_entry_type_is_service(self) -> None:
+        """entry_type must be DeviceEntryType.SERVICE so HA treats the entry-level
+        device (button, binary_sensor, sensor) as a cloud service rather than a
+        physical device.
+
+        Parity with TestBuildCodexDeviceInfo.test_entry_type_is_service —
+        both builders must declare SERVICE entry_type or HA shows an area picker
+        for a network proxy, which makes no sense."""
+        from homeassistant.helpers import device_registry as dr  # type: ignore[attr-defined]
+
+        entry = _make_entry()
+        info = build_codex_entry_device_info(entry)
+        assert info.get("entry_type") is dr.DeviceEntryType.SERVICE
 
 
 # ---------------------------------------------------------------------------

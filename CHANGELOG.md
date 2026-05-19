@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.87] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_entity_utils.py`** — `TestBuildCodexDeviceInfo.test_entry_type_is_service`
+  and `TestBuildCodexEntryDeviceInfo.test_entry_type_is_service` pin that both
+  device-info builders set `entry_type=DeviceEntryType.SERVICE`.  Without this field
+  HA shows an area picker for a cloud proxy device, which is meaningless.  Neither
+  builder had an entry_type test before; a refactor removing the field would have
+  passed all existing tests.
+
+---
+
 ## [0.2.86] – 2026-05-19
 
 ### Added (tests)
