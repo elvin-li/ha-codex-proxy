@@ -260,6 +260,46 @@ class TestSuccessLogging:
         assert "2" in last_call_str or "model" in last_call_str.lower()
 
     @pytest.mark.asyncio
+    async def test_success_log_format_string_starts_with_fetched(self) -> None:
+        """The success debug log format string must start with 'Fetched'.
+
+        test_debug_logged_on_success checks the combined str(call_args) with an
+        OR condition — it passes as long as either '2' or 'model' appears anywhere
+        in the call repr, including in the format string itself.  A refactor that
+        rewrites the format string to e.g. 'Model list updated: %d entries…' would
+        still pass the OR test (because 'model' is a substring of 'Model') but
+        would break the operator expectation set by log documentation.
+
+        This test finds the 'Fetched' call by args[0] and pins the exact prefix
+        so any format-string rename is caught immediately."""
+        coord = _make_coordinator()
+        ok = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": 100},
+                    {"id": "gpt-5.4", "created": 50},
+                ]
+            },
+        )
+        coord._http.get = AsyncMock(return_value=ok)
+
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = True
+            await coord._async_update_data()
+
+        fetched_calls = [
+            c for c in mock_log.debug.call_args_list if c.args and "Fetched" in str(c.args[0])
+        ]
+        assert fetched_calls, (
+            "Expected at least one debug call whose format string contains 'Fetched'"
+        )
+        fmt = fetched_calls[-1].args[0]
+        assert fmt.startswith("Fetched"), (
+            f"Success log format string must start with 'Fetched', got {fmt!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_success_log_shows_zero_for_image_only(self) -> None:
         """Image-only models should show 0 chat-capable in the debug log."""
         coord = _make_coordinator()

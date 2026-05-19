@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.120] - 2026-05-19
+### Tests
+- `test_coordinator_logging.py`: add `TestSuccessLogging.test_success_log_format_string_starts_with_fetched` — pins `args[0].startswith("Fetched")` replacing OR-condition check on combined call repr
+
 ## [0.2.119] - 2026-05-19
 ### Tests
 - `test_enrich_subentry.py`: add `TestEnrichSubentryData.test_base_none_exact_key_set` — exact set equality on result keys, catching accidental additions that the prior two `in` checks would silently accept
