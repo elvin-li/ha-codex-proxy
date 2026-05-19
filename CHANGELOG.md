@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.98] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_init.py`** —
+  `TestBuildCodexHeaders.test_returns_exactly_required_keys` uses exact set
+  equality (`==`) instead of `issubset` to assert that `_build_codex_headers`
+  returns *exactly* the four required headers and no extras.  The existing
+  `test_all_required_keys_present` passes even if an extra header (e.g.
+  `Authorization`) is accidentally added; an extra `Authorization` would
+  silently override the api_key-derived Bearer token and break all LLM requests
+  with HTTP 401.
+
+---
+
 ## [0.2.97] – 2026-05-19
 
 ### Added (tests)

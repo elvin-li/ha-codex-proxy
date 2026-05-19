@@ -59,6 +59,22 @@ class TestBuildCodexHeaders:
         required = {"User-Agent", "OpenAI-Beta", "originator", "x-codex-installation-id"}
         assert required.issubset(headers.keys())
 
+    def test_returns_exactly_required_keys(self) -> None:
+        """_build_codex_headers must return exactly the four required keys —
+        no more, no less.
+
+        The existing test_all_required_keys_present uses issubset, which passes
+        even if extra keys are accidentally added (e.g., an 'Authorization' header
+        leaked in during a refactor).  The openai client is configured with these
+        headers as ``default_headers``; an accidentally included 'Authorization'
+        key would silently override the api_key-derived Bearer token and make all
+        LLM requests fail with HTTP 401."""
+        headers = _build_codex_headers("test-id")
+        expected = {"User-Agent", "OpenAI-Beta", "originator", "x-codex-installation-id"}
+        assert set(headers.keys()) == expected, (
+            f"Unexpected headers in _build_codex_headers: {set(headers.keys()) - expected}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # PLATFORMS list
