@@ -211,6 +211,33 @@ class TestAsyncSelectOption:
         )
 
     @pytest.mark.asyncio
+    async def test_info_log_model_positions_in_format_args(self) -> None:
+        """The info log format must pass (title, old_model, new_model) as
+        positional format args in that order so the rendered message places
+        them correctly.
+
+        test_info_logged_on_model_change uses str(call_args) to check that
+        both model ids appear, but that would pass even if old and new model
+        args were swapped.  Checking the positional args directly pins the
+        order: args[1]=title, args[2]=old_model, args[3]=new_model — matching
+        the format string 'Model for subentry … changed from … to …'."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
+        with patch("custom_components.codex_proxy.select._LOGGER") as mock_log:
+            await entity.async_select_option("gpt-5.6")
+        call_args = mock_log.info.call_args
+        assert call_args.args[1] == "Test Agent", (
+            f"Expected subentry title 'Test Agent' at args[1], got {call_args.args[1]!r}"
+        )
+        assert call_args.args[2] == "gpt-5.5", (
+            f"Expected old model 'gpt-5.5' at args[2], got {call_args.args[2]!r}"
+        )
+        assert call_args.args[3] == "gpt-5.6", (
+            f"Expected new model 'gpt-5.6' at args[3], got {call_args.args[3]!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_no_log_on_noop(self) -> None:
         """No log should be emitted when the same model is re-selected."""
         from unittest.mock import patch

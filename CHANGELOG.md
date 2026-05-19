@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.100] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_select.py`** —
+  `TestSelectAsync.test_info_log_model_positions_in_format_args` checks that
+  the model-change info log passes `(title, old_model, new_model)` as positional
+  format args at indices 1, 2, and 3 respectively.  The existing
+  `test_info_logged_on_model_change` uses `str(call_args)` which would pass
+  even if the old and new model args were accidentally swapped; the new test
+  pins the exact position of each value.
+
+---
+
 ## [0.2.99] – 2026-05-19
 
 ### Added (tests)
