@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.143] - 2026-05-19
+### Tests
+- `test_coordinator_properties.py`: add `TestChatModelsProperty.test_gpt_image_filter_preserves_remaining_chat_models` — exact list equality after gpt-image filter, catching over-aggressive filtering missed by the `not in`/`in` pair
+
 ## [0.2.142] - 2026-05-19
 ### Tests
 - `test_manifest.py`: add `test_homeassistant_min_version_exact_value` (pins to `"2024.10.0"`), `test_codeowners_exact_value` (pins to `["@elvin-li"]`), and `test_after_dependencies_exact_list` (pins to `["openai_conversation"]`) — replacing format/membership/type checks that accept incorrect values

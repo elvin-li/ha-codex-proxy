@@ -61,6 +61,22 @@ class TestChatModelsProperty:
         assert "gpt-image-1" not in ids
         assert "gpt-5.5" in ids
 
+    def test_gpt_image_filter_preserves_remaining_chat_models(self) -> None:
+        """Filtering gpt-image-1 must keep 'gpt-5.5' — not drop all models.
+
+        test_filters_gpt_image_prefix asserts both 'not in' and 'in' but does
+        not check that those are the *only* two outcomes — it passes even if the
+        coordinator returns extra models (e.g. gpt-5.4) or is over-aggressive and
+        returns [].  Exact list equality catches both cases in a single assertion,
+        parity with the dall-e and image- companion tests."""
+        models = [_m("gpt-image-1"), _m("gpt-5.5")]
+        coord = _make_coordinator(models)
+        ids = [m["id"] for m in coord.chat_models]
+        assert ids == ["gpt-5.5"], (
+            f"Expected exactly ['gpt-5.5'] after gpt-image filter, got {ids!r} — "
+            "the filter must exclude only gpt-image models, not chat-capable ones"
+        )
+
     def test_filters_dall_e_prefix(self) -> None:
         models = [_m("dall-e-3"), _m("gpt-5.5")]
         coord = _make_coordinator(models)
