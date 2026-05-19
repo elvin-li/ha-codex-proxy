@@ -101,6 +101,31 @@ base_url = "https://second.example.com"
             "https://second.example.com",
         )
 
+    def test_base_url_is_first_not_second_provider(self) -> None:
+        """When multiple model_providers tables are present, parse_codex_toml
+        must return the URL from the *first* provider, not the second.
+
+        test_base_url_takes_first_provider uses an ``in`` check that also
+        passes if the second provider's URL is returned — which would accept
+        a dict-iteration-order change that silently breaks users who configure
+        multiple providers and expect the first one to take precedence.
+
+        test_pure_helpers.py::test_base_url_takes_first_provider already pins
+        this with exact equality; this test closes the same gap in test_config_flow.py
+        which historically tested the same function under a different import path."""
+        toml = """
+[model_providers.a]
+base_url = "https://first.example.com"
+
+[model_providers.b]
+base_url = "https://second.example.com"
+"""
+        result = parse_codex_toml(toml)
+        assert result["base_url"] == "https://first.example.com", (
+            f"Expected first provider URL, got {result['base_url']!r} — "
+            "parse_codex_toml must use the first model_providers entry"
+        )
+
 
 # ---------------------------------------------------------------------------
 # validate_base_url

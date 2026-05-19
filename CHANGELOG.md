@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.105] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_config_flow.py`** —
+  `TestParseCodexToml.test_base_url_is_first_not_second_provider` uses exact
+  equality to assert that `parse_codex_toml` returns the first provider's URL.
+  The existing `test_base_url_takes_first_provider` uses `in (first, second)` —
+  it passes even if the second provider's URL is returned, allowing a silent
+  dict-iteration-order regression to go undetected.
+
+---
+
 ## [0.2.104] – 2026-05-19
 
 ### Added (tests)
