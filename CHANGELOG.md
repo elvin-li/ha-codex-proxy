@@ -7,6 +7,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.12] – 2026-05-19
+
+### Added (tests)
+
+- **`TestTranslationKeyConsistency`** — 3 new tests in `test_translations.py`:
+  - `test_entity_platform_keys_consistent_across_all_files` — verifies all
+    three files declare the same entity platform keys.
+  - `test_entity_keys_consistent_across_all_files` — within each platform,
+    the entity keys must match across strings/en/zh-Hans.
+  - `test_all_entity_keys_have_name_field` — every entity entry must have a
+    non-empty `name` field so HA can render human-readable labels.
+
+---
+
 ## [0.2.11] – 2026-05-19
 
 ### Changed

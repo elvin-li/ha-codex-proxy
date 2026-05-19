@@ -84,3 +84,45 @@ class TestTranslationKeyConsistency:
             data = _load(fname)
             for error_key, error_val in data["config"]["error"].items():
                 assert error_val, f"{fname} has empty string for config.error.{error_key}"
+
+    def test_entity_platform_keys_consistent_across_all_files(self) -> None:
+        """All three files must declare the same set of entity platform keys
+        (binary_sensor, button, select, sensor, update)."""
+        strings = _load("strings.json")
+        en = _load("translations/en.json")
+        zh = _load("translations/zh-Hans.json")
+
+        s_platforms = set(strings["entity"].keys())
+        e_platforms = set(en["entity"].keys())
+        z_platforms = set(zh["entity"].keys())
+
+        assert s_platforms == e_platforms, f"en.json entity platform mismatch: {s_platforms ^ e_platforms}"
+        assert s_platforms == z_platforms, f"zh-Hans.json entity platform mismatch: {s_platforms ^ z_platforms}"
+
+    def test_entity_keys_consistent_across_all_files(self) -> None:
+        """Within each platform, the entity translation keys (proxy_reachable,
+        refresh_models, etc.) must match across all three files."""
+        strings = _load("strings.json")
+        en = _load("translations/en.json")
+        zh = _load("translations/zh-Hans.json")
+
+        for platform in strings["entity"]:
+            s_keys = set(strings["entity"][platform].keys())
+            e_keys = set(en["entity"].get(platform, {}).keys())
+            z_keys = set(zh["entity"].get(platform, {}).keys())
+            assert s_keys == e_keys, f"en.json entity.{platform} key mismatch: {s_keys ^ e_keys}"
+            assert s_keys == z_keys, f"zh-Hans.json entity.{platform} key mismatch: {s_keys ^ z_keys}"
+
+    def test_all_entity_keys_have_name_field(self) -> None:
+        """Every entity translation entry must have a 'name' field so HA can
+        display a human-readable name in the UI."""
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            for platform, entities in data["entity"].items():
+                for key, entry in entities.items():
+                    assert "name" in entry, (
+                        f"{fname} entity.{platform}.{key} is missing 'name' field"
+                    )
+                    assert entry["name"], (
+                        f"{fname} entity.{platform}.{key}.name is empty"
+                    )
