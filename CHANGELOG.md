@@ -13,6 +13,24 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.60] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_setup_unload.py`** — two new tests for `async_unload_entry`:
+  - `test_unload_returns_false_when_platforms_fail` — verifies that when
+    ``async_unload_platforms`` returns ``False``, ``async_unload_entry``
+    propagates that ``False`` so HA keeps the entry in its registry.  Without
+    this contract test, a future refactor that accidentally returned ``True``
+    unconditionally would be silent.
+  - `test_unload_safe_when_entry_absent_from_hass_data` — verifies that a
+    double-unload race (entry already removed from ``hass.data[DOMAIN]``) does
+    not raise ``KeyError``.  The implementation uses ``.pop(key, None)`` which
+    is safe, but the test documents the invariant and catches any accidental
+    regression to a direct ``del`` or ``[key]`` access.
+
+---
+
 ## [0.2.59] – 2026-05-19
 
 ### Fixed (tests)

@@ -105,3 +105,33 @@ class TestAsyncUnloadEntry:
         await async_unload_entry(hass, entry)
 
         hass.config_entries.async_unload_platforms.assert_awaited_once_with(entry, PLATFORMS)
+
+    @pytest.mark.asyncio
+    async def test_unload_returns_false_when_platforms_fail(self) -> None:
+        """When ``async_unload_platforms`` returns ``False`` (HA couldn't cleanly
+        unload one of the platforms), ``async_unload_entry`` must propagate that
+        ``False`` so HA knows the entry is still live and doesn't remove it from
+        the registry."""
+        entry = _make_entry()
+        hass = _make_hass(entry.entry_id)
+        hass.config_entries.async_unload_platforms = AsyncMock(return_value=False)
+
+        result = await async_unload_entry(hass, entry)
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_unload_safe_when_entry_absent_from_hass_data(self) -> None:
+        """If the entry was already removed from ``hass.data[DOMAIN]`` before
+        ``async_unload_entry`` is called (e.g. a double-unload race), the call
+        must not raise ``KeyError`` — the ``pop`` is a no-op and the entry still
+        unloads cleanly."""
+        entry = _make_entry("entry-gone")
+        hass = _make_hass(entry.entry_id)
+        # Simulate pre-removed entry data
+        hass.data[DOMAIN].pop("entry-gone", None)
+
+        # Should not raise KeyError
+        result = await async_unload_entry(hass, entry)
+
+        assert result is True
