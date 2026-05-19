@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.107] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_setup_entry.py`** —
+  `TestInstallationId.test_installation_id_update_uses_keyword_data_arg`
+  verifies that `async_update_entry` is called with `data` as a keyword
+  argument.  The existing test uses a defensive `or` fallback that reads the
+  second positional arg — dead code that would `IndexError` if the keyword path
+  failed.  The new test pins the keyword-arg calling convention directly via
+  `"data" in call_args.kwargs`.
+
+---
+
 ## [0.2.106] – 2026-05-19
 
 ### Added (tests)

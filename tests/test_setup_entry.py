@@ -98,6 +98,31 @@ class TestInstallationId:
         uuid.UUID(new_data[CONF_INSTALLATION_ID])  # raises if invalid
 
     @pytest.mark.asyncio
+    async def test_installation_id_update_uses_keyword_data_arg(self) -> None:
+        """async_update_entry must receive the new entry data as a ``data``
+        keyword argument, not as a second positional argument.
+
+        test_generates_installation_id_when_absent extracts new_data with:
+          ``call_kwargs[1].get("data") or call_kwargs[0][1]``
+        The fallback ``call_kwargs[0][1]`` (second positional arg) is dead code
+        because ``async_update_entry(entry, data=…)`` only ever has one
+        positional arg (entry).  This test pins the keyword-arg convention
+        explicitly so a refactor that accidentally switches to a positional call
+        is caught here rather than silently relying on a dead-code fallback."""
+        entry = _make_entry(installation_id=None)
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator()
+
+        with patcher:
+            await async_setup_entry(hass, entry)
+
+        call_args = hass.config_entries.async_update_entry.call_args
+        assert "data" in call_args.kwargs, (
+            "async_update_entry must be called with 'data' as a keyword arg — "
+            "passing it positionally would be incorrect and fragile"
+        )
+
+    @pytest.mark.asyncio
     async def test_reuses_installation_id_when_present(self) -> None:
         """When entry.data already has an installation_id, it must be reused and
         async_update_entry must NOT be called."""
