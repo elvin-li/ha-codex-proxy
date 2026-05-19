@@ -102,6 +102,21 @@ class TestTranslationKeyConsistency:
             f"zh-Hans.json entity platform mismatch: {s_platforms ^ z_platforms}"
         )
 
+    def test_entity_platform_keys_exact_set(self) -> None:
+        """strings.json must declare exactly the five entity platform keys.
+
+        test_entity_platform_keys_consistent_across_all_files proves all three
+        files agree with each other, but if all three files simultaneously drop
+        a platform (e.g. 'button') that test still passes. This test pins the
+        canonical set so a simultaneous omission is caught."""
+        strings = _load("strings.json")
+        actual = set(strings["entity"].keys())
+        expected = {"binary_sensor", "button", "select", "sensor", "update"}
+        assert actual == expected, (
+            f"Expected entity platforms {expected!r}, got {actual!r} — "
+            "update this test only when a platform is intentionally added or removed"
+        )
+
     def test_entity_keys_consistent_across_all_files(self) -> None:
         """Within each platform, the entity translation keys (proxy_reachable,
         refresh_models, etc.) must match across all three files."""
