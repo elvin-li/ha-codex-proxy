@@ -81,7 +81,15 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Transient errors (5xx, timeout) — retry with back-off
                 last_err = err
                 if attempt < COORDINATOR_MAX_RETRIES - 1:
-                    await asyncio.sleep(COORDINATOR_RETRY_DELAYS[attempt])
+                    delay = COORDINATOR_RETRY_DELAYS[attempt]
+                    _LOGGER.debug(
+                        "Transient error on attempt %d/%d (%s) — retrying in %ds",
+                        attempt + 1,
+                        COORDINATOR_MAX_RETRIES,
+                        type(err).__name__,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
             except httpx.HTTPError as err:
                 # Non-transient (connection refused, DNS) — fail immediately
                 raise UpdateFailed(
@@ -122,6 +130,15 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
             )
         models.sort(key=lambda x: x["created"], reverse=True)
+        _LOGGER.debug(
+            "Fetched %d models from %s (%d chat-capable after filtering)",
+            len(models),
+            url,
+            sum(
+                1 for m in models
+                if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
+            ),
+        )
         return {"models": models}
 
     @property

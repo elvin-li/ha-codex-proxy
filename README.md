@@ -124,14 +124,23 @@ wire_api = "responses"
 
 ---
 
-## 诊断传感器（可选）
+## 实体一览
 
-默认禁用，可在实体页手动启用：
+### 默认启用
 
-| 实体 | 说明 |
-|---|---|
-| `sensor.codex_*_chat_model_count` | 反代当前可用对话模型数量 |
-| `sensor.codex_*_last_model_refresh` | 上次 `/v1/models` 成功刷新的时间戳 |
+| 实体 | 类型 | 说明 |
+|---|---|---|
+| `binary_sensor.codex_*_proxy_reachable` | 连通性诊断 | 反代可达时为 `on`，最近一次 `/v1/models` 拉取失败时为 `off`；`extra_state_attributes.last_checked` 记录上次成功检查时间 |
+| `button.codex_*_refresh_models` | 操作 | 立即触发一次 `/v1/models` 刷新，无需等待 6 小时周期 |
+| `update.codex_*_model_update` | 更新 | 反代出现新模型时显示 "有更新"，点安装即切换子代理模型 |
+
+### 默认禁用（可在实体页手动启用）
+
+| 实体 | 类型 | 说明 |
+|---|---|---|
+| `sensor.codex_*_chat_model_count` | 传感器 | 反代当前可用对话模型数量 |
+| `sensor.codex_*_last_model_refresh` | 传感器 | 上次 `/v1/models` 成功刷新的时间戳 |
+| `select.codex_*_model_select` | 选择 | 从下拉直接切换子代理使用的模型（适合仪表盘操作） |
 
 ---
 
