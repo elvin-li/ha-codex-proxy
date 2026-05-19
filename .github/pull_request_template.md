@@ -14,7 +14,8 @@
 ## Checklist
 
 - [ ] `pytest tests/ -v` passes locally
-- [ ] New code is covered by tests (or explain why it can't be)
+- [ ] `pytest tests/ --cov=custom_components/codex_proxy --cov-report=term-missing` shows 100% (or explain any new exclusions)
+- [ ] `ruff check custom_components/codex_proxy/ && ruff format --check custom_components/codex_proxy/ tests/` passes
 - [ ] `strings.json`, `en.json`, and `zh-Hans.json` updated if new UI strings were added
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`
 - [ ] `manifest.json` version bumped if this is a release PR

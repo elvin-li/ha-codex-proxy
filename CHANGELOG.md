@@ -7,6 +7,33 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+<!-- Add new changes here. Move to a versioned section on release. -->
+
+---
+
+## [0.2.24] – 2026-05-19
+
+### Added
+
+- **`diagnostics.py`** — The diagnostics download now includes
+  `"integration_version"` at the top level (read from `manifest.json` via the
+  existing `_INTEGRATION_VERSION` constant in `entity_utils.py`).  Previously,
+  maintainers had to ask reporters which version they had installed; now it
+  appears verbatim in every diagnostics bundle.
+- **`tests/test_diagnostics.py`** — 2 new `TestDiagnosticsIntegrationVersion`
+  tests: `test_integration_version_present` and
+  `test_integration_version_matches_manifest`.
+- **`CHANGELOG.md`** — Added `[Unreleased]` section at the top per the PR
+  template reference to `[Unreleased]`.
+- **`.github/pull_request_template.md`** — Checklist now includes explicit
+  `pytest --cov` and `ruff format --check` steps; removed the ambiguous
+  "new code is covered by tests" line in favour of the quantitative 100%
+  criterion.
+
+---
+
 ## [0.2.23] – 2026-05-19
 
 ### Added (tests)

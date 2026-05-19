@@ -106,6 +106,41 @@ def _make_entry(
 # ---------------------------------------------------------------------------
 
 
+class TestDiagnosticsIntegrationVersion:
+    @pytest.mark.asyncio
+    async def test_integration_version_present(self) -> None:
+        """Diagnostics output must include integration_version so bug reports
+        can be triaged without asking the user to find the version manually."""
+        coord = _make_coordinator()
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert "integration_version" in result
+
+    @pytest.mark.asyncio
+    async def test_integration_version_matches_manifest(self) -> None:
+        """The reported version must match what is in manifest.json."""
+        import json
+        import pathlib
+
+        coord = _make_coordinator()
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        manifest_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "manifest.json"
+        )
+        expected = json.loads(manifest_path.read_text()).get("version")
+        assert result["integration_version"] == expected
+
+
 class TestDiagnosticsRedaction:
     @pytest.mark.asyncio
     async def test_api_key_is_redacted(self) -> None:

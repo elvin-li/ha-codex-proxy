@@ -13,6 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import CONF_API_KEY, DATA_COORDINATOR, DOMAIN
+from .entity_utils import _INTEGRATION_VERSION
 
 _TO_REDACT = {CONF_API_KEY}
 
@@ -45,6 +46,7 @@ async def async_get_config_entry_diagnostics(
     ]
 
     return {
+        "integration_version": _INTEGRATION_VERSION,
         "entry_data": async_redact_data(dict(entry.data), _TO_REDACT),
         "coordinator": coordinator_info,
         "subentries": subentries_info,
