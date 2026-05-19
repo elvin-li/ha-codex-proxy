@@ -95,15 +95,36 @@ class TestReleaseSummary:
         entity = _make_entity("gpt-5.5", None)
         assert "not yet available" in entity.release_summary
 
+    def test_no_coordinator_data_mentions_refresh_button(self) -> None:
+        """When the model list hasn't loaded yet, the summary must include
+        an actionable reference to the 'Refresh Models' button so users know
+        how to trigger an immediate check.  This pins the UX text added in
+        v0.2.58 against regression back to opaque developer-speak."""
+        entity = _make_entity("gpt-5.5", None)
+        assert "Refresh Models" in entity.release_summary
+
     def test_up_to_date(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.5")
         assert "latest" in entity.release_summary
+
+    def test_up_to_date_says_already_on_latest_model(self) -> None:
+        """Pin the exact 'Already on the latest model' phrasing so a future
+        edit that changes the wording is caught immediately rather than
+        silently breaking user-visible update card text."""
+        entity = _make_entity("gpt-5.5", "gpt-5.5")
+        assert "Already on the latest model" in entity.release_summary
 
     def test_update_available(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.6")
         summary = entity.release_summary
         assert "gpt-5.6" in summary
         assert "gpt-5.5" in summary
+
+    def test_update_available_says_click_install(self) -> None:
+        """The update-available summary must include an explicit call-to-action
+        so users know the install button will apply the change."""
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        assert "Click Install" in entity.release_summary
 
 
 # ---------------------------------------------------------------------------

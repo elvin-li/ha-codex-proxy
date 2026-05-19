@@ -13,6 +13,22 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.62] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_update_entity.py`** — three additional `TestReleaseSummary` tests that
+  pin user-visible strings in `CodexModelUpdate.release_summary`:
+  - `test_no_coordinator_data_mentions_refresh_button` — verifies the summary includes
+    "Refresh Models" when the model list hasn't loaded yet, guarding the v0.2.58 UX
+    improvement that replaced opaque developer-speak with a named UI button.
+  - `test_up_to_date_says_already_on_latest_model` — pins the "Already on the latest
+    model" phrase so a future wording change is caught immediately.
+  - `test_update_available_says_click_install` — verifies the actionable call-to-action
+    "Click Install" appears in the update-available summary.
+
+---
+
 ## [0.2.61] – 2026-05-19
 
 ### Added (tests)
