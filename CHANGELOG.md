@@ -7,6 +7,38 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.7] – 2026-05-19
+
+### Added
+
+- **`tests/test_pure_helpers.py`** (17 tests) — direct coverage for
+  `parse_codex_toml` and `validate_base_url` from `_pure_helpers.py`,
+  complementing the existing `test_config_flow.py` indirect tests; uses the
+  standard package import path (with ha_stubs bootstrap) rather than
+  `importlib.util.spec_from_file_location`.
+- **`tests/test_coordinator_request.py`** (10 tests) — verifies that
+  `_async_update_data` sends the correct URL (`base_url + /v1/models`),
+  all required headers (`Authorization`, `User-Agent`, `OpenAI-Beta`,
+  `originator`, `x-codex-installation-id`, `Accept`), and
+  `timeout=COORDINATOR_TIMEOUT_S` on each poll.
+
+### Fixed
+
+- **Coordinator debug-log eagerness** — the `sum(...)` computing chat-capable
+  model count was evaluated unconditionally even when DEBUG logging was
+  disabled. Guarded behind `if _LOGGER.isEnabledFor(logging.DEBUG):` to
+  avoid the list scan on every successful poll in production (where the log
+  level is typically INFO).
+
+### Changed
+
+- `test_coordinator_logging.py::TestSuccessLogging::test_success_log_shows_zero_for_image_only`
+  — updated to mock the full `_LOGGER` (setting `isEnabledFor.return_value =
+  True`) so the guard is exercised correctly; assertion now checks the
+  third positional arg of the `"Fetched … models"` call directly.
+
+---
+
 ## [0.2.6] – 2026-05-19
 
 ### Added

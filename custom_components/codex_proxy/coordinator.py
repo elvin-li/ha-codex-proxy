@@ -130,15 +130,18 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
             )
         models.sort(key=lambda x: x["created"], reverse=True)
-        _LOGGER.debug(
-            "Fetched %d models from %s (%d chat-capable after filtering)",
-            len(models),
-            url,
-            sum(
-                1 for m in models
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            chat_count = sum(
+                1
+                for m in models
                 if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
-            ),
-        )
+            )
+            _LOGGER.debug(
+                "Fetched %d models from %s (%d chat-capable after filtering)",
+                len(models),
+                url,
+                chat_count,
+            )
         return {"models": models}
 
     @property

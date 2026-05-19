@@ -197,18 +197,16 @@ class TestSuccessLogging:
         })
         coord._http.get = AsyncMock(return_value=ok)
 
-        logged_args: list = []
-
-        def capture(*args, **kwargs):
-            logged_args.extend(args)
-
-        with patch(
-            "custom_components.codex_proxy.coordinator._LOGGER.debug",
-            side_effect=capture,
-        ):
+        # Patch the full logger so isEnabledFor(DEBUG) returns True and the
+        # debug() call is exercised (the sum() is now guarded by isEnabledFor).
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = True
             await coord._async_update_data()
 
-        # Last debug call args should contain 0 for chat-capable count
-        # Format: "Fetched %d models from %s (%d chat-capable after filtering)"
-        success_calls = [a for a in logged_args if isinstance(a, int) and a == 0]
-        assert success_calls, "Expected 0 chat-capable models in debug log"
+        # Find the "Fetched %d models …" call and verify chat-capable == 0
+        debug_calls = mock_log.debug.call_args_list
+        fetched_calls = [c for c in debug_calls if "Fetched" in str(c)]
+        assert fetched_calls, "Expected a 'Fetched … models' debug log call"
+        # Third positional arg is the chat-capable count
+        call_args = fetched_calls[-1][0]  # positional args tuple
+        assert call_args[3] == 0, f"Expected 0 chat-capable, got {call_args[3]}"
