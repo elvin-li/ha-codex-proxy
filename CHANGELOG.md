@@ -7,6 +7,48 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.4] – 2026-05-19
+
+### Added
+
+- **`select.py` stale-subentry fix** — `_handle_coordinator_update` override
+  re-reads `_subentry` from the live entry registry on each coordinator poll,
+  so `current_option` stays correct after external config-flow edits.
+- **Coordinator debug logging** — retry attempts now log `(attempt N/M,
+  error type, sleep delay)`; success logs total model count + chat-capable
+  count. Useful for diagnosing sporadic proxy connectivity issues.
+- **README entity reference table** — complete table of all 6 entities split
+  into default-enabled (binary_sensor, button, update) and default-disabled
+  (sensor×2, select); documents `last_checked` attribute on binary_sensor.
+- **42 new tests** across 5 new test files:
+  `test_entity_utils.py` (7), `test_init.py` (15), `test_coordinator_logging.py`
+  (5), `test_platform_setup.py` (10), `test_binary_sensor.py` extras (3 new),
+  `test_select.py` extras (2 new).
+
+### Fixed
+
+- **`@callback` guard bug** in `ha_stubs.py` — guard `if not callable(...)`
+  never fired (MagicMock is callable), so `@callback` decorated methods in
+  `select.py` and `update.py` were silently replaced by MagicMock instances.
+  Now always assigns `_CORE.callback = lambda f: f`.
+- **Test ordering fragility** — migrated all remaining inline-stub test files
+  (`test_select.py`, `test_coordinator_properties.py`, `test_model_select.py`,
+  `test_update_entity.py`) to `ha_stubs.py`; fixed `_CoordinatorEntityBase`
+  missing `__init__` that caused `test_platform_setup.py` to fail in the full
+  suite.
+
+### Changed
+
+- `ha_stubs.py`: wire parent→submodule attributes so `from homeassistant.helpers
+  import device_registry as dr` resolves to the configured mock (not a fresh
+  auto-generated child mock); add `_SensorEntityDescription` real class;
+  wire all `homeassistant.components.*` and `homeassistant.helpers.*` submodule
+  attributes onto parent mocks.
+- `tests/conftest.py`: add `title` field to `_FakeEntry` (required by platform
+  `async_setup_entry` functions that build `DeviceInfo`).
+
+---
+
 ## [0.2.3] – 2026-05-19
 
 ### Added
