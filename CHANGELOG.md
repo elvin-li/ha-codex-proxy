@@ -13,6 +13,28 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.53] – 2026-05-19
+
+### Changed
+
+- **`config_flow.py`** — ``async_step_user`` and ``async_step_reconfigure`` now
+  use named field access from the ``_ParseResult`` NamedTuple instead of
+  positional unpacking.  The validation-errors variable is renamed
+  ``parsed.errors`` and the probe-errors variable is renamed ``probe_errors``
+  to make the two distinct error paths visually distinct.  In
+  ``async_step_reconfigure`` the ``_, _`` placeholders for the unused
+  ``reasoning_effort`` / ``store_responses`` fields are eliminated entirely —
+  the comment explains they are not needed in this step.
+
+### Added (tests)
+
+- `test_pure_helpers.py` — ``test_non_dict_model_providers_value_ignored``:
+  a ``model_providers`` key that contains a bare string (not a TOML table)
+  must not crash ``parse_codex_toml`` — the ``isinstance(providers, dict)``
+  guard should prevent AttributeError and omit ``base_url`` from the result.
+
+---
+
 ## [0.2.52] – 2026-05-19
 
 ### Fixed

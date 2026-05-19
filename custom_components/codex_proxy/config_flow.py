@@ -285,26 +285,23 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=STEP_USER_SCHEMA)
 
-        errors, api_key, base_url, model, reasoning_effort, store_responses = (
-            _parse_toml_and_validate(user_input)
-        )
-
-        if errors:
+        parsed = _parse_toml_and_validate(user_input)
+        if parsed.errors:
             return self.async_show_form(
                 step_id="user",
                 data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
-                errors=errors,
+                errors=parsed.errors,
             )
 
-        errors = await _probe_proxy(self.hass, api_key, base_url, model)
-        if errors:
+        probe_errors = await _probe_proxy(self.hass, parsed.api_key, parsed.base_url, parsed.model)
+        if probe_errors:
             return self.async_show_form(
                 step_id="user",
                 data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
-                errors=errors,
+                errors=probe_errors,
             )
 
-        await self.async_set_unique_id(base_url)
+        await self.async_set_unique_id(parsed.base_url)
         self._abort_if_unique_id_configured()
 
         keys = _upstream_keys()
@@ -314,17 +311,17 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         # 502 for any non-null service_tier value.
         common_data = _enrich_subentry_data(
             {
-                keys["chat_model"]: model,
+                keys["chat_model"]: parsed.model,
                 keys["prompt"]: DEFAULT_PROMPT,
-                keys["reasoning_effort"]: reasoning_effort,
-                keys["store_responses"]: store_responses,
+                keys["reasoning_effort"]: parsed.reasoning_effort,
+                keys["store_responses"]: parsed.store_responses,
             }
         )
         return self.async_create_entry(
-            title=f"Codex 号池 ({base_url.split('//', 1)[-1]})",
+            title=f"Codex 号池 ({parsed.base_url.split('//', 1)[-1]})",
             data={
-                CONF_API_KEY: api_key,
-                CONF_BASE_URL: base_url,
+                CONF_API_KEY: parsed.api_key,
+                CONF_BASE_URL: parsed.base_url,
             },
             subentries=[
                 {
@@ -359,34 +356,32 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             )
 
-        # reasoning_effort and store_responses from TOML are intentionally
-        # ignored here — reconfigure only updates the connection credentials
-        # (api_key / base_url); subentry-level LLM settings are managed via
-        # the subentry reconfigure flow instead.
-        errors, api_key, base_url, model, _, _ = _parse_toml_and_validate(user_input)
-
-        if errors:
+        # Only api_key and base_url are updated by reconfigure; reasoning_effort
+        # and store_responses from TOML are intentionally ignored here — LLM
+        # settings are managed per-subentry via the subentry reconfigure flow.
+        parsed = _parse_toml_and_validate(user_input)
+        if parsed.errors:
             return self.async_show_form(
                 step_id="reconfigure",
                 data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
-                errors=errors,
+                errors=parsed.errors,
             )
 
-        errors = await _probe_proxy(self.hass, api_key, base_url, model)
-        if errors:
+        probe_errors = await _probe_proxy(self.hass, parsed.api_key, parsed.base_url, parsed.model)
+        if probe_errors:
             return self.async_show_form(
                 step_id="reconfigure",
                 data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
-                errors=errors,
+                errors=probe_errors,
             )
 
-        await self.async_set_unique_id(base_url)
+        await self.async_set_unique_id(parsed.base_url)
         self._abort_if_unique_id_mismatch()
         return self.async_update_reload_and_abort(
             entry,
             # Merge with existing data to preserve CONF_INSTALLATION_ID and any
             # future fields that may have been added since initial setup.
-            data={**entry.data, CONF_API_KEY: api_key, CONF_BASE_URL: base_url},
+            data={**entry.data, CONF_API_KEY: parsed.api_key, CONF_BASE_URL: parsed.base_url},
         )
 
     @classmethod

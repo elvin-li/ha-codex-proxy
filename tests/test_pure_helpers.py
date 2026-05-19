@@ -124,6 +124,14 @@ base_url = "  https://proxy.example.com  "
         result = parse_codex_toml(toml)
         assert result["base_url"] == "https://proxy.example.com"
 
+    def test_non_dict_model_providers_value_ignored(self) -> None:
+        """If model_providers is a non-dict type (e.g. a bare string from a
+        hand-edited TOML), parse_codex_toml must not crash and must omit
+        base_url rather than raising AttributeError on a non-dict iteration."""
+        toml = 'model_providers = "not_a_table"\n'
+        result = parse_codex_toml(toml)
+        assert "base_url" not in result
+
     def test_reasoning_effort_with_whitespace_stripped(self) -> None:
         """model_reasoning_effort values with extra whitespace must be stripped
         (consistent with how model is handled).
