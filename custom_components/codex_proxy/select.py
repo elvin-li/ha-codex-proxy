@@ -12,16 +12,14 @@ explicitly if you want dashboard-level model switching.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-from homeassistant.core import callback
 from homeassistant.components.openai_conversation.const import (
     CONF_CHAT_MODEL as UPSTREAM_CONF_CHAT_MODEL,
 )
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity

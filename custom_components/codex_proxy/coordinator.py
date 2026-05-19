@@ -44,7 +44,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(
         self,
         hass: HomeAssistant,
-        entry: "ConfigEntry",
+        entry: ConfigEntry,
         installation_id: str,
     ) -> None:
         super().__init__(

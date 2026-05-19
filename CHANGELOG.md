@@ -7,6 +7,33 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.10] – 2026-05-19
+
+### Fixed (lint)
+
+- **`__init__.py`**: removed unused `ConfigEntryAuthFailed` and
+  `ConfigEntryNotReady` imports (F401 — they were carried over from an early
+  draft before the exception handling was simplified to `httpx.HTTPError`).
+- **`config_flow.py`**: moved relative imports (`._pure_helpers`) after
+  third-party imports to satisfy isort/I001 ordering rules.
+- **`coordinator.py`**: removed redundant quotes from `entry: "ConfigEntry"`
+  annotation — redundant because `from __future__ import annotations` already
+  makes all annotations lazy (UP037).
+- **`select.py`**: removed unused `from typing import Any` import (F401).
+
+### Added (CI)
+
+- **Ruff lint job** added to `.github/workflows/tests.yml` — runs as a
+  separate `lint` job on Python 3.13 before the test matrix so style issues
+  are caught on every push/PR without duplicating effort across matrix legs.
+
+### Added (test)
+
+- **`test_select.py::TestClassAttributes::test_entity_category_is_config`**
+  (1 test) — verifies `_attr_entity_category is EntityCategory.CONFIG`.
+
+---
+
 ## [0.2.9] – 2026-05-19
 
 ### Fixed

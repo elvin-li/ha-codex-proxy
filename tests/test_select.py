@@ -197,6 +197,12 @@ class TestClassAttributes:
         """Select entity is opt-in; default enabled = False."""
         assert CodexModelSelectEntity._attr_entity_registry_enabled_default is False
 
+    def test_entity_category_is_config(self) -> None:
+        """Select entity belongs to CONFIG category (user configures the model)."""
+        from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
+        assert CodexModelSelectEntity._attr_entity_category is EntityCategory.CONFIG
+
 
 class TestHandleCoordinatorUpdate:
     def test_subentry_refreshed_from_entry_on_update(self) -> None:
