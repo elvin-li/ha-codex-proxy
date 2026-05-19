@@ -13,6 +13,28 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.44] – 2026-05-19
+
+### Fixed
+
+- **`coordinator.py`** — The model-processing loop now skips non-dict entries
+  (bare strings, ``None``, integers) in the proxy's model list with an
+  ``isinstance(m, dict)`` guard.  Previously any non-dict element would raise
+  ``AttributeError: 'str' object has no attribute 'get'`` and crash the
+  entire coordinator update cycle.  Some non-standard reverse proxies return
+  mixed-type lists; this makes the integration resilient against them.
+
+### Added (tests)
+
+- `test_coordinator.py` — `test_non_dict_entries_in_list_are_skipped`:
+  exercises the helper with a mixed list (dict + str + None + int); guards the
+  new ``isinstance`` check at the data-processing layer.
+- `test_coordinator_retry.py` — `test_non_dict_entries_skipped_without_crash`:
+  exercises ``_async_update_data`` end-to-end with a mixed-type payload from
+  the proxy to ensure no ``AttributeError`` is raised.
+
+---
+
 ## [0.2.43] – 2026-05-19
 
 ### Changed

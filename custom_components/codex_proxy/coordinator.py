@@ -149,6 +149,11 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         seen_ids: set[str] = set()
         models: list[dict[str, Any]] = []
         for m in raw_list:
+            # Skip non-dict elements — some proxies include bare strings or
+            # other scalars in the list; calling .get() on them would raise
+            # AttributeError and crash the entire coordinator update.
+            if not isinstance(m, dict):
+                continue
             mid = m.get("id")
             if not mid or mid in seen_ids:
                 continue

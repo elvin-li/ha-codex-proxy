@@ -159,6 +159,30 @@ class TestCoordinatorSuccess:
         ids = [m["id"] for m in result["models"]]
         assert ids == ["gpt-a-model", "gpt-m-model", "gpt-z-model"]
 
+    @pytest.mark.asyncio
+    async def test_non_dict_entries_skipped_without_crash(self) -> None:
+        """A proxy returning a mixed list (dicts + bare strings) must not crash
+        _async_update_data.  The non-dict entries must be silently ignored;
+        valid dict entries must be processed normally."""
+        coord = _make_coordinator()
+        response = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": 100},
+                    "bare-string-entry",   # would crash .get() without isinstance guard
+                    None,                  # NoneType — same
+                    42,                    # int — same
+                ]
+            },
+        )
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+
+        assert len(result["models"]) == 1
+        assert result["models"][0]["id"] == "gpt-5.5"
+
 
 # ---------------------------------------------------------------------------
 # Retry / back-off (transient errors)

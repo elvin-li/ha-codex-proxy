@@ -44,11 +44,13 @@ def _make_model(model_id: str, created: int = 0) -> dict[str, Any]:
     return {"id": model_id, "created": created, "object": "model", "owned_by": "openai"}
 
 
-def _process_models(payload_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _process_models(payload_data: list) -> list[dict[str, Any]]:
     """Replicate coordinator._async_update_data model-processing loop."""
     seen_ids: set[str] = set()
     models: list[dict[str, Any]] = []
     for m in payload_data:
+        if not isinstance(m, dict):
+            continue
         mid = m.get("id")
         if not mid or mid in seen_ids:
             continue
@@ -160,6 +162,21 @@ class TestModelProcessing:
         data = [{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": ""}]
         models = _process_models(data)
         assert models[0]["display_name"] == "gpt-5.5"
+
+    def test_non_dict_entries_in_list_are_skipped(self) -> None:
+        """Some non-standard proxies mix bare strings or other non-dict types
+        into the model list.  The loop must skip them rather than raising
+        AttributeError on .get().  Guards the `isinstance(m, dict)` check."""
+        data: list = [
+            _make_model("gpt-5.5"),
+            "some-bare-string-entry",  # str — .get() would raise AttributeError
+            None,                       # NoneType — same
+            42,                         # int — same
+        ]
+        models = _process_models(data)
+        # Only the valid dict entry should appear in the result
+        assert len(models) == 1
+        assert models[0]["id"] == "gpt-5.5"
 
 
 class TestChatModelFilter:
