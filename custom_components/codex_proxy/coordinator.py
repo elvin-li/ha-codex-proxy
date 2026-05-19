@@ -76,26 +76,32 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 r.raise_for_status()
                 payload = r.json()
                 break  # success
-            except (httpx.HTTPStatusError, httpx.TimeoutException) as err:
-                # Transient errors (5xx, timeout) — retry with back-off
-                last_err = err
-                if attempt < COORDINATOR_MAX_RETRIES - 1:
-                    delay = COORDINATOR_RETRY_DELAYS[
-                        min(attempt, len(COORDINATOR_RETRY_DELAYS) - 1)
-                    ]
-                    _LOGGER.debug(
-                        "Transient error on attempt %d/%d (%s) — retrying in %ds",
-                        attempt + 1,
-                        COORDINATOR_MAX_RETRIES,
-                        type(err).__name__,
-                        delay,
-                    )
-                    await asyncio.sleep(delay)
+            except httpx.HTTPStatusError as err:
+                if err.response.status_code < 500:
+                    # Client error (4xx) — non-transient, fail immediately
+                    raise UpdateFailed(
+                        f"Client error fetching {url}: HTTP {err.response.status_code}"
+                    ) from err
+                last_err = err  # 5xx — fall through to retry logic below
+            except httpx.TimeoutException as err:
+                last_err = err  # Transient — fall through to retry logic below
             except httpx.HTTPError as err:
                 # Non-transient (connection refused, DNS) — fail immediately
                 raise UpdateFailed(f"Failed to fetch {url}: {type(err).__name__}: {err}") from err
             except ValueError as err:
                 raise UpdateFailed(f"Bad JSON from {url}: {err}") from err
+
+            # Transient error — sleep before next attempt (not after the last one)
+            if attempt < COORDINATOR_MAX_RETRIES - 1:
+                delay = COORDINATOR_RETRY_DELAYS[min(attempt, len(COORDINATOR_RETRY_DELAYS) - 1)]
+                _LOGGER.debug(
+                    "Transient error on attempt %d/%d (%s) — retrying in %ds",
+                    attempt + 1,
+                    COORDINATOR_MAX_RETRIES,
+                    type(last_err).__name__,
+                    delay,
+                )
+                await asyncio.sleep(delay)
         else:
             raise UpdateFailed(
                 f"Failed to fetch {url} after {COORDINATOR_MAX_RETRIES} attempts"

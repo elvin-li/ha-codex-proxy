@@ -48,6 +48,24 @@ class _FakeAPIConnectionError(Exception):
     pass
 
 
+class _FakePermissionDeniedError(Exception):
+    pass
+
+
+class _FakeRateLimitError(Exception):
+    pass
+
+
+class _FakeInternalServerError(Exception):
+    pass
+
+
+class _FakeUnprocessableEntityError(Exception):
+    def __init__(self, message: str = "unprocessable") -> None:
+        super().__init__(message)
+        self.message = message
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -85,8 +103,12 @@ def _patch_openai(exc_instance=None):
         mock_openai.AsyncOpenAI.return_value = client_mock
         # Wire our stub classes so except clauses in _probe_proxy match them
         mock_openai.AuthenticationError = _FakeAuthError
+        mock_openai.PermissionDeniedError = _FakePermissionDeniedError
         mock_openai.NotFoundError = _FakeNotFoundError
         mock_openai.BadRequestError = _FakeBadRequestError
+        mock_openai.UnprocessableEntityError = _FakeUnprocessableEntityError
+        mock_openai.RateLimitError = _FakeRateLimitError
+        mock_openai.InternalServerError = _FakeInternalServerError
         mock_openai.APIConnectionError = _FakeAPIConnectionError
         yield mock_openai
 
@@ -154,3 +176,46 @@ class TestProbeProxyOsError:
         with _patch_openai(TimeoutError("timed out")):
             errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
         assert errors.get("base") == "cannot_connect"
+
+
+class TestProbeProxyPermissionDenied:
+    @pytest.mark.asyncio
+    async def test_permission_denied_returns_invalid_auth(self) -> None:
+        """HTTP 403 from the proxy should surface as invalid_auth, not a crash."""
+        with _patch_openai(_FakePermissionDeniedError()):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "invalid_auth"
+
+
+class TestProbeProxyRateLimit:
+    @pytest.mark.asyncio
+    async def test_rate_limit_returns_cannot_connect(self) -> None:
+        """HTTP 429 rate-limit during setup should surface as cannot_connect."""
+        with _patch_openai(_FakeRateLimitError()):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "cannot_connect"
+
+
+class TestProbeProxyInternalServerError:
+    @pytest.mark.asyncio
+    async def test_internal_server_error_returns_cannot_connect(self) -> None:
+        """HTTP 500 from the proxy should surface as cannot_connect."""
+        with _patch_openai(_FakeInternalServerError()):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "cannot_connect"
+
+
+class TestProbeProxyUnprocessableEntity:
+    @pytest.mark.asyncio
+    async def test_model_in_message_returns_unknown_model(self) -> None:
+        """HTTP 422 with 'model' in the error body → unknown_model."""
+        with _patch_openai(_FakeUnprocessableEntityError("model field invalid")):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "unknown_model"
+
+    @pytest.mark.asyncio
+    async def test_no_model_in_message_returns_unknown(self) -> None:
+        """HTTP 422 without 'model' in the error body → unknown."""
+        with _patch_openai(_FakeUnprocessableEntityError("parameter out of range")):
+            errors = await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+        assert errors.get("base") == "unknown"

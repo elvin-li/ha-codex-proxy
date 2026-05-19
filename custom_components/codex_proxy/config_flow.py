@@ -182,10 +182,18 @@ async def _probe_proxy(
         )
     except openai.AuthenticationError:
         errors["base"] = "invalid_auth"
+    except openai.PermissionDeniedError:
+        errors["base"] = "invalid_auth"
     except openai.NotFoundError:
         errors["base"] = "unknown_model"
     except openai.BadRequestError as err:
         errors["base"] = "unknown_model" if "model" in str(err).lower() else "unknown"
+    except openai.UnprocessableEntityError as err:
+        errors["base"] = "unknown_model" if "model" in str(err).lower() else "unknown"
+    except openai.RateLimitError:
+        errors["base"] = "cannot_connect"
+    except openai.InternalServerError:
+        errors["base"] = "cannot_connect"
     except openai.APIConnectionError:
         errors["base"] = "cannot_connect"
     except (TimeoutError, OSError) as err:

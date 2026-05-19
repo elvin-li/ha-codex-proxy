@@ -53,8 +53,10 @@ def _make_response(status_code: int = 200, json_data: dict | None = None) -> Mag
     r.status_code = status_code
     r.json.return_value = json_data or {"data": []}
     if status_code >= 400:
+        response_mock = MagicMock()
+        response_mock.status_code = status_code  # must be int for < 500 check
         r.raise_for_status.side_effect = httpx.HTTPStatusError(
-            f"HTTP {status_code}", request=MagicMock(), response=MagicMock()
+            f"HTTP {status_code}", request=MagicMock(), response=response_mock
         )
     else:
         r.raise_for_status.return_value = None
@@ -226,6 +228,42 @@ class TestCoordinatorNonTransient:
 
         # No sleep between retries — it failed immediately
         sleep_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_4xx_raises_immediately_without_retry(self) -> None:
+        """HTTP 4xx (e.g. 401 Unauthorized) must NOT be retried."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(return_value=_make_response(401))
+
+        sleep_mock = AsyncMock()
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock),
+            pytest.raises(UpdateFailed),
+        ):
+            await coord._async_update_data()
+
+        sleep_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_403_raises_immediately(self) -> None:
+        """HTTP 403 Forbidden must also fail immediately."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(return_value=_make_response(403))
+
+        with pytest.raises(UpdateFailed, match="403"):
+            await coord._async_update_data()
+
+    @pytest.mark.asyncio
+    async def test_5xx_still_retried(self) -> None:
+        """HTTP 503 must still be retried (behaviour unchanged)."""
+        coord = _make_coordinator()
+        ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 100}]})
+        coord._http.get = AsyncMock(side_effect=[_make_response(503), ok])
+
+        with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()):
+            result = await coord._async_update_data()
+
+        assert result["models"][0]["id"] == "gpt-5.5"
 
 
 # ---------------------------------------------------------------------------

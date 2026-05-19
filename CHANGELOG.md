@@ -13,6 +13,42 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.27] – 2026-05-19
+
+### Fixed
+
+- **`config_flow.py:_probe_proxy`** — Four additional `openai` exception types
+  that previously propagated uncaught (crashing the config flow UI) are now
+  handled:
+  - `openai.PermissionDeniedError` (HTTP 403) → `"invalid_auth"`
+  - `openai.RateLimitError` (HTTP 429) → `"cannot_connect"`
+  - `openai.InternalServerError` (HTTP 500) → `"cannot_connect"`
+  - `openai.UnprocessableEntityError` (HTTP 422) → `"unknown_model"` if
+    "model" appears in the error message, else `"unknown"`
+
+- **`coordinator.py:_async_update_data`** — HTTP 4xx responses (e.g. 401
+  Unauthorized, 403 Forbidden) are no longer retried three times (which
+  previously wasted up to 35 seconds).  Only genuine transient errors — HTTP
+  5xx and connection/timeout exceptions — trigger the retry/back-off loop;
+  4xx errors now raise `UpdateFailed` immediately.  The retry logic was also
+  refactored to eliminate the duplicated delay-sleep block.
+
+### Added (tests)
+
+- **`tests/test_probe_proxy.py`** — 6 new test classes covering the previously
+  unhandled exception paths: `TestProbeProxyPermissionDenied`,
+  `TestProbeProxyRateLimit`, `TestProbeProxyInternalServerError`,
+  `TestProbeProxyUnprocessableEntity` (2 cases).
+- **`tests/test_coordinator_retry.py`** — 3 new tests:
+  `test_4xx_raises_immediately_without_retry` (401),
+  `test_403_raises_immediately`, `test_5xx_still_retried`.  The
+  `_make_response` helper also fixed to properly set `response.status_code`
+  (integer, not `MagicMock`) on the `httpx.HTTPStatusError` so the `< 500`
+  guard in production code works correctly under test.
+- **`tests/test_coordinator_logging.py`** — Same `_make_response` fix applied.
+
+---
+
 ## [0.2.26] – 2026-05-19
 
 ### Fixed

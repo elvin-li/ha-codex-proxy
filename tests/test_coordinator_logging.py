@@ -41,8 +41,10 @@ def _make_response(status_code: int = 200, json_data: dict | None = None) -> Mag
     r.status_code = status_code
     r.json.return_value = json_data or {"data": []}
     if status_code >= 400:
+        response_mock = MagicMock()
+        response_mock.status_code = status_code  # must be int for < 500 check
         r.raise_for_status.side_effect = httpx.HTTPStatusError(
-            f"HTTP {status_code}", request=MagicMock(), response=MagicMock()
+            f"HTTP {status_code}", request=MagicMock(), response=response_mock
         )
     else:
         r.raise_for_status.return_value = None

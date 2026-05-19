@@ -19,7 +19,7 @@ import pytest
 
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import tests.ha_stubs  # noqa: F401, E402
+import tests.ha_stubs  # noqa: F401, E402, I001
 from custom_components.codex_proxy import async_setup_entry  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CONF_INSTALLATION_ID,
