@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.151] - 2026-05-19
+### Tests
+- `test_select.py`: add `TestSelectAsync.test_info_log_format_string_exact` — pins `args[0]` (the format string) of the model-change info log to the exact string, closing the gap left by positional-arg tests that never checked the template wording itself
+
 ## [0.2.150] - 2026-05-19
 ### Tests
 - `test_subentry_flow.py`: add `TestBuildSchemaWithCoordinator.test_coordinator_model_options_exact_list` — exact list equality for coordinator model options, replacing two `in` membership checks

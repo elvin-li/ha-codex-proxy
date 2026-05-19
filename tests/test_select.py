@@ -271,6 +271,27 @@ class TestAsyncSelectOption:
         )
 
     @pytest.mark.asyncio
+    async def test_info_log_format_string_exact(self) -> None:
+        """args[0] of the info call must be the exact format string used in
+        select.py so a refactor that changes the template wording is caught.
+
+        test_info_log_model_positions_in_format_args pins args[1-3] (title,
+        old, new) but never checks args[0] — the format string itself.  If the
+        log message were reworded to e.g. 'Switching model …', all positional
+        tests still pass while the operator-facing log text changes silently."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
+        with patch("custom_components.codex_proxy.select._LOGGER") as mock_log:
+            await entity.async_select_option("gpt-5.6")
+        fmt = mock_log.info.call_args.args[0]
+        assert fmt == "Model for subentry '%s' changed from '%s' to '%s'; reloading entry", (
+            f"Expected exact format string "
+            f"\"Model for subentry '%s' changed from '%s' to '%s'; reloading entry\", "
+            f"got {fmt!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_no_log_on_noop(self) -> None:
         """No log should be emitted when the same model is re-selected."""
         from unittest.mock import patch
