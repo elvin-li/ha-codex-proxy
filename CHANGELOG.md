@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.129] - 2026-05-19
+### Tests
+- `test_coordinator_retry.py`: add `TestCoordinatorSuccess.test_return_dict_has_exactly_models_key` — exact set equality on `_async_update_data` return dict keys, catching accidental extra keys the `in` check would miss
+
 ## [0.2.128] - 2026-05-19
 ### Tests
 - `test_pure_helpers.py`: add `TestParseCodexToml.test_full_config_exact_key_set` — exact set equality on parse result keys, catching accidental extra keys the per-value tests would miss

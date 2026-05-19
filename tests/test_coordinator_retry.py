@@ -97,6 +97,29 @@ class TestCoordinatorSuccess:
         assert len(result["models"]) == 2
 
     @pytest.mark.asyncio
+    async def test_return_dict_has_exactly_models_key(self) -> None:
+        """_async_update_data must return a dict with exactly one key: 'models'.
+
+        test_returns_models_list_on_success only checks that 'models' is present
+        using ``in``; it passes even if extra keys are returned (e.g. a 'metadata'
+        key added during a refactor).  The coordinator's data dict is consumed by
+        chat_models, latest_chat_model_id, and diagnostics — all of which assume
+        only 'models' is present.  Exact set equality here catches accidental
+        additions to the return payload."""
+        coord = _make_coordinator()
+        response = _make_response(
+            200, {"data": [{"id": "gpt-5.5", "created": 100, "owned_by": "openai"}]}
+        )
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+
+        assert set(result.keys()) == {"models"}, (
+            f"_async_update_data must return exactly {{'models'}}, "
+            f"got keys: {set(result.keys())!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_models_sorted_newest_first(self) -> None:
         coord = _make_coordinator()
         response = _make_response(
