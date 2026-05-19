@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.146] - 2026-05-19
+### Tests
+- `test_update_entity.py`: add `TestReleaseSummary.test_update_available_exact_release_summary` — pins the update-available release_summary to the exact full sentence, replacing four separate substring/position checks that leave wording gaps
+
 ## [0.2.145] - 2026-05-19
 ### Tests
 - `test_enrich_subentry.py`: add `TestUpstreamKeys.test_upstream_keys_exact_key_set` — exact set equality on `_upstream_keys()` result keys, catching accidental additions missed by the five-iteration `in` loop

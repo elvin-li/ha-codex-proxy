@@ -161,6 +161,25 @@ class TestReleaseSummary:
             "the format is '… available: <new> (installed: <old>) …'"
         )
 
+    def test_update_available_exact_release_summary(self) -> None:
+        """When a newer model is available, release_summary must be exactly:
+        'Proxy has a newer model available: gpt-5.6 (installed: gpt-5.5). Click Install to switch.'
+
+        The other update-available tests each check a single substring ('gpt-5.6
+        in summary', 'gpt-5.5 in summary', 'Click Install in summary') and one
+        positional check — together they constrain the string but leave gaps.
+        For example a message like 'gpt-5.6 available (gpt-5.5 old) Click Install
+        would pass all substring checks.  Pinning the full string catches any
+        UX wording change in one assertion."""
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        expected = (
+            "Proxy has a newer model available: gpt-5.6 "
+            "(installed: gpt-5.5). Click Install to switch."
+        )
+        assert entity.release_summary == expected, (
+            f"Expected {expected!r}, got {entity.release_summary!r}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # release_url
