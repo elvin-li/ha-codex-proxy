@@ -31,6 +31,9 @@ async def async_get_config_entry_diagnostics(
             if coordinator.last_update_success_time
             else None
         ),
+        # str() of a timedelta produces a human-readable form such as "6:00:00"
+        # that is easy to copy into a bug report or compare with MODEL_REFRESH_INTERVAL.
+        "update_interval": str(coordinator.update_interval),
         "chat_models_count": len(coordinator.chat_models),
         "latest_chat_model": coordinator.latest_chat_model_id,
         "models": coordinator.data.get("models", []) if coordinator.data else [],

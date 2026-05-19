@@ -13,6 +13,31 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.47] – 2026-05-19
+
+### Added
+
+- **`diagnostics.py`** — Coordinator section now includes ``update_interval``
+  (e.g. ``"6:00:00"``), making it easy to confirm the model-refresh cadence
+  from a downloaded diagnostics file without reading the source code.
+
+### Changed
+
+- **`const.py`** — Added a module-level ``assert`` that ``COORDINATOR_RETRY_DELAYS``
+  has exactly ``COORDINATOR_MAX_RETRIES - 1`` entries.  The comment already
+  documented the invariant, but there was no enforcement: a developer who
+  changed one constant without updating the other would get silently wrong
+  retry behaviour instead of an immediate ``AssertionError``.
+
+### Added (tests)
+
+- `test_diagnostics.py` — `test_update_interval_present_as_string`: verifies
+  the new ``update_interval`` key is a human-readable string (``"6:00:00"``).
+- `test_diagnostics.py` — `test_update_interval_non_default`: verifies the
+  value is dynamic, not hardcoded.
+
+---
+
 ## [0.2.46] – 2026-05-19
 
 ### Fixed

@@ -40,11 +40,18 @@ MODEL_REFRESH_INTERVAL = timedelta(hours=6)
 PROBE_TIMEOUT_S = 10.0
 COORDINATOR_TIMEOUT_S = 15.0
 COORDINATOR_MAX_RETRIES = 3
-# len(COORDINATOR_RETRY_DELAYS) must equal COORDINATOR_MAX_RETRIES - 1.
-# The retry loop uses index min(attempt, len-1) to select the sleep delay;
-# if these two constants drift, extra retries silently reuse the last delay
-# rather than raising a clear error.
+# COORDINATOR_RETRY_DELAYS must have exactly COORDINATOR_MAX_RETRIES - 1 entries:
+# one sleep per inter-attempt gap (no sleep after the final attempt).
+# The retry loop uses min(attempt, len-1) to index into the table, which would
+# silently reuse the last delay if the two constants drift.  The assertion below
+# surfaces any mismatch immediately at import time rather than hiding it.
 COORDINATOR_RETRY_DELAYS: tuple[int, ...] = (5, 30)
+
+assert len(COORDINATOR_RETRY_DELAYS) == COORDINATOR_MAX_RETRIES - 1, (
+    f"COORDINATOR_RETRY_DELAYS must have exactly {COORDINATOR_MAX_RETRIES - 1} "
+    f"element(s) (one per inter-attempt sleep), but has {len(COORDINATOR_RETRY_DELAYS)}. "
+    "Update COORDINATOR_RETRY_DELAYS or COORDINATOR_MAX_RETRIES to keep them in sync."
+)
 
 # Model IDs starting with any of these prefixes are image-only and excluded
 # from the chat-model list surfaced in conversation-agent dropdowns.

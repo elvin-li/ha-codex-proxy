@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -67,6 +67,7 @@ def _make_coordinator(
     chat_models: list[dict[str, Any]] | None = None,
     latest_id: str | None = "gpt-5.5",
     models_data: list[dict[str, Any]] | None = None,
+    update_interval: timedelta = timedelta(hours=6),
 ) -> MagicMock:
     coord = MagicMock()
     coord.last_update_success = last_success
@@ -74,6 +75,7 @@ def _make_coordinator(
     coord.chat_models = chat_models or [{"id": "gpt-5.5"}]
     coord.latest_chat_model_id = latest_id
     coord.data = {"models": models_data or [{"id": "gpt-5.5"}]}
+    coord.update_interval = update_interval
     return coord
 
 
@@ -223,6 +225,32 @@ class TestDiagnosticsCoordinatorInfo:
         result = await async_get_config_entry_diagnostics(hass, entry)
 
         assert result["coordinator"]["latest_chat_model"] == "gpt-5.6"
+
+    @pytest.mark.asyncio
+    async def test_update_interval_present_as_string(self) -> None:
+        """update_interval must appear in coordinator diagnostics as a
+        human-readable string so users can see the polling cadence without
+        having to inspect the source code."""
+        coord = _make_coordinator(update_interval=timedelta(hours=6))
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert "update_interval" in result["coordinator"]
+        # str(timedelta(hours=6)) == "6:00:00"
+        assert result["coordinator"]["update_interval"] == "6:00:00"
+
+    @pytest.mark.asyncio
+    async def test_update_interval_non_default(self) -> None:
+        """Verify that a non-default interval is faithfully reported (not hardcoded)."""
+        coord = _make_coordinator(update_interval=timedelta(minutes=30))
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["update_interval"] == "0:30:00"
 
 
 class TestDiagnosticsSubentries:
