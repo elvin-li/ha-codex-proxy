@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.157] - 2026-05-19
+### Tests
+- `test_binary_sensor.py`: add `TestExtraStateAttributes.test_last_error_exact_value_from_exception_str` — pins `last_error` to the exact `str(exception)` value, replacing a substring `"503" in` check that passed for any string containing "503"
+
 ## [0.2.156] - 2026-05-19
 ### Tests
 - `test_platform_setup.py`: add `TestSelectSetup.test_select_unique_ids_exact_format` and `TestUpdateSetup.test_update_unique_ids_exact_format` — pin select and update unique_ids to exact `{subentry_id}_model_select` / `{subentry_id}_model_update` format, replacing distinctness-only checks

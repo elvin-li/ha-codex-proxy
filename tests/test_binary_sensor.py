@@ -374,6 +374,24 @@ class TestExtraStateAttributes:
         assert "last_error" in attrs
         assert "503" in attrs["last_error"]
 
+    def test_last_error_exact_value_from_exception_str(self) -> None:
+        """last_error must be exactly str(last_exception) — i.e. the exception
+        message without any 'Exception: ' prefix or traceback.
+
+        test_last_error_present_when_exception_set uses a substring check
+        ('503' in attrs['last_error']) which passes even if the implementation
+        formats the error differently (e.g. 'Exception: HTTP 503 from proxy'
+        would still contain '503').  Pinning the exact string ensures the binary
+        sensor exposes a clean, jinja-templatable value and not an internal repr."""
+        s = _make_sensor_with_coord(
+            last_exception=Exception("HTTP 503 from proxy"),
+        )
+        attrs = s.extra_state_attributes
+        assert attrs["last_error"] == "HTTP 503 from proxy", (
+            f"Expected 'HTTP 503 from proxy', got {attrs['last_error']!r} — "
+            "last_error must be str(exception), not repr() or a prefixed form"
+        )
+
     def test_last_error_is_string(self) -> None:
         """last_error must be a string, not an Exception object, so HA can
         serialise it to the state machine without raising a TypeError."""
