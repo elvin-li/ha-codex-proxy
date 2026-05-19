@@ -97,6 +97,29 @@ class TestCoordinatorInit:
         coord = _make_coordinator()
         assert coord._headers["Accept"] == "application/json"
 
+    def test_headers_exact_key_set(self) -> None:
+        """coord._headers must contain exactly the six expected keys.
+
+        The per-header tests above each verify a single value; they pass even if
+        extra keys are added (e.g. an accidental duplicate or a debug header that
+        leaks the API key).  Exact set equality catches additions and omissions in
+        a single assertion, analogous to TestRequestHeaders.test_exact_header_keys_sent_in_request
+        in test_coordinator_request.py."""
+        coord = _make_coordinator()
+        expected_keys = {
+            "Authorization",
+            "User-Agent",
+            "OpenAI-Beta",
+            "originator",
+            "x-codex-installation-id",
+            "Accept",
+        }
+        actual_keys = set(coord._headers.keys())
+        assert actual_keys == expected_keys, (
+            f"Unexpected _headers keys: {actual_keys - expected_keys}. "
+            f"Missing: {expected_keys - actual_keys}."
+        )
+
     def test_http_client_set_from_hass(self) -> None:
         coord = _make_coordinator()
         assert coord._http is _FAKE_HTTP_CLIENT

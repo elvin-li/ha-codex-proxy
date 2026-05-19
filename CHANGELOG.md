@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.115] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_init.py`** —
+  `TestCoordinatorInit.test_headers_exact_key_set` pins the exact set of six
+  header keys in `coord._headers` using set equality.  The per-header tests
+  each check a single value; they pass even if extra keys are added.  This test
+  catches extra or missing headers at construction time, complementing the
+  request-level test added in v0.2.114.
+
+---
+
 ## [0.2.114] – 2026-05-19
 
 ### Added (tests)
