@@ -312,6 +312,31 @@ class TestExtraStateAttributes:
         assert "last_checked" in attrs
         assert "latest_model" in attrs
 
+    def test_attrs_exact_keys_after_successful_poll(self) -> None:
+        """extra_state_attributes must contain exactly {'last_checked', 'latest_model'}
+        after a successful poll with both timestamp and model available.
+
+        test_both_attributes_present_after_successful_poll uses ``in`` checks
+        for both keys but does not verify the complete set.  A refactor that
+        accidentally included an extra key (e.g. ``last_error: None`` leaking
+        through on a healthy coordinator) would silently pass the existing test
+        but would expose implementation details in the HA frontend attribute table.
+        Exact set equality prevents that."""
+        from datetime import datetime
+
+        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
+        s = _make_sensor_with_coord(
+            last_update_success_time=ts,
+            latest_chat_model_id="gpt-5.5",
+            last_exception=None,
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert set(attrs.keys()) == {"last_checked", "latest_model"}, (
+            f"Unexpected keys in extra_state_attributes: "
+            f"{set(attrs.keys()) - {'last_checked', 'latest_model'}}"
+        )
+
     def test_only_latest_model_when_no_timestamp(self) -> None:
         """When only latest_model_id is known (no timestamp yet), attrs is non-None."""
         s = _make_sensor_with_coord(

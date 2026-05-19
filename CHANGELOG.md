@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.111] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_binary_sensor.py`** —
+  `TestExtraStateAttributes.test_attrs_exact_keys_after_successful_poll` pins
+  `set(attrs.keys()) == {"last_checked", "latest_model"}` using exact set
+  equality for a healthy coordinator.  The existing
+  `test_both_attributes_present_after_successful_poll` uses `in` checks that
+  pass even if extra keys (e.g. `last_error: None`) leak into the attributes
+  dict.
+
+---
+
 ## [0.2.110] – 2026-05-19
 
 ### Added (tests)
