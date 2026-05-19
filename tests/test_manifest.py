@@ -80,10 +80,34 @@ class TestManifestValidity:
             f"homeassistant value {data['homeassistant']!r} does not match YYYY.MM.N"
         )
 
+    def test_homeassistant_min_version_exact_value(self) -> None:
+        """homeassistant must be exactly '2024.10.0'.
+
+        test_homeassistant_min_version_present only checks the format; a bump
+        to '2025.1.0' would pass the regex but raise the minimum HA version and
+        break users still on 2024.10.x without a deliberate compatibility review.
+        Exact equality makes such a bump an explicit, reviewable change."""
+        assert _load()["homeassistant"] == "2024.10.0", (
+            f"homeassistant min version must be '2024.10.0', got {_load()['homeassistant']!r} — "
+            "bumping this drops support for older HA versions without a compatibility review"
+        )
+
     def test_codeowners_is_list(self) -> None:
         codeowners = _load()["codeowners"]
         assert isinstance(codeowners, list)
         assert len(codeowners) > 0
+
+    def test_codeowners_exact_value(self) -> None:
+        """codeowners must be exactly ['@elvin-li'].
+
+        test_codeowners_is_list only checks that it's a non-empty list — any
+        list passes.  Exact equality catches an accidental addition (e.g. a
+        second reviewer from another integration's template) or accidental
+        removal of the owner, which would break HACS attribution and GitHub
+        CODEOWNERS file generation."""
+        assert _load()["codeowners"] == ["@elvin-li"], (
+            f"codeowners must be ['@elvin-li'], got {_load()['codeowners']!r}"
+        )
 
     def test_requirements_is_empty_list(self) -> None:
         """We delegate all requirements to the upstream openai_conversation integration."""
@@ -91,6 +115,20 @@ class TestManifestValidity:
 
     def test_after_dependencies_includes_openai_conversation(self) -> None:
         assert "openai_conversation" in _load()["after_dependencies"]
+
+    def test_after_dependencies_exact_list(self) -> None:
+        """after_dependencies must be exactly ['openai_conversation'].
+
+        test_after_dependencies_includes_openai_conversation uses ``in`` — a list
+        with extra entries (e.g. ['openai_conversation', 'google_generative_ai_conversation'])
+        still passes.  An extra after_dependency forces HA to load that integration
+        before codex_proxy, which could break setups without that integration installed.
+        Exact equality catches accidental additions."""
+        assert _load()["after_dependencies"] == ["openai_conversation"], (
+            f"after_dependencies must be ['openai_conversation'], "
+            f"got {_load()['after_dependencies']!r} — extra entries force unnecessary "
+            "load ordering constraints on installations that don't have those integrations"
+        )
 
     def test_quality_scale_is_silver(self) -> None:
         """quality_scale must be 'silver' — this controls the HACS badge and HA

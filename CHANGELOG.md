@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.142] - 2026-05-19
+### Tests
+- `test_manifest.py`: add `test_homeassistant_min_version_exact_value` (pins to `"2024.10.0"`), `test_codeowners_exact_value` (pins to `["@elvin-li"]`), and `test_after_dependencies_exact_list` (pins to `["openai_conversation"]`) — replacing format/membership/type checks that accept incorrect values
+
 ## [0.2.141] - 2026-05-19
 ### Tests
 - `test_manifest.py`: add `TestManifestValidity.test_name_exact_value` — pins `name` to exactly `"Codex Token Pool"`, replacing the type/truthiness check that passes for any non-empty string
