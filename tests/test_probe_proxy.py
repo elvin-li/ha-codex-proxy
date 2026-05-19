@@ -160,6 +160,31 @@ class TestProbeProxySuccess:
         assert _MODEL in logged
 
     @pytest.mark.asyncio
+    async def test_debug_log_base_url_as_format_arg(self) -> None:
+        """The debug log must pass base_url as a positional format argument so
+        the full URL appears verbatim in the rendered message.
+
+        test_debug_log_emitted_at_probe_start uses an OR condition that passes
+        even if only the hostname (not the scheme) appears in the log string.
+        This test checks the positional arg directly: config_flow.py line
+        ``_LOGGER.debug("Probing proxy at %s with model %s", base_url, model)``
+        must supply the exact _BASE_URL value at args index 1."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        call_args = mock_log.debug.call_args
+        assert call_args.args[1] == _BASE_URL, (
+            f"Expected base_url positional arg {_BASE_URL!r}, "
+            f"got {call_args.args[1]!r} — the probe debug log must pass the "
+            "full base_url as a format arg, not interpolate it into the format string"
+        )
+
+    @pytest.mark.asyncio
     async def test_debug_log_does_not_leak_api_key(self) -> None:
         """The API key must NEVER appear in any log call — including the
         probe debug message — because HA log files are routinely shared in

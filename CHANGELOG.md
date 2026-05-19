@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.99] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_probe_proxy.py`** —
+  `TestProbeProxySuccess.test_debug_log_base_url_as_format_arg` checks that
+  `base_url` is passed as a positional format argument at index 1 of the probe
+  debug log call.  The existing `test_debug_log_emitted_at_probe_start` uses an
+  OR condition (`_BASE_URL in logged or "proxy.example.com" in logged`) that
+  passes even if only the hostname without scheme appears; the new test pins
+  `call_args.args[1] == _BASE_URL` directly.
+
+---
+
 ## [0.2.98] – 2026-05-19
 
 ### Added (tests)
