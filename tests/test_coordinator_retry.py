@@ -438,6 +438,27 @@ class TestCoordinatorNonTransient:
         assert coord._url in str(exc_info.value)
 
     @pytest.mark.asyncio
+    async def test_connection_error_message_exact_format(self) -> None:
+        """UpdateFailed message for a ConnectError must follow exactly:
+        'Failed to fetch {url}: ConnectError: {detail}'.
+
+        test_connection_error_message_contains_url only checks that the URL
+        is a substring — 'Proxy error (https://…): conn refused' would still
+        pass.  Pinning the exact format ensures log-scraping scripts that
+        parse 'Failed to fetch <url>:' from HA logs continue to work after
+        any coordinator refactor."""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
+
+        with pytest.raises(UpdateFailed) as exc_info:
+            await coord._async_update_data()
+
+        expected_msg = f"Failed to fetch {coord._url}: ConnectError: connection refused"
+        assert str(exc_info.value) == expected_msg, (
+            f"Expected {expected_msg!r}, got {str(exc_info.value)!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_5xx_still_retried(self) -> None:
         """HTTP 503 must still be retried (behaviour unchanged)."""
         coord = _make_coordinator()

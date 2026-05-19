@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.147] - 2026-05-19
+### Tests
+- `test_coordinator_retry.py`: add `TestCoordinatorNonTransient.test_connection_error_message_exact_format` — pins `UpdateFailed` message to exact `"Failed to fetch {url}: ConnectError: {detail}"` format, replacing the URL substring check
+
 ## [0.2.146] - 2026-05-19
 ### Tests
 - `test_update_entity.py`: add `TestReleaseSummary.test_update_available_exact_release_summary` — pins the update-available release_summary to the exact full sentence, replacing four separate substring/position checks that leave wording gaps
