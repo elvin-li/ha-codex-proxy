@@ -261,3 +261,28 @@ class TestEntryCreation:
             await flow.async_step_user(padded_input)
         call_kwargs = flow.async_create_entry.call_args[1]
         assert call_kwargs["data"][CONF_API_KEY] == "sk-test"
+
+    @pytest.mark.asyncio
+    async def test_probe_receives_stripped_api_key(self) -> None:
+        """_probe_proxy must receive the STRIPPED api_key, not the raw padded
+        string the user submitted.
+
+        The existing test_api_key_whitespace_stripped_in_flow only verifies
+        the STORED key is stripped; without this companion test a refactor that
+        moves the strip() call to happen after the probe would silently send the
+        padded key to the proxy — potentially producing an 'invalid_auth' error
+        on a key that would otherwise succeed, with no indication that whitespace
+        was the cause."""
+        flow = _make_flow()
+        padded_input = {**_VALID_INPUT, CONF_API_KEY: "  sk-padded  "}
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ) as mock_probe:
+            await flow.async_step_user(padded_input)
+
+        probe_args = mock_probe.call_args[0]  # positional args
+        assert probe_args[1] == "sk-padded", (
+            f"probe received {probe_args[1]!r} instead of 'sk-padded' — "
+            "api_key whitespace stripping must happen BEFORE the probe call, not after"
+        )

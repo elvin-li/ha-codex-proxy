@@ -332,3 +332,30 @@ class TestReconfigurePreservesInstallationId:
 
         passed_data = flow.async_update_reload_and_abort.call_args[1]["data"]
         assert passed_data[CONF_API_KEY] == "sk-reconfigured"
+
+    @pytest.mark.asyncio
+    async def test_probe_receives_stripped_api_key_in_reconfigure(self) -> None:
+        """Reconfigure must pass the STRIPPED api_key to _probe_proxy, not the
+        raw padded value from form submission.
+
+        Companion to test_api_key_whitespace_stripped_in_reconfigure (which
+        only verifies the STORED key is stripped) and to the analogous test in
+        test_main_flow.py.  Without this test a refactor that moves the strip()
+        to after the probe call would silently send the padded key to the proxy
+        during credential validation — the user would see 'invalid_auth' for a
+        key that would succeed once properly stripped."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+        padded_input = {**_VALID_USER_INPUT, CONF_API_KEY: "  sk-padded  "}
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ) as mock_probe:
+            await flow.async_step_reconfigure(padded_input)
+
+        probe_args = mock_probe.call_args[0]  # positional args
+        assert probe_args[1] == "sk-padded", (
+            f"probe received {probe_args[1]!r} instead of 'sk-padded' — "
+            "api_key stripping must happen BEFORE the probe, not after"
+        )

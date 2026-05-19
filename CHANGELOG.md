@@ -13,6 +13,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.81] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_main_flow.py`** — `TestEntryCreation.test_probe_receives_stripped_api_key`
+  verifies that `_probe_proxy` is called with the whitespace-stripped api_key, not the
+  raw padded value the user submitted.  The existing
+  `test_api_key_whitespace_stripped_in_flow` only checks the STORED key is stripped;
+  a refactor that moves `strip()` to after the probe call would pass both old tests
+  while silently sending padded credentials to the proxy.
+- **`tests/test_reconfigure_flow.py`** — `TestReconfigurePreservesInstallationId.test_probe_receives_stripped_api_key_in_reconfigure`
+  — same guard for the reconfigure path.
+
+---
+
 ## [0.2.80] – 2026-05-19
 
 ### Added (tests)
