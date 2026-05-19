@@ -121,6 +121,12 @@ class CodexModelUpdate(
         target = version or self.coordinator.latest_chat_model_id
         if not target or target == self.installed_version:
             return
+        _LOGGER.info(
+            "Installing model '%s' on subentry '%s' (was '%s'); reloading entry",
+            target,
+            self._subentry.title,
+            self.installed_version,
+        )
         new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: target}
         self.hass.config_entries.async_update_subentry(
             self._entry, self._subentry, data=new_data

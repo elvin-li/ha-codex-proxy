@@ -155,6 +155,28 @@ class TestAsyncInstall:
         await entity.async_install(version=None, backup=False)
         entity.hass.config_entries.async_update_subentry.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_install_logs_on_change(self) -> None:
+        """_LOGGER.info is called once when a model upgrade is installed."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", "gpt-5.6")
+        with patch("custom_components.codex_proxy.update._LOGGER") as mock_log:
+            await entity.async_install(version="gpt-5.6", backup=False)
+        mock_log.info.assert_called_once()
+        logged = str(mock_log.info.call_args)
+        assert "gpt-5.6" in logged
+
+    @pytest.mark.asyncio
+    async def test_no_log_on_noop_install(self) -> None:
+        """No log when version is already installed."""
+        from unittest.mock import patch
+
+        entity = _make_entity("gpt-5.5", "gpt-5.5")
+        with patch("custom_components.codex_proxy.update._LOGGER") as mock_log:
+            await entity.async_install(version="gpt-5.5", backup=False)
+        mock_log.info.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # _handle_coordinator_update — live subentry refresh
