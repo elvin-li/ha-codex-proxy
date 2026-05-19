@@ -104,6 +104,19 @@ class TestManualInput:
         assert not result.errors
         assert "localhost" in result.base_url
 
+    def test_http_url_exact_value_preserved(self) -> None:
+        """A valid HTTP URL must be stored verbatim (port included) in result.base_url.
+
+        test_http_url_valid uses a substring check ('localhost' in base_url)
+        which passes even if the port ':8080' is stripped or the scheme is
+        changed to 'https'.  Exact equality ensures the full URL survives
+        _parse_toml_and_validate without modification."""
+        result = _parse_toml_and_validate(_input(base_url="http://localhost:8080"))
+        assert result.base_url == "http://localhost:8080", (
+            f"Expected 'http://localhost:8080', got {result.base_url!r} — "
+            "the URL must be preserved exactly (including port) by _parse_toml_and_validate"
+        )
+
     def test_base_url_with_surrounding_whitespace_stripped(self) -> None:
         """A manually pasted URL with extra leading/trailing spaces must be
         accepted and stripped — a common paste-from-browser artifact."""

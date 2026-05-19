@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.106] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_parse_toml_validate.py`** —
+  `TestManualInput.test_http_url_exact_value_preserved` asserts
+  `result.base_url == "http://localhost:8080"` using exact equality.  The
+  existing `test_http_url_valid` uses `"localhost" in result.base_url` which
+  passes even if the port is stripped or the scheme changed to `https`; the new
+  test pins the full URL value including port.
+
+---
+
 ## [0.2.105] – 2026-05-19
 
 ### Added (tests)
