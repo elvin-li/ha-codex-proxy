@@ -87,6 +87,42 @@ class TestRetryLogging:
         assert "Transient" in debug_calls_str or "attempt" in debug_calls_str.lower()
 
     @pytest.mark.asyncio
+    async def test_retry_log_format_string_starts_with_transient_error_on_attempt(
+        self,
+    ) -> None:
+        """The retry debug log format string must start with 'Transient error on attempt'.
+
+        test_debug_logged_on_transient_retry uses an OR condition
+        ('Transient' in str OR 'attempt' in str) that passes as long as
+        *either* word appears in any debug call — even if the retry message
+        is silently reformatted to, say, 'attempt N — Transient' (wrong order)
+        or just 'Transient failure' (missing 'attempt').
+
+        This test finds the retry call directly via args[0] and verifies the
+        format string begins with the exact phrase 'Transient error on attempt',
+        catching both word-order changes and partial omissions in one assertion."""
+        coord = _make_coordinator()
+        fail = _make_response(503)
+        ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 1}]})
+        coord._http.get = AsyncMock(side_effect=[fail, ok])
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log,
+        ):
+            await coord._async_update_data()
+
+        retry_calls = [
+            c for c in mock_log.debug.call_args_list if c.args and "Transient" in str(c.args[0])
+        ]
+        assert retry_calls, "Expected at least one retry debug log call containing 'Transient'"
+        fmt = retry_calls[0].args[0]
+        assert fmt.startswith("Transient error on attempt"), (
+            f"Retry log format string must start with 'Transient error on attempt', "
+            f"got {fmt!r}"
+        )
+
+    @pytest.mark.asyncio
     async def test_retry_log_includes_error_type_for_5xx(self) -> None:
         """The retry debug log must include the exception type name so operators
         can distinguish HTTP 5xx transient failures from timeout transient failures

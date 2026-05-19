@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.118] - 2026-05-19
+### Tests
+- `test_coordinator_logging.py`: add `TestRetryLogging.test_retry_log_format_string_starts_with_transient_error_on_attempt` — checks `args[0]` starts with exact phrase instead of OR-condition substring search
+
 ## [0.2.117] - 2026-05-19
 ### Tests
 - `test_diagnostics.py`: add `TestDiagnosticsSubentries.test_subentries_types_exact_set` — exact set equality on subentry types catches unexpected additions that the two prior `in` membership checks would miss
