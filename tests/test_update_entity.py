@@ -161,6 +161,16 @@ class TestAsyncInstall:
 # ---------------------------------------------------------------------------
 
 
+class TestTitle:
+    def test_title_is_chinese_string(self) -> None:
+        entity = _make_entity("gpt-5.5", "gpt-5.5")
+        assert entity.title == "Codex 号池模型"
+
+    def test_title_is_not_none(self) -> None:
+        entity = _make_entity()
+        assert entity.title is not None
+
+
 class TestHandleCoordinatorUpdate:
     def test_subentry_refreshed_from_entry_subentries(self) -> None:
         """After a coordinator update, _subentry should be re-read from
