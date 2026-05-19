@@ -13,6 +13,22 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.71] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_probe_proxy.py`** — two new `TestProbeProxySuccess` tests:
+  - `test_debug_log_contains_model` — the probe debug message must include the
+    model being tested so operators can diagnose `unknown_model` errors from the
+    log without re-running setup. Completes the format-string pin started by the
+    existing URL-presence test.
+  - `test_debug_log_does_not_leak_api_key` — security guard asserting the API key
+    never appears in any log call emitted by `_probe_proxy`. HA log files are
+    routinely shared in bug reports; this test catches any future refactor that
+    accidentally logs the credential.
+
+---
+
 ## [0.2.70] – 2026-05-19
 
 ### Added (tests)

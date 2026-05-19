@@ -143,6 +143,41 @@ class TestProbeProxySuccess:
         # The log must reference the URL being probed
         assert _BASE_URL in logged or "proxy.example.com" in logged
 
+    @pytest.mark.asyncio
+    async def test_debug_log_contains_model(self) -> None:
+        """The probe debug log must also include the model being tested so
+        operators can diagnose 'unknown_model' errors by checking which model
+        was used during a failed setup attempt."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        logged = str(mock_log.debug.call_args)
+        assert _MODEL in logged
+
+    @pytest.mark.asyncio
+    async def test_debug_log_does_not_leak_api_key(self) -> None:
+        """The API key must NEVER appear in any log call — including the
+        probe debug message — because HA log files are routinely shared in
+        bug reports and GitHub issues."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        all_logged = " ".join(str(c) for c in mock_log.mock_calls)
+        assert _API_KEY not in all_logged, (
+            f"API key {_API_KEY!r} appeared in a log call — "
+            "credentials must never be written to HA's log files"
+        )
+
 
 class TestProbeProxyAuthError:
     @pytest.mark.asyncio
