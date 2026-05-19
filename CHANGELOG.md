@@ -13,6 +13,27 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.58] – 2026-05-19
+
+### Fixed
+
+- **`tests/conftest.py`** — `mock_coordinator` fixture now explicitly sets
+  ``coord.last_exception = None``.  Previously this attribute was omitted,
+  causing ``MagicMock`` to auto-generate a truthy child mock for it.  Any
+  future test that builds a ``CodexProxyReachableSensor`` using this fixture
+  and calls ``extra_state_attributes`` would have seen a spurious ``last_error``
+  key (the binary-sensor surfaces it when ``last_exception is not None``).
+
+### Changed
+
+- **`update.py`** — `release_summary` for the "model list not yet available"
+  case now reads "use the Refresh Models button to force an immediate check"
+  instead of the opaque "trigger manually via update_entity".  This matches
+  the actual button entity exposed by the integration and is actionable for
+  end-users who encounter the message in HA's update card.
+
+---
+
 ## [0.2.57] – 2026-05-19
 
 ### Changed

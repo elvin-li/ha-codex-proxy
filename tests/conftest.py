@@ -107,4 +107,8 @@ def mock_coordinator(mock_entry: _FakeEntry) -> MagicMock:
     coord.latest_chat_model_id = "gpt-5.5"
     coord.last_update_success = True
     coord.last_update_success_time = None
+    # Explicitly set to None so tests that inspect extra_state_attributes on a
+    # CodexProxyReachableSensor using this fixture don't see a truthy MagicMock
+    # auto-attribute where no real exception exists.
+    coord.last_exception = None
     return coord

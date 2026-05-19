@@ -111,7 +111,8 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
         if not latest:
             return (
                 "Model list not yet available "
-                "(first refresh runs within 6 hours; trigger manually via update_entity)."
+                "(first refresh runs within 6 hours; "
+                "use the Refresh Models button to force an immediate check)."
             )
         if latest == installed:
             return "Already on the latest model from the proxy."
