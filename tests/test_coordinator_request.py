@@ -159,6 +159,42 @@ class TestRequestHeaders:
         assert headers["Accept"] == "application/json"
 
 
+    @pytest.mark.asyncio
+    async def test_exact_header_keys_sent_in_request(self) -> None:
+        """The HTTP GET request must include exactly the six expected headers —
+        no more, no less.
+
+        The individual tests above each check one header value; they pass even
+        if extra headers are accidentally included.  An extra header such as a
+        second Authorization key or a debug-dump header would be invisible to the
+        per-header tests but caught here.  This is analogous to the
+        _build_codex_headers exact-set test in test_init.py, extended to the
+        request level where the coordinator adds 'Accept' and 'Authorization'
+        on top of the codex headers.
+
+        Expected: Authorization, User-Agent, OpenAI-Beta, originator,
+                  x-codex-installation-id, Accept"""
+        coord = _make_coordinator()
+        coord._http.get = AsyncMock(return_value=_make_ok_response())
+
+        await coord._async_update_data()
+
+        headers = coord._http.get.call_args[1]["headers"]
+        expected_keys = {
+            "Authorization",
+            "User-Agent",
+            "OpenAI-Beta",
+            "originator",
+            "x-codex-installation-id",
+            "Accept",
+        }
+        actual_keys = set(headers.keys())
+        assert actual_keys == expected_keys, (
+            f"Unexpected header keys in request: {actual_keys - expected_keys}. "
+            f"Missing: {expected_keys - actual_keys}."
+        )
+
+
 class TestRequestTimeout:
     @pytest.mark.asyncio
     async def test_timeout_matches_constant(self) -> None:

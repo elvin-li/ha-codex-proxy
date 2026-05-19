@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.114] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_request.py`** —
+  `TestRequestHeaders.test_exact_header_keys_sent_in_request` pins the exact set
+  of 6 HTTP headers sent in the `/v1/models` request using exact set equality.
+  The existing per-header tests verify individual values but pass even if extra
+  headers are accidentally added; this test catches extra or missing headers in
+  a single assertion.
+
+---
+
 ## [0.2.113] – 2026-05-19
 
 ### Added (tests)
