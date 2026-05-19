@@ -136,6 +136,13 @@ class TestModelProcessing:
         models = _process_models(data)
         assert models[0]["created"] == 0
 
+    def test_empty_string_display_name_falls_back_to_id(self) -> None:
+        """An empty-string display_name (falsy, like None) must fall back to
+        the model id — guards the `str(m.get("display_name") or mid)` branch."""
+        data = [{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": ""}]
+        models = _process_models(data)
+        assert models[0]["display_name"] == "gpt-5.5"
+
 
 class TestChatModelFilter:
     def test_excludes_gpt_image_prefix(self) -> None:

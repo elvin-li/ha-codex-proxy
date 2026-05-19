@@ -68,3 +68,14 @@ class TestManifestValidity:
 
     def test_after_dependencies_includes_openai_conversation(self) -> None:
         assert "openai_conversation" in _load()["after_dependencies"]
+
+    def test_quality_scale_is_silver(self) -> None:
+        """quality_scale must be 'silver' — this controls the HACS badge and HA
+        integration quality indicator.  Changing it accidentally should be caught."""
+        assert _load().get("quality_scale") == "silver"
+
+    def test_dependencies_is_empty_list(self) -> None:
+        """Hard dependencies must remain empty — we piggyback on
+        openai_conversation via after_dependencies (soft dependency) to avoid
+        forcing it to load before HA finishes its startup sequence."""
+        assert _load()["dependencies"] == []

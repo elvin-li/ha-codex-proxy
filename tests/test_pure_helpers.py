@@ -112,6 +112,29 @@ api_key = "sk-xxx"
         result = parse_codex_toml(toml)
         assert "base_url" not in result
 
+    def test_base_url_with_surrounding_whitespace_stripped(self) -> None:
+        """base_url values with leading/trailing whitespace in TOML must be
+        stripped so downstream URL validation does not reject them with an
+        'invalid_url_scheme' error (a URL starting with a space has no scheme).
+        """
+        toml = """
+[model_providers.p]
+base_url = "  https://proxy.example.com  "
+"""
+        result = parse_codex_toml(toml)
+        assert result["base_url"] == "https://proxy.example.com"
+
+    def test_reasoning_effort_with_whitespace_stripped(self) -> None:
+        """model_reasoning_effort values with extra whitespace must be stripped
+        (consistent with how model is handled).
+        Note: model_reasoning_effort is a top-level TOML key, so it must appear
+        before any section header in the test fixture."""
+        toml = (
+            'model_reasoning_effort = "  high  "\n[model_providers.p]\nbase_url = "https://x.com"\n'
+        )
+        result = parse_codex_toml(toml)
+        assert result["reasoning_effort"] == "high"
+
 
 # ---------------------------------------------------------------------------
 # validate_base_url

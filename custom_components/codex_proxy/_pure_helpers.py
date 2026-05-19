@@ -32,7 +32,7 @@ def parse_codex_toml(text: str) -> dict[str, Any]:
     if isinstance(providers, dict):
         for provider in providers.values():
             if isinstance(provider, dict) and provider.get("base_url"):
-                out["base_url"] = str(provider["base_url"]).rstrip("/")
+                out["base_url"] = str(provider["base_url"]).strip().rstrip("/")
                 break
     return out
 

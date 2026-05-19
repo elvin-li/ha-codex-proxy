@@ -88,6 +88,14 @@ class TestDefaults:
     def test_default_store_is_false(self) -> None:
         assert DEFAULT_STORE is False
 
+    def test_default_prompt_is_empty_string(self) -> None:
+        """DEFAULT_PROMPT must be empty — users set their own system prompts via
+        the subentry reconfigure flow; the empty string tells upstream to use its
+        built-in assistant prompt rather than overriding it with something opaque."""
+        from custom_components.codex_proxy.const import DEFAULT_PROMPT
+
+        assert DEFAULT_PROMPT == ""
+
 
 class TestIntervals:
     def test_model_refresh_interval_is_6h(self) -> None:

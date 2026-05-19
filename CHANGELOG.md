@@ -13,6 +13,42 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.35] – 2026-05-19
+
+### Fixed
+
+- **`_pure_helpers.py`** — `parse_codex_toml` now strips leading/trailing
+  whitespace from `base_url` values before removing trailing slashes
+  (`str(provider["base_url"]).strip().rstrip("/")`).  Previously a TOML file
+  with `base_url = " https://... "` would produce a URL starting with a space,
+  which `validate_base_url` correctly rejected with `invalid_url_scheme`.  Now
+  the value is cleaned up before validation, consistent with how `model` and
+  `model_reasoning_effort` are already treated.
+
+- **`tests/test_coordinator_retry.py`** — Fixed import order: `UpdateFailed`
+  was imported from `homeassistant.helpers.update_coordinator` before
+  `tests.ha_stubs` was bootstrapped, which caused `ModuleNotFoundError` when
+  running the file in isolation.  Moved the import to after `ha_stubs`.
+  Also moved `# isort: skip_file` to be immediately before
+  `from __future__ import annotations` (no blank line) so ruff's isort
+  recognises the directive correctly.
+
+### Added (tests)
+
+- `test_coordinator.py` — `test_empty_string_display_name_falls_back_to_id`:
+  an explicit `display_name=""` must fall back to the model id (same as `None`).
+- `test_pure_helpers.py` — `test_base_url_with_surrounding_whitespace_stripped`:
+  verifies the new `.strip()` behaviour; `test_reasoning_effort_with_whitespace_stripped`:
+  verifies `model_reasoning_effort` whitespace is already stripped (existing
+  behaviour, newly documented in tests).
+- `test_const.py` — `test_default_prompt_is_empty_string` guards against
+  accidentally defaulting `DEFAULT_PROMPT` to a non-empty string.
+- `test_manifest.py` — `test_quality_scale_is_silver` and
+  `test_dependencies_is_empty_list`: guard accidental changes to
+  `quality_scale` and `dependencies`.
+
+---
+
 ## [0.2.34] – 2026-05-19
 
 ### Changed (tests)

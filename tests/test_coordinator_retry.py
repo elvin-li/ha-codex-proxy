@@ -3,9 +3,13 @@
 We mock httpx at the call-site so we can simulate 5xx, timeout, DNS failure,
 and bad JSON without a live proxy. asyncio.sleep is patched to avoid actually
 waiting in tests.
-"""
-# isort: skip_file — imports must be ordered: stdlib → httpx → ha_stubs → HA/codex
 
+Import order: stdlib → httpx → ha_stubs → homeassistant → codex_proxy.
+httpx must be imported before ha_stubs (real library); ha_stubs must precede
+all homeassistant imports so the stubs are registered first.
+"""
+
+# isort: skip_file
 from __future__ import annotations
 
 import os
@@ -20,9 +24,9 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import httpx  # real httpx — coordinator uses it directly  # noqa: E402
-from homeassistant.helpers.update_coordinator import UpdateFailed  # noqa: E402
 
-import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
+import tests.ha_stubs  # noqa: F401, E402  — must precede ALL homeassistant imports
+from homeassistant.helpers.update_coordinator import UpdateFailed  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CODEX_OPENAI_BETA,
     CODEX_ORIGINATOR,
