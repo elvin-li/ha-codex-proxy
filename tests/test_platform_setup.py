@@ -189,6 +189,29 @@ class TestSelectSetup:
         uids = [e._attr_unique_id for e in added]
         assert len(set(uids)) == 2
 
+    @pytest.mark.asyncio
+    async def test_non_llm_subentry_skipped(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """A subentry of an unknown type must not produce a select entity."""
+        from tests.conftest import _FakeSubentry
+        from custom_components.codex_proxy.select import async_setup_entry
+
+        # Inject a third subentry with a non-LLM type
+        mock_entry.subentries["sub-other-1"] = _FakeSubentry(
+            subentry_id="sub-other-1",
+            subentry_type="light",  # not a LLM-bearing type
+            title="Not an LLM",
+            data={},
+        )
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        # Still only 2 (the LLM subentries), not 3
+        assert len(added) == 2
+
 
 # ---------------------------------------------------------------------------
 # update platform
@@ -224,6 +247,27 @@ class TestUpdateSetup:
 
         uids = [e._attr_unique_id for e in added]
         assert len(set(uids)) == 2
+
+    @pytest.mark.asyncio
+    async def test_non_llm_subentry_skipped(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """A subentry of an unknown type must not produce an update entity."""
+        from tests.conftest import _FakeSubentry
+        from custom_components.codex_proxy.update import async_setup_entry
+
+        mock_entry.subentries["sub-other-2"] = _FakeSubentry(
+            subentry_id="sub-other-2",
+            subentry_type="switch",  # not a LLM-bearing type
+            title="Not an LLM",
+            data={},
+        )
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        assert len(added) == 2
 
 
 # ---------------------------------------------------------------------------
