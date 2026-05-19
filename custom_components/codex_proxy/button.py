@@ -50,11 +50,30 @@ class CodexRefreshModelsButton(ButtonEntity):
         coordinator: CodexModelCoordinator,
         entry: ConfigEntry,
     ) -> None:
-        self._coordinator = coordinator
+        # Stash the entry_id (not the coordinator) so ``async_press`` can look
+        # up the *live* coordinator from ``hass.data`` at call time.  Holding a
+        # direct reference to the coordinator instance would silently target
+        # the stale post-reload coordinator if the user presses the button
+        # while a reload is in flight — the refresh would run against a
+        # coordinator that has already been ``async_shutdown()``-ed.
+        self._entry_id: str = entry.entry_id
         self._attr_unique_id = f"{entry.entry_id}_refresh_models"
         self._attr_device_info = build_codex_entry_device_info(entry)
 
     async def async_press(self) -> None:
-        """Trigger an out-of-schedule model list refresh."""
+        """Trigger an out-of-schedule model list refresh.
+
+        Resolves the live coordinator from ``hass.data`` on every press so a
+        reload that swaps the coordinator instance doesn't leave the button
+        pointing at a stale one.  Silently returns when the entry has been
+        unloaded mid-press (``hass.data`` lookup yields ``None``) — there is
+        no coordinator to refresh in that case.
+        """
         _LOGGER.debug("Manual /v1/models refresh requested")
-        await self._coordinator.async_request_refresh()
+        bucket = self.hass.data.get(DOMAIN, {}).get(self._entry_id)
+        if bucket is None:
+            return
+        coordinator: CodexModelCoordinator | None = bucket.get(DATA_COORDINATOR)
+        if coordinator is None:
+            return
+        await coordinator.async_request_refresh()

@@ -9,6 +9,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.172] - 2026-05-19
+### Fixed
+- `async_setup_entry` now also catches `ConfigEntryNotReady` from `async_config_entry_first_refresh`. HA Core wraps the `UpdateFailed` raised by `_async_update_data` and re-raises it as `ConfigEntryNotReady`, so the pre-existing `except (httpx.HTTPError, UpdateFailed)` clause never matched in production — any transient proxy hiccup at HA startup caused the entire entry setup to fail instead of running in the documented "warn and continue" degraded mode.
+- Lazy `base_url` migration now also rewrites `entry.unique_id` when the old value matched the pre-normalisation `base_url`. Without this, legacy entries upgraded across v0.2.171 had `data.base_url` migrated to `…/v1` but `unique_id` left at the bare host, causing every reconfigure attempt to abort with `_abort_if_unique_id_mismatch`. A user-customised `unique_id` is preserved verbatim.
+- `async_unload_entry` now awaits `coordinator.async_shutdown()` before popping `hass.data`. The scheduled refresh listener registered by `DataUpdateCoordinator.__init__` previously survived unload and the next periodic tick raised `KeyError` against the popped entry data, producing spurious post-unload tracebacks in the HA log on every reload.
+- `button.refresh_models` resolves the live coordinator from `hass.data` on every press (storing `entry_id` instead of a direct coordinator reference). A press in flight during a reload would otherwise target the stale coordinator that was already shut down, silently dropping the refresh.
+
+### Tests
+- `tests/test_setup_entry.py`:
+  - `TestCoordinatorFailurePath.test_config_entry_not_ready_is_non_fatal` — pins that a `ConfigEntryNotReady` raised by first-refresh still loads the entry and stores the coordinator in `hass.data` (locking in the bug-fix above).
+  - `TestBaseUrlMigration` (4 tests) — bare-host data + unique_id both get `/v1` appended; already-normalised entries are not rewritten (idempotency); a user-customised `unique_id` is not clobbered by the migration.
+- `tests/test_setup_unload.py`: `test_unload_shuts_down_coordinator` and `test_unload_does_not_shut_down_coordinator_on_failure` — pin the shutdown wiring and the "skip shutdown on failed unload" guarantee.
+- `tests/test_platform_setup.py`: `test_button_coordinator_reference` was renamed/rewritten as `test_button_entry_id_reference` to pin the new entry-id storage pattern.
+- `tests/ha_stubs.py`: stub `homeassistant.exceptions.{HomeAssistantError, ConfigEntryNotReady, ConfigEntryAuthFailed}` as real exception classes so production code that does `except ConfigEntryNotReady` can be exercised without the runtime barking about non-`BaseException` classes.
+
 ## [0.2.171] - 2026-05-19
 ### Fixed
 - `base_url` is now normalised to always end in `/v1` (the OpenAI-compatible "base URL" convention). The OpenAI SDK treats `base_url` as the base it appends `/responses`, `/chat/completions`, etc. to, so a stored `https://proxy.example.com` was producing requests to `https://proxy.example.com/responses` (no `/v1`). Lenient proxies silently accepted that and the integration appeared to work; strict proxies (e.g. `tokenclub.top`) returned their HTML landing page and HA surfaced the cryptic error "Last content in chat log is not an AssistantContent: UserContent(...)". The coordinator's `_url` build was the mirror image — it appended `/v1/models` to `base_url`, which only worked when `base_url` lacked the `/v1` suffix. Both paths now agree on the convention.

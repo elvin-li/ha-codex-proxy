@@ -142,6 +142,114 @@ class TestInstallationId:
 
 
 # ---------------------------------------------------------------------------
+# Lazy base_url migration
+# ---------------------------------------------------------------------------
+
+
+class TestBaseUrlMigration:
+    """Pre-v0.2.171 entries stored ``base_url`` without the OpenAI-compatible
+    ``/v1`` suffix; ``async_setup_entry`` lazily migrates them.  These tests
+    pin the migration contract so it survives future refactors."""
+
+    @pytest.mark.asyncio
+    async def test_bare_host_data_gets_v1_appended(self) -> None:
+        entry = _make_entry(installation_id="iid-mig1")
+        entry.data = {
+            "api_key": "sk-test",
+            "base_url": "https://legacy.example.com",  # bare host, pre-v0.2.171
+            CONF_INSTALLATION_ID: "iid-mig1",
+        }
+        entry.unique_id = "https://legacy.example.com"
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator()
+
+        with patcher:
+            await async_setup_entry(hass, entry)
+
+        hass.config_entries.async_update_entry.assert_called_once()
+        call = hass.config_entries.async_update_entry.call_args
+        new_data = call[1]["data"]
+        assert new_data["base_url"] == "https://legacy.example.com/v1", (
+            "Lazy migration must append /v1 to a bare-host base_url so the "
+            "OpenAI SDK hits /v1/responses on subsequent loads"
+        )
+
+    @pytest.mark.asyncio
+    async def test_bare_host_unique_id_also_migrated(self) -> None:
+        """Migrating ``data.base_url`` without also rewriting ``unique_id``
+        breaks the reconfigure flow: ``_abort_if_unique_id_mismatch`` rejects
+        every legacy entry because the form sets ``unique_id`` to the
+        ``/v1``-normalised form while the entry still carries the bare-host
+        value.  This test pins that ``unique_id`` and ``base_url`` are
+        migrated together when they previously matched."""
+        entry = _make_entry(installation_id="iid-mig2")
+        entry.data = {
+            "api_key": "sk-test",
+            "base_url": "https://legacy.example.com",
+            CONF_INSTALLATION_ID: "iid-mig2",
+        }
+        entry.unique_id = "https://legacy.example.com"
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator()
+
+        with patcher:
+            await async_setup_entry(hass, entry)
+
+        call = hass.config_entries.async_update_entry.call_args
+        assert call[1].get("unique_id") == "https://legacy.example.com/v1", (
+            "Lazy migration must also rewrite entry.unique_id to the "
+            "normalised form — otherwise the reconfigure flow's "
+            "_abort_if_unique_id_mismatch rejects every legacy entry forever"
+        )
+
+    @pytest.mark.asyncio
+    async def test_already_normalised_does_not_trigger_update(self) -> None:
+        """When the stored ``base_url`` already ends in ``/v1`` (newer entry
+        or already-migrated one), ``async_update_entry`` MUST NOT be called —
+        otherwise every restart rewrites the storage file pointlessly and
+        the migration is no longer idempotent."""
+        entry = _make_entry(installation_id="iid-normalised")
+        entry.data = {
+            "api_key": "sk-test",
+            "base_url": "https://newer.example.com/v1",  # already normalised
+            CONF_INSTALLATION_ID: "iid-normalised",
+        }
+        entry.unique_id = "https://newer.example.com/v1"
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator()
+
+        with patcher:
+            await async_setup_entry(hass, entry)
+
+        hass.config_entries.async_update_entry.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_user_renamed_unique_id_not_overwritten(self) -> None:
+        """If the user (or a previous reconfigure) deliberately set
+        ``entry.unique_id`` to something other than the bare-host base_url,
+        the lazy migration must not clobber it.  We only rewrite when the
+        old ``unique_id`` matched the old ``base_url`` exactly."""
+        entry = _make_entry(installation_id="iid-rename")
+        entry.data = {
+            "api_key": "sk-test",
+            "base_url": "https://legacy.example.com",
+            CONF_INSTALLATION_ID: "iid-rename",
+        }
+        entry.unique_id = "custom-user-supplied-id"
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator()
+
+        with patcher:
+            await async_setup_entry(hass, entry)
+
+        call = hass.config_entries.async_update_entry.call_args
+        assert "unique_id" not in call[1], (
+            "Custom user-supplied unique_id must be preserved verbatim; only "
+            "the legacy bare-host == base_url case triggers a unique_id rewrite"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Return value and hass.data
 # ---------------------------------------------------------------------------
 
@@ -373,4 +481,39 @@ class TestCoordinatorFailurePath:
         assert fmt == "Initial model refresh failed: %s", (
             f"Expected format string 'Initial model refresh failed: %s', got {fmt!r} — "
             "the format string must pass the exception as a %s arg, not interpolate it"
+        )
+
+    @pytest.mark.asyncio
+    async def test_config_entry_not_ready_is_non_fatal(self) -> None:
+        """``async_config_entry_first_refresh`` catches ``UpdateFailed`` from
+        ``_async_update_data`` and re-raises it as ``ConfigEntryNotReady``.
+
+        Pre-v0.2.172 the except clause only covered ``UpdateFailed`` and
+        ``httpx.HTTPError`` — so in production the entry would fail to load
+        entirely on any transient proxy hiccup at HA startup (the
+        documentation comment promised "warn and continue" but the code
+        delivered "fail").  This test pins the contract: a
+        ``ConfigEntryNotReady`` raised from first refresh must be caught and
+        the entry must still load."""
+        from homeassistant.exceptions import ConfigEntryNotReady  # type: ignore[attr-defined]
+
+        entry = _make_entry("entry-cenr", installation_id="iid-cenr")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator(
+            first_refresh_side_effect=ConfigEntryNotReady("proxy unreachable")
+        )
+
+        with patcher:
+            result = await async_setup_entry(hass, entry)
+
+        assert result is True, (
+            "async_setup_entry must return True even when the first refresh "
+            "raises ConfigEntryNotReady — the entity tree should still register "
+            "so users see the proxy_reachable binary_sensor reporting OFF "
+            "instead of seeing the entire entry stuck in 'setup_retry'"
+        )
+        assert DATA_COORDINATOR in hass.data[DOMAIN]["entry-cenr"], (
+            "coordinator must still be stored in hass.data after a "
+            "ConfigEntryNotReady — otherwise the next periodic refresh has "
+            "nowhere to publish its result"
         )

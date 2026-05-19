@@ -29,11 +29,26 @@ def _make_coordinator() -> MagicMock:
 
 
 def _make_button(entry_id: str = "entry-1") -> CodexRefreshModelsButton:
+    """Construct a button entity wired to a live coordinator via ``hass.data``.
+
+    The button no longer holds a direct ``self._coordinator`` reference — it
+    looks up the coordinator from ``hass.data[DOMAIN][entry_id][DATA_COORDINATOR]``
+    on every press so a reload that swaps the coordinator instance does not
+    leave the button pointing at a stale one.  Tests can still inspect the
+    coordinator via the ``_test_coordinator`` attribute installed below.
+    """
+    from custom_components.codex_proxy.const import DATA_COORDINATOR, DOMAIN
+
     coord = _make_coordinator()
     btn = object.__new__(CodexRefreshModelsButton)
-    btn._coordinator = coord
+    btn._entry_id = entry_id
     btn._attr_unique_id = f"{entry_id}_refresh_models"
     btn._attr_device_info = {}
+    btn.hass = MagicMock()
+    btn.hass.data = {DOMAIN: {entry_id: {DATA_COORDINATOR: coord}}}
+    # Expose the coordinator for test assertions without re-introducing the
+    # stale-reference issue the production code path was hardened against.
+    btn._test_coordinator = coord
     return btn
 
 
@@ -108,15 +123,18 @@ class TestRefreshModelsButton:
     async def test_press_calls_async_request_refresh(self) -> None:
         btn = _make_button()
         await btn.async_press()
-        btn._coordinator.async_request_refresh.assert_awaited_once()
+        btn._test_coordinator.async_request_refresh.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_press_does_not_call_entry_reload(self) -> None:
         """Button should delegate throttling to coordinator, not reload entry."""
         btn = _make_button()
-        btn.hass = MagicMock()
+        # Don't overwrite btn.hass — _make_button installs a hass with the
+        # live-coordinator lookup wired up.  Snapshot config_entries off the
+        # existing hass so we can assert it was not touched.
+        config_entries = btn.hass.config_entries
         await btn.async_press()
-        btn.hass.config_entries.async_reload.assert_not_called()
+        config_entries.async_reload.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_double_press_calls_refresh_twice(self) -> None:
@@ -125,7 +143,7 @@ class TestRefreshModelsButton:
         btn = _make_button()
         await btn.async_press()
         await btn.async_press()
-        assert btn._coordinator.async_request_refresh.await_count == 2
+        assert btn._test_coordinator.async_request_refresh.await_count == 2
 
     @pytest.mark.asyncio
     async def test_press_emits_debug_log(self) -> None:

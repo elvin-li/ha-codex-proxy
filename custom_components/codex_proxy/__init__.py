@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 import openai
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -86,13 +87,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> boo
 
     installation_id = entry.data.get(CONF_INSTALLATION_ID)
     new_data: dict[str, str] | None = None
+    new_unique_id: str | None = None
     if base_url != stored_base_url:
         new_data = {**entry.data, CONF_BASE_URL: base_url}
+        # Keep ``entry.unique_id`` in sync with the normalised ``base_url`` so
+        # the reconfigure flow's ``_abort_if_unique_id_mismatch`` does not
+        # reject every legacy entry: pre-v0.2.171 entries had
+        # ``unique_id`` set to the bare-host base_url; if we migrate ``data``
+        # without also rewriting ``unique_id``, the next reconfigure attempt
+        # (which sets ``unique_id`` to the normalised form) aborts with a
+        # mismatch error and the user can never edit their entry again.
+        if entry.unique_id == stored_base_url:
+            new_unique_id = base_url
     if not installation_id:
         installation_id = str(uuid.uuid4())
         new_data = {**(new_data or entry.data), CONF_INSTALLATION_ID: installation_id}
     if new_data is not None:
-        hass.config_entries.async_update_entry(entry, data=new_data)
+        update_kwargs: dict[str, Any] = {"data": new_data}
+        if new_unique_id is not None:
+            update_kwargs["unique_id"] = new_unique_id
+        hass.config_entries.async_update_entry(entry, **update_kwargs)
 
     client = openai.AsyncOpenAI(
         api_key=api_key,
@@ -110,9 +124,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> boo
     coordinator = CodexModelCoordinator(hass, entry, installation_id)
     try:
         await coordinator.async_config_entry_first_refresh()
-    except (httpx.HTTPError, UpdateFailed) as err:
+    except (httpx.HTTPError, UpdateFailed, ConfigEntryNotReady) as err:
         # Coordinator failure is non-fatal — the entry still loads and polls
         # again at the next MODEL_REFRESH_INTERVAL tick.
+        #
+        # ``async_config_entry_first_refresh`` catches ``UpdateFailed`` from
+        # ``_async_update_data`` internally and re-raises it as
+        # ``ConfigEntryNotReady``.  Catching only ``UpdateFailed`` here would
+        # therefore *never* match in production — the entry would fail to load
+        # entirely on any transient proxy hiccup at HA startup, contradicting
+        # the "warn and continue" contract documented in this branch.  Catch
+        # all three so the entity tree is registered even when the proxy is
+        # temporarily down.
         _LOGGER.warning("Initial model refresh failed: %s", err)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
@@ -142,11 +165,25 @@ async def async_migrate_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> b
 async def async_unload_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bool:
     """Unload a Codex Token Pool config entry.
 
-    We deliberately do NOT call `client.close()` — the AsyncOpenAI client
-    is wrapping HA's shared httpx client (`get_async_client(hass)`); closing
-    it would tear down HTTP I/O for every other integration.
+    We deliberately do NOT call ``client.close()`` — the AsyncOpenAI client
+    wraps HA's shared httpx client (``get_async_client(hass)``); closing it
+    would tear down HTTP I/O for every other integration.
+
+    We DO shut down the ``CodexModelCoordinator`` so its scheduled refresh
+    listener (set up by ``DataUpdateCoordinator.__init__`` via
+    ``update_interval``) does not fire after the entry has been popped from
+    ``hass.data``.  Without ``async_shutdown()`` the next periodic tick
+    enters ``_async_update_data`` against a coordinator whose entry is gone,
+    and any downstream code that looks up
+    ``hass.data[DOMAIN][entry.entry_id]`` raises ``KeyError`` — producing
+    spurious post-unload tracebacks in the HA log on every reload.
     """
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
-        hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+        domain_data = hass.data.get(DOMAIN, {})
+        bucket = domain_data.pop(entry.entry_id, None)
+        if bucket is not None:
+            coordinator: CodexModelCoordinator | None = bucket.get(DATA_COORDINATOR)
+            if coordinator is not None:
+                await coordinator.async_shutdown()
     return unloaded

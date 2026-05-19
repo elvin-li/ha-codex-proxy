@@ -329,6 +329,34 @@ _HELPERS.entity_platform = sys.modules["homeassistant.helpers.entity_platform"]
 _HELPERS.selector = sys.modules["homeassistant.helpers.selector"]
 
 # ---------------------------------------------------------------------------
+# homeassistant.exceptions — real exception classes so production code that
+# does ``except ConfigEntryNotReady`` (and similar) can be exercised by tests
+# without the runtime barking ``catching classes that do not inherit from
+# BaseException is not allowed`` (auto-MagicMocked attributes are not classes).
+# ---------------------------------------------------------------------------
+_EXC = sys.modules["homeassistant.exceptions"]
+
+
+class _HomeAssistantError(Exception):
+    pass
+
+
+class _ConfigEntryNotReady(_HomeAssistantError):
+    pass
+
+
+class _ConfigEntryAuthFailed(_HomeAssistantError):
+    pass
+
+
+if not isinstance(getattr(_EXC, "HomeAssistantError", None), type):
+    _EXC.HomeAssistantError = _HomeAssistantError
+if not isinstance(getattr(_EXC, "ConfigEntryNotReady", None), type):
+    _EXC.ConfigEntryNotReady = _ConfigEntryNotReady
+if not isinstance(getattr(_EXC, "ConfigEntryAuthFailed", None), type):
+    _EXC.ConfigEntryAuthFailed = _ConfigEntryAuthFailed
+
+# ---------------------------------------------------------------------------
 # homeassistant.util.dt — coordinator.py imports `dt_util.utcnow` to stamp
 # ``last_update_success_time``.  The auto-MagicMock attribute resolution would
 # return another MagicMock (not a datetime), which would silently survive most

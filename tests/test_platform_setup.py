@@ -134,14 +134,23 @@ class TestButtonSetup:
         assert isinstance(added[0], CodexRefreshModelsButton)
 
     @pytest.mark.asyncio
-    async def test_button_coordinator_reference(self, mock_entry, mock_coordinator) -> None:
+    async def test_button_entry_id_reference(self, mock_entry, mock_coordinator) -> None:
+        """Button stores the *entry_id* (not the coordinator instance) so it can
+        look up the live coordinator from ``hass.data`` on every press.
+
+        Holding a direct ``self._coordinator`` reference would silently target
+        the stale post-reload coordinator if the user pressed the button while
+        a reload was in flight — the refresh would run against a coordinator
+        that has already been ``async_shutdown()``-ed."""
         from custom_components.codex_proxy.button import async_setup_entry
 
         hass = _make_hass(mock_entry, mock_coordinator)
         add, added = _collecting_add_entities()
         await async_setup_entry(hass, mock_entry, add)
 
-        assert added[0]._coordinator is mock_coordinator
+        assert added[0]._entry_id == mock_entry.entry_id, (
+            f"Button must stash entry_id {mock_entry.entry_id!r}, got {added[0]._entry_id!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
