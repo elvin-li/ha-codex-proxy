@@ -107,6 +107,15 @@ class TestOptions:
         entity = _make_entity("gpt-5.5", ["gpt-5.6", "gpt-5.5", "gpt-5.4"])
         assert entity.options == ["gpt-5.6", "gpt-5.5", "gpt-5.4"]
 
+    def test_fallback_to_default_when_current_is_none_and_coordinator_empty(self) -> None:
+        """If current_option returns None (subentry stores explicit None for the
+        chat_model key) and the coordinator has no models, options must still
+        return [DEFAULT_MODEL] rather than an empty list."""
+        entity = _make_entity(DEFAULT_MODEL, [])
+        # Force current_option to return None by overriding subentry data
+        entity._subentry.data = {"chat_model": None}
+        assert entity.options == [DEFAULT_MODEL]
+
 
 # ---------------------------------------------------------------------------
 # current_option property

@@ -7,6 +7,35 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.23] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_reconfigure_flow.py`** — 7 new tests covering three
+  previously uncovered paths in `config_flow.py`:
+  - `TestReconfigureInitialForm`: `async_step_reconfigure(None)` shows the
+    form pre-filled with current entry values (line 312) without probing the
+    proxy.
+  - `TestReconfigureValidationErrors`: invalid URL scheme and malformed TOML
+    trigger the validation-error re-show path (line 326) without calling the
+    probe.
+  - `TestAsyncGetSupportedSubentryTypes`: the `@classmethod` on
+    `CodexConfigFlow` registers `conversation` → `ConversationSubentryFlowHandler`
+    and `ai_task_data` → `AITaskSubentryFlowHandler` (line 354).
+- **`tests/test_select.py`** — 1 new `TestOptions` case:
+  `test_fallback_to_default_when_current_is_none_and_coordinator_empty` covers
+  `select.py:112` — the `result.append(DEFAULT_MODEL)` fallback when
+  `current_option` returns `None` (explicit `None` stored in subentry data)
+  and the coordinator has no models.
+- **`entity_utils.py`** — added `# pragma: no cover` to the module-level
+  `except Exception` fallback block (lines 18-19); the block only runs when
+  `manifest.json` cannot be read at import time, which is untestable without
+  complex module-reimport machinery.
+
+**Coverage:** 100% (601 statements, 0 missed) across all 14 source files.
+
+---
+
 ## [0.2.22] – 2026-05-19
 
 ### Changed

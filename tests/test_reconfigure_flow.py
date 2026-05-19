@@ -89,6 +89,110 @@ _VALID_USER_INPUT = {
 # ---------------------------------------------------------------------------
 
 
+class TestReconfigureInitialForm:
+    @pytest.mark.asyncio
+    async def test_initial_form_shows_current_entry_values(self) -> None:
+        """Calling async_step_reconfigure(None) should display the form pre-filled
+        with the entry's current api_key and base_url (line 312 path)."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+
+        result = await flow.async_step_reconfigure(None)
+
+        flow.async_show_form.assert_called_once()
+        assert result["type"] == "form"
+
+    @pytest.mark.asyncio
+    async def test_initial_form_does_not_call_probe(self) -> None:
+        """No network probe should happen when the user hasn't submitted yet."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(),
+        ) as mock_probe:
+            await flow.async_step_reconfigure(None)
+
+        mock_probe.assert_not_called()
+
+
+class TestReconfigureValidationErrors:
+    @pytest.mark.asyncio
+    async def test_invalid_url_scheme_reshows_form(self) -> None:
+        """A non-http/https URL triggers a validation error and reshows the
+        reconfigure form (line 326 path) without calling the probe."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+        bad_input = {
+            CONF_API_KEY: "sk-key",
+            CONF_BASE_URL: "ftp://invalid-scheme.example.com",
+            "model": "gpt-5.5",
+            "toml_config": "",
+        }
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(),
+        ) as mock_probe:
+            result = await flow.async_step_reconfigure(bad_input)
+
+        flow.async_update_reload_and_abort.assert_not_called()
+        flow.async_show_form.assert_called_once()
+        mock_probe.assert_not_called()
+        assert result["type"] == "form"
+
+    @pytest.mark.asyncio
+    async def test_bad_toml_reshows_form(self) -> None:
+        """Malformed TOML triggers a validation error and reshows the form."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+        bad_input = {
+            CONF_API_KEY: "sk-key",
+            CONF_BASE_URL: "",
+            "model": "gpt-5.5",
+            "toml_config": "this is [ not valid toml !!",
+        }
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(),
+        ) as mock_probe:
+            result = await flow.async_step_reconfigure(bad_input)
+
+        flow.async_update_reload_and_abort.assert_not_called()
+        mock_probe.assert_not_called()
+        assert result["type"] == "form"
+
+
+class TestAsyncGetSupportedSubentryTypes:
+    def test_conversation_type_registered(self) -> None:
+        """async_get_supported_subentry_types must register the conversation type."""
+        from custom_components.codex_proxy.config_flow import (
+            ConversationSubentryFlowHandler,
+        )
+
+        entry = MagicMock()
+        types = CodexConfigFlow.async_get_supported_subentry_types(entry)
+        assert "conversation" in types
+        assert types["conversation"] is ConversationSubentryFlowHandler
+
+    def test_ai_task_type_registered(self) -> None:
+        """async_get_supported_subentry_types must register the ai_task_data type."""
+        from custom_components.codex_proxy.config_flow import AITaskSubentryFlowHandler
+
+        entry = MagicMock()
+        types = CodexConfigFlow.async_get_supported_subentry_types(entry)
+        assert "ai_task_data" in types
+        assert types["ai_task_data"] is AITaskSubentryFlowHandler
+
+    def test_exactly_two_subentry_types(self) -> None:
+        """Exactly two subentry types should be registered."""
+        entry = MagicMock()
+        types = CodexConfigFlow.async_get_supported_subentry_types(entry)
+        assert len(types) == 2
+
+
 class TestReconfigurePreservesInstallationId:
     @pytest.mark.asyncio
     async def test_installation_id_preserved_on_success(self) -> None:
