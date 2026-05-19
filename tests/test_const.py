@@ -73,6 +73,24 @@ class TestSubentryTypes:
     def test_llm_bearing_is_tuple(self) -> None:
         assert isinstance(LLM_BEARING_SUBENTRY_TYPES, tuple)
 
+    def test_llm_bearing_contains_exactly_both_types(self) -> None:
+        """LLM_BEARING_SUBENTRY_TYPES must contain *exactly* the two expected
+        types — no more, no less.
+
+        test_llm_bearing_contains_both_types uses ``in`` checks which pass even
+        if an extra type is accidentally added (e.g. ``"light"`` from a misapplied
+        copy-paste).  An extra type would cause every 'light' subentry to produce
+        a model-select and update entity, flooding the device registry with
+        spurious entities.  Exact set equality catches that without needing to
+        enumerate every possible platform name."""
+        assert set(LLM_BEARING_SUBENTRY_TYPES) == {
+            SUBENTRY_TYPE_CONVERSATION,
+            SUBENTRY_TYPE_AI_TASK,
+        }, (
+            f"LLM_BEARING_SUBENTRY_TYPES contains unexpected values: "
+            f"{set(LLM_BEARING_SUBENTRY_TYPES) - {SUBENTRY_TYPE_CONVERSATION, SUBENTRY_TYPE_AI_TASK}}"
+        )
+
 
 class TestDefaults:
     def test_default_model_is_non_empty(self) -> None:

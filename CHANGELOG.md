@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.104] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_const.py`** —
+  `TestSubentryTypes.test_llm_bearing_contains_exactly_both_types` asserts
+  `set(LLM_BEARING_SUBENTRY_TYPES) == {conversation, ai_task_data}` using
+  exact set equality.  The existing `test_llm_bearing_contains_both_types`
+  uses `in` checks that pass even if an extra type is accidentally added;
+  an extra entry would cause every subentry of that type to generate spurious
+  model-select and update entities in the device registry.
+
+---
+
 ## [0.2.103] – 2026-05-19
 
 ### Added (tests)
