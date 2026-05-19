@@ -10,6 +10,7 @@ The only override is `device_info`, anchoring the device under our DOMAIN
 instead of upstream's, so HA's "Devices & Services" attributes the entity
 to Codex Token Pool, not OpenAI Conversation.
 """
+
 from __future__ import annotations
 
 from homeassistant.components.openai_conversation.const import (
@@ -31,9 +32,7 @@ class CodexConversationEntity(OpenAIConversationEntity):
 
     def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
         super().__init__(entry, subentry)
-        self._attr_device_info = build_codex_device_info(
-            subentry, UPSTREAM_CONF_CHAT_MODEL
-        )
+        self._attr_device_info = build_codex_device_info(subentry, UPSTREAM_CONF_CHAT_MODEL)
 
 
 async def async_setup_entry(

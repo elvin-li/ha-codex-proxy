@@ -3,6 +3,7 @@
 Tests run without a full HA install by mocking the entire homeassistant
 namespace before importing the module under test.
 """
+
 from __future__ import annotations
 
 import sys

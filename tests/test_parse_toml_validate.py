@@ -11,6 +11,7 @@ setup step and the reconfigure step. It covers:
  - URL trailing-slash stripping
  - model default fallback
 """
+
 from __future__ import annotations
 
 import sys
@@ -77,40 +78,28 @@ class TestManualInput:
         assert base_url == "https://proxy.example.com"
 
     def test_model_defaults_when_empty(self) -> None:
-        errors, _, _, model, _, _ = _parse_toml_and_validate(
-            _input(model="")
-        )
+        errors, _, _, model, _, _ = _parse_toml_and_validate(_input(model=""))
         assert model == DEFAULT_MODEL
 
     def test_model_preserved_when_set(self) -> None:
-        errors, _, _, model, _, _ = _parse_toml_and_validate(
-            _input(model="gpt-5.6")
-        )
+        errors, _, _, model, _, _ = _parse_toml_and_validate(_input(model="gpt-5.6"))
         assert model == "gpt-5.6"
 
     def test_missing_base_url_returns_required_error(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="")
-        )
+        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url=""))
         assert CONF_BASE_URL in errors
         assert errors[CONF_BASE_URL] == "required"
 
     def test_ftp_scheme_returns_invalid_url_scheme(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="ftp://proxy.example.com")
-        )
+        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="ftp://proxy.example.com"))
         assert errors.get(CONF_BASE_URL) == "invalid_url_scheme"
 
     def test_no_scheme_returns_invalid_url_scheme(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="proxy.example.com")
-        )
+        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="proxy.example.com"))
         assert errors.get(CONF_BASE_URL) == "invalid_url_scheme"
 
     def test_https_no_host_returns_invalid_url(self) -> None:
-        errors, _, _, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="https://")
-        )
+        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="https://"))
         assert errors.get(CONF_BASE_URL) == "invalid_url"
 
     def test_http_url_valid(self) -> None:
@@ -132,9 +121,7 @@ class TestTomlInput:
 [model_providers.p]
 base_url = "https://from-toml.example.com"
 """
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
+        errors, _, base_url, _, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
         assert not errors
         assert base_url == "https://from-toml.example.com"
 
@@ -151,14 +138,14 @@ base_url = "https://from-toml.example.com"
 
     def test_toml_sets_model(self) -> None:
         toml = 'model = "gpt-5.6"\n[model_providers.p]\nbase_url = "https://x.com"\n'
-        errors, _, _, model, _, _ = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
+        errors, _, _, model, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
         assert not errors
         assert model == "gpt-5.6"
 
     def test_toml_sets_reasoning_effort(self) -> None:
-        toml = 'model_reasoning_effort = "medium"\n[model_providers.p]\nbase_url = "https://x.com"\n'
+        toml = (
+            'model_reasoning_effort = "medium"\n[model_providers.p]\nbase_url = "https://x.com"\n'
+        )
         errors, _, _, _, reasoning_effort, _ = _parse_toml_and_validate(
             _input(base_url="", toml=toml)
         )
@@ -167,17 +154,13 @@ base_url = "https://from-toml.example.com"
 
     def test_toml_sets_store_responses_false(self) -> None:
         toml = 'disable_response_storage = true\n[model_providers.p]\nbase_url = "https://x.com"\n'
-        errors, _, _, _, _, store = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
+        errors, _, _, _, _, store = _parse_toml_and_validate(_input(base_url="", toml=toml))
         assert not errors
         assert store is False
 
     def test_toml_no_base_url_returns_error(self) -> None:
         toml = 'model = "gpt-5.5"\n'  # no model_providers table
-        errors, _, _, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
+        errors, _, _, _, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
         assert errors.get("base") == "toml_no_base_url"
 
     def test_bad_toml_returns_bad_toml_error(self) -> None:
@@ -188,9 +171,7 @@ base_url = "https://from-toml.example.com"
 
     def test_toml_trailing_slash_stripped(self) -> None:
         toml = '[model_providers.p]\nbase_url = "https://x.example.com/"\n'
-        errors, _, base_url, _, _, _ = _parse_toml_and_validate(
-            _input(base_url="", toml=toml)
-        )
+        errors, _, base_url, _, _, _ = _parse_toml_and_validate(_input(base_url="", toml=toml))
         assert not errors
         assert not base_url.endswith("/")
 

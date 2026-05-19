@@ -3,6 +3,7 @@
 Covers: unique_id, async_press calls async_request_refresh exactly once,
 noop on double-press is handled by coordinator throttle (not our code).
 """
+
 from __future__ import annotations
 
 import sys
@@ -52,10 +53,12 @@ class TestClassAttributes:
 
     def test_entity_category_is_diagnostic(self) -> None:
         from homeassistant.const import EntityCategory  # type: ignore[attr-defined]
+
         assert CodexRefreshModelsButton._attr_entity_category is EntityCategory.DIAGNOSTIC
 
     def test_device_class_is_update(self) -> None:
         from homeassistant.components.button import ButtonDeviceClass  # type: ignore[attr-defined]
+
         assert CodexRefreshModelsButton._attr_device_class is ButtonDeviceClass.UPDATE
 
 

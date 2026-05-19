@@ -4,6 +4,7 @@ We bypass `openai.AsyncOpenAI.models.list()` and call the endpoint with raw
 httpx because the openai SDK 2.x cursor-page parser fails on this proxy's
 response (`'str' object has no attribute '_set_private_attributes'`).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -71,9 +72,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         last_err: Exception | None = None
         for attempt in range(COORDINATOR_MAX_RETRIES):
             try:
-                r = await self._http.get(
-                    url, headers=headers, timeout=COORDINATOR_TIMEOUT_S
-                )
+                r = await self._http.get(url, headers=headers, timeout=COORDINATOR_TIMEOUT_S)
                 r.raise_for_status()
                 payload = r.json()
                 break  # success
@@ -94,13 +93,9 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     await asyncio.sleep(delay)
             except httpx.HTTPError as err:
                 # Non-transient (connection refused, DNS) — fail immediately
-                raise UpdateFailed(
-                    f"Failed to fetch {url}: {type(err).__name__}: {err}"
-                ) from err
+                raise UpdateFailed(f"Failed to fetch {url}: {type(err).__name__}: {err}") from err
             except ValueError as err:
-                raise UpdateFailed(
-                    f"Bad JSON from {url}: {err}"
-                ) from err
+                raise UpdateFailed(f"Bad JSON from {url}: {err}") from err
         else:
             raise UpdateFailed(
                 f"Failed to fetch {url} after {COORDINATOR_MAX_RETRIES} attempts"
@@ -110,9 +105,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Some proxies return the model list at the top level ("data" key
         # missing); others follow the OpenAI convention {"object":"list","data":[...]}.
         # Handle both gracefully.
-        raw_list: list[Any] = (
-            payload.get("data", payload) if isinstance(payload, dict) else payload
-        )
+        raw_list: list[Any] = payload.get("data", payload) if isinstance(payload, dict) else payload
         if not isinstance(raw_list, list):
             raw_list = []
 
@@ -134,9 +127,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         models.sort(key=lambda x: x["created"], reverse=True)
         if _LOGGER.isEnabledFor(logging.DEBUG):
             chat_count = sum(
-                1
-                for m in models
-                if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
+                1 for m in models if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
             )
             _LOGGER.debug(
                 "Fetched %d models from %s (%d chat-capable after filtering)",

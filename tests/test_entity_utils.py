@@ -2,6 +2,7 @@
 
 Runs without a full HA install by using the shared ha_stubs module.
 """
+
 from __future__ import annotations
 
 import sys

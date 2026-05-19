@@ -3,6 +3,7 @@
 Guards against accidental changes to values that other code (and the live
 HA integration) depends on.
 """
+
 from __future__ import annotations
 
 import sys
@@ -11,6 +12,7 @@ from datetime import timedelta
 
 # Bootstrap HA stubs — importing from the package loads __init__.py which needs HA
 import tests.ha_stubs  # noqa: F401, E402
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from custom_components.codex_proxy.const import (

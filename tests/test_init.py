@@ -3,6 +3,7 @@
 Covers _build_codex_headers and verifies the PLATFORMS list contains all
 expected platform strings. Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys

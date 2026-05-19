@@ -3,6 +3,7 @@
 Isolated here so unit tests can import and exercise them without needing
 a full HA runtime installed.
 """
+
 from __future__ import annotations
 
 import tomllib

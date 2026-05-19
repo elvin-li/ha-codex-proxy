@@ -22,7 +22,7 @@ pre-commit install
 pytest tests/ -v
 ```
 
-All 100+ tests run without a Home Assistant installation. They mock the
+All 380+ tests run without a Home Assistant installation. They mock the
 `homeassistant.*` namespace via `sys.modules` injection so you can develop
 and test purely against the Python stdlib + real `httpx`.
 
@@ -35,25 +35,50 @@ custom_components/codex_proxy/
 ├── coordinator.py       # /v1/models polling with retry/back-off
 ├── conversation.py      # Conversation entity (thin subclass of upstream)
 ├── ai_task.py           # AI Task entity (thin subclass of upstream)
-├── update.py            # Update entity: installed vs latest model
+├── binary_sensor.py     # Proxy-reachable binary sensor
+├── button.py            # Refresh-models button
+├── select.py            # Active-model select entity
 ├── sensor.py            # Diagnostic sensors (model count, last refresh)
+├── update.py            # Update entity: installed vs latest model
 ├── diagnostics.py       # Diagnostics download (API key redacted)
-├── entity_utils.py      # Shared DeviceInfo builder
+├── entity_utils.py      # Shared DeviceInfo builder (incl. sw_version)
 ├── _pure_helpers.py     # Pure-Python TOML parser + URL validator
 ├── const.py             # All constants
 └── translations/        # zh-Hans.json, en.json
 tests/
-├── conftest.py                  # Shared fixtures
-├── test_config_flow.py          # _pure_helpers TOML + URL validation
-├── test_coordinator.py          # Model processing / dedup / image filter
-├── test_coordinator_retry.py    # Retry/backoff with mocked httpx
+├── conftest.py                     # Shared fixtures
+├── ha_stubs.py                     # HA module mock bootstrap (no HA install needed)
+├── test_binary_sensor.py           # Proxy-reachable sensor logic
+├── test_button.py                  # Refresh-models button
+├── test_config_flow.py             # _pure_helpers TOML + URL validation
+├── test_const.py                   # Constant value checks
+├── test_conversation_entity.py     # Conversation entity device_info
+├── test_coordinator.py             # Model processing / dedup / image filter
+├── test_coordinator_init.py        # Coordinator construction
+├── test_coordinator_logging.py     # Coordinator debug log
 ├── test_coordinator_properties.py  # chat_models + latest_chat_model_id
-├── test_update_entity.py        # Update entity logic + install + live refresh
-├── test_sensor.py               # Sensor entity native_value
-├── test_diagnostics.py          # Redaction + data shape
-├── test_enrich_subentry.py      # _enrich_subentry_data
-├── test_model_select.py         # _model_select_options dropdown builder
-└── test_parse_toml_validate.py  # _parse_toml_and_validate form helper
+├── test_coordinator_request.py     # Request headers
+├── test_coordinator_retry.py       # Retry/backoff with mocked httpx
+├── test_diagnostics.py             # Redaction + data shape
+├── test_enrich_subentry.py         # _enrich_subentry_data
+├── test_entity_utils.py            # DeviceInfo builders (incl. sw_version)
+├── test_init.py                    # _build_codex_headers
+├── test_main_flow.py               # async_step_user full flow
+├── test_manifest.py                # manifest.json structure
+├── test_migrate_entry.py           # async_migrate_entry
+├── test_model_select.py            # _model_select_options dropdown builder
+├── test_parse_toml_validate.py     # _parse_toml_and_validate form helper
+├── test_platform_setup.py          # async_setup_entry for each platform
+├── test_probe_proxy.py             # _probe_proxy error mapping
+├── test_pure_helpers.py            # parse_codex_toml + validate_base_url
+├── test_reconfigure_flow.py        # async_step_reconfigure data preservation
+├── test_select.py                  # CodexModelSelectEntity logic
+├── test_sensor.py                  # Sensor entity native_value
+├── test_setup_entry.py             # async_setup_entry (coordinator init)
+├── test_setup_unload.py            # async_unload_entry
+├── test_subentry_flow.py           # Subentry add/reconfigure flows
+├── test_translations.py            # Translation file key consistency
+└── test_update_entity.py           # Update entity logic + install + live refresh
 ```
 
 ## Adding a new feature

@@ -5,6 +5,7 @@ Verifies that:
 - The function always returns True (non-destructive).
 Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys

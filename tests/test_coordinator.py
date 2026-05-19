@@ -3,6 +3,7 @@
 These tests exercise the pure data-transformation code extracted from
 _async_update_data. They have no HA runtime dependency.
 """
+
 from __future__ import annotations
 
 import sys
@@ -68,11 +69,7 @@ def _process_models(payload_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _filter_chat(models: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Replicate coordinator.chat_models filter."""
-    return [
-        m
-        for m in models
-        if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
-    ]
+    return [m for m in models if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)]
 
 
 # ---------------------------------------------------------------------------
@@ -120,9 +117,7 @@ class TestModelProcessing:
 
 class TestChatModelFilter:
     def test_excludes_gpt_image_prefix(self) -> None:
-        models = _process_models(
-            [_make_model("gpt-image-1", 100), _make_model("gpt-5.5", 50)]
-        )
+        models = _process_models([_make_model("gpt-image-1", 100), _make_model("gpt-5.5", 50)])
         chat = _filter_chat(models)
         assert len(chat) == 1
         assert chat[0]["id"] == "gpt-5.5"
@@ -134,9 +129,7 @@ class TestChatModelFilter:
         assert any(m["id"] == "gpt-5.5" for m in chat)
 
     def test_excludes_image_prefix(self) -> None:
-        models = _process_models(
-            [_make_model("image-alpha-001"), _make_model("gpt-5.5")]
-        )
+        models = _process_models([_make_model("image-alpha-001"), _make_model("gpt-5.5")])
         chat = _filter_chat(models)
         assert all(not m["id"].startswith("image-") for m in chat)
 

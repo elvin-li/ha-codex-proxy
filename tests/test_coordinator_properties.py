@@ -3,6 +3,7 @@
 chat_models filters image-only models; latest_chat_model_id returns the
 first result from chat_models.  Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys

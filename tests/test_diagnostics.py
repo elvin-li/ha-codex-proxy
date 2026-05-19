@@ -3,6 +3,7 @@
 Exercises async_get_config_entry_diagnostics: API key redaction, coordinator
 info shape, and subentry enumeration. Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys
@@ -30,9 +31,7 @@ def _real_async_redact_data(data: dict[str, Any], to_redact: set[str]) -> dict[s
     return result
 
 
-sys.modules["homeassistant.components.diagnostics"].async_redact_data = (
-    _real_async_redact_data
-)
+sys.modules["homeassistant.components.diagnostics"].async_redact_data = _real_async_redact_data
 
 from custom_components.codex_proxy.diagnostics import async_get_config_entry_diagnostics  # noqa: E402
 

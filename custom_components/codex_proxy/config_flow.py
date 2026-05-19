@@ -13,6 +13,7 @@ Three flows live here:
 * `AITaskSubentryFlowHandler` — same knobs as conversation but for AI Task
   data-generation / image-generation subentries.
 """
+
 from __future__ import annotations
 
 import logging
@@ -207,9 +208,7 @@ def _enrich_subentry_data(
     return out
 
 
-def _model_select_options(
-    coordinator: Any, current: str | None
-) -> list[SelectOptionDict]:
+def _model_select_options(coordinator: Any, current: str | None) -> list[SelectOptionDict]:
     """Build the model dropdown — proxy-discovered models first, current model
     always present even if the proxy hasn't seen it."""
     seen: set[str] = set()
@@ -243,13 +242,9 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is None:
-            return self.async_show_form(
-                step_id="user", data_schema=STEP_USER_SCHEMA
-            )
+            return self.async_show_form(step_id="user", data_schema=STEP_USER_SCHEMA)
 
         errors, api_key, base_url, model, reasoning_effort, store_responses = (
             _parse_toml_and_validate(user_input)
@@ -258,9 +253,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         if errors:
             return self.async_show_form(
                 step_id="user",
-                data_schema=self.add_suggested_values_to_schema(
-                    STEP_USER_SCHEMA, user_input
-                ),
+                data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
                 errors=errors,
             )
 
@@ -268,9 +261,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         if errors:
             return self.async_show_form(
                 step_id="user",
-                data_schema=self.add_suggested_values_to_schema(
-                    STEP_USER_SCHEMA, user_input
-                ),
+                data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
                 errors=errors,
             )
 
@@ -334,9 +325,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         if errors:
             return self.async_show_form(
                 step_id="reconfigure",
-                data_schema=self.add_suggested_values_to_schema(
-                    STEP_USER_SCHEMA, user_input
-                ),
+                data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
                 errors=errors,
             )
 
@@ -344,9 +333,7 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         if errors:
             return self.async_show_form(
                 step_id="reconfigure",
-                data_schema=self.add_suggested_values_to_schema(
-                    STEP_USER_SCHEMA, user_input
-                ),
+                data_schema=self.add_suggested_values_to_schema(STEP_USER_SCHEMA, user_input),
                 errors=errors,
             )
 
@@ -384,13 +371,9 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
 
     _default_title: str = "Codex 号池代理"
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
         if user_input is None:
-            return self.async_show_form(
-                step_id="user", data_schema=self._build_schema(None)
-            )
+            return self.async_show_form(step_id="user", data_schema=self._build_schema(None))
         return self.async_create_entry(
             title=self._default_title,
             data=_enrich_subentry_data(user_input),
@@ -415,14 +398,8 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
         keys = _upstream_keys()
         existing = defaults or {}
         entry = self._get_entry()
-        coordinator = (
-            self.hass.data.get(DOMAIN, {})
-            .get(entry.entry_id, {})
-            .get(DATA_COORDINATOR)
-        )
-        model_choices = _model_select_options(
-            coordinator, existing.get(keys["chat_model"])
-        )
+        coordinator = self.hass.data.get(DOMAIN, {}).get(entry.entry_id, {}).get(DATA_COORDINATOR)
+        model_choices = _model_select_options(coordinator, existing.get(keys["chat_model"]))
 
         return vol.Schema(
             {
@@ -438,23 +415,16 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
                 ),
                 vol.Required(
                     keys["reasoning_effort"],
-                    default=existing.get(
-                        keys["reasoning_effort"], DEFAULT_REASONING_EFFORT
-                    ),
+                    default=existing.get(keys["reasoning_effort"], DEFAULT_REASONING_EFFORT),
                 ): SelectSelector(
                     SelectSelectorConfig(
-                        options=[
-                            SelectOptionDict(value=v, label=v)
-                            for v in REASONING_EFFORTS
-                        ],
+                        options=[SelectOptionDict(value=v, label=v) for v in REASONING_EFFORTS],
                         mode=SelectSelectorMode.DROPDOWN,
                     )
                 ),
                 vol.Required(
                     keys["store_responses"],
-                    default=bool(
-                        existing.get(keys["store_responses"], DEFAULT_STORE)
-                    ),
+                    default=bool(existing.get(keys["store_responses"], DEFAULT_STORE)),
                 ): BooleanSelector(),
                 vol.Optional(
                     keys["prompt"],

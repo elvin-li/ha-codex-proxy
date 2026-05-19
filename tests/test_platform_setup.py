@@ -4,6 +4,7 @@ Uses the shared conftest fixtures (mock_entry, mock_coordinator) to verify
 that each platform registers the correct number and type of entities.
 Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys
@@ -20,6 +21,7 @@ import tests.ha_stubs  # noqa: F401, E402
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_hass(mock_entry, mock_coordinator):
     """Wire up hass.data so platform setup can look up the coordinator."""
@@ -51,9 +53,7 @@ def _collecting_add_entities():
 
 class TestBinarySensorSetup:
     @pytest.mark.asyncio
-    async def test_setup_creates_one_entity_per_entry(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_setup_creates_one_entity_per_entry(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.binary_sensor import (
             async_setup_entry,
             CodexProxyReachableSensor,
@@ -67,9 +67,7 @@ class TestBinarySensorSetup:
         assert isinstance(added[0], CodexProxyReachableSensor)
 
     @pytest.mark.asyncio
-    async def test_entity_unique_id_contains_entry_id(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_entity_unique_id_contains_entry_id(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.binary_sensor import async_setup_entry
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -86,9 +84,7 @@ class TestBinarySensorSetup:
 
 class TestButtonSetup:
     @pytest.mark.asyncio
-    async def test_setup_creates_one_button_per_entry(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_setup_creates_one_button_per_entry(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.button import (
             async_setup_entry,
             CodexRefreshModelsButton,
@@ -102,9 +98,7 @@ class TestButtonSetup:
         assert isinstance(added[0], CodexRefreshModelsButton)
 
     @pytest.mark.asyncio
-    async def test_button_coordinator_reference(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_button_coordinator_reference(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.button import async_setup_entry
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -121,9 +115,7 @@ class TestButtonSetup:
 
 class TestSensorSetup:
     @pytest.mark.asyncio
-    async def test_setup_creates_two_sensors_per_entry(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_setup_creates_two_sensors_per_entry(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.sensor import (
             async_setup_entry,
             CodexChatModelCountSensor,
@@ -140,9 +132,7 @@ class TestSensorSetup:
         assert CodexLastRefreshSensor in types
 
     @pytest.mark.asyncio
-    async def test_sensor_unique_ids_are_distinct(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_sensor_unique_ids_are_distinct(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.sensor import async_setup_entry
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -177,9 +167,7 @@ class TestSelectSetup:
         assert all(isinstance(e, CodexModelSelectEntity) for e in added)
 
     @pytest.mark.asyncio
-    async def test_select_unique_ids_are_distinct(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_select_unique_ids_are_distinct(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.select import async_setup_entry
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -190,9 +178,7 @@ class TestSelectSetup:
         assert len(set(uids)) == 2
 
     @pytest.mark.asyncio
-    async def test_non_llm_subentry_skipped(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_non_llm_subentry_skipped(self, mock_entry, mock_coordinator) -> None:
         """A subentry of an unknown type must not produce a select entity."""
         from tests.conftest import _FakeSubentry
         from custom_components.codex_proxy.select import async_setup_entry
@@ -213,9 +199,7 @@ class TestSelectSetup:
         assert len(added) == 2
 
     @pytest.mark.asyncio
-    async def test_select_config_subentry_id_passed(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_select_config_subentry_id_passed(self, mock_entry, mock_coordinator) -> None:
         """async_add_entities must be called with the correct config_subentry_id
         for each select entity so HA auto-removes it when the subentry is deleted."""
         from custom_components.codex_proxy.select import async_setup_entry
@@ -256,9 +240,7 @@ class TestUpdateSetup:
         assert all(isinstance(e, CodexModelUpdate) for e in added)
 
     @pytest.mark.asyncio
-    async def test_update_unique_ids_are_distinct(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_update_unique_ids_are_distinct(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.update import async_setup_entry
 
         hass = _make_hass(mock_entry, mock_coordinator)
@@ -269,9 +251,7 @@ class TestUpdateSetup:
         assert len(set(uids)) == 2
 
     @pytest.mark.asyncio
-    async def test_non_llm_subentry_skipped(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_non_llm_subentry_skipped(self, mock_entry, mock_coordinator) -> None:
         """A subentry of an unknown type must not produce an update entity."""
         from tests.conftest import _FakeSubentry
         from custom_components.codex_proxy.update import async_setup_entry
@@ -290,9 +270,7 @@ class TestUpdateSetup:
         assert len(added) == 2
 
     @pytest.mark.asyncio
-    async def test_update_config_subentry_id_passed(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_update_config_subentry_id_passed(self, mock_entry, mock_coordinator) -> None:
         """async_add_entities must be called with the correct config_subentry_id
         for each update entity so HA auto-removes it when the subentry is deleted."""
         from custom_components.codex_proxy.update import async_setup_entry
@@ -345,9 +323,7 @@ class TestConversationSetup:
         assert len(added) == 1
 
     @pytest.mark.asyncio
-    async def test_setup_passes_config_subentry_id(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_setup_passes_config_subentry_id(self, mock_entry, mock_coordinator) -> None:
         """async_add_entities must be called with config_subentry_id kwarg."""
         from custom_components.codex_proxy.conversation import async_setup_entry
 
@@ -384,9 +360,7 @@ class TestAITaskSetup:
         assert isinstance(added[0], CodexAITaskEntity)
 
     @pytest.mark.asyncio
-    async def test_setup_skips_non_ai_task_subentries(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_setup_skips_non_ai_task_subentries(self, mock_entry, mock_coordinator) -> None:
         """The conversation subentry must NOT produce an ai_task entity."""
         from custom_components.codex_proxy.ai_task import async_setup_entry
 
@@ -396,9 +370,7 @@ class TestAITaskSetup:
         assert len(added) == 1
 
     @pytest.mark.asyncio
-    async def test_setup_passes_config_subentry_id(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_setup_passes_config_subentry_id(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.ai_task import async_setup_entry
 
         calls: list = []

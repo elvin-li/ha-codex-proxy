@@ -3,6 +3,7 @@
 Verifies the manifest is valid JSON with all HA-required and HACS-required
 fields, correct types, and a well-formed semantic version string.
 """
+
 from __future__ import annotations
 
 import json
@@ -38,9 +39,7 @@ class TestManifestValidity:
     def test_version_is_semver(self) -> None:
         """Version must be X.Y.Z (HACS and HA enforce this)."""
         version = _load()["version"]
-        assert re.fullmatch(r"\d+\.\d+\.\d+", version), (
-            f"Version {version!r} is not semver X.Y.Z"
-        )
+        assert re.fullmatch(r"\d+\.\d+\.\d+", version), f"Version {version!r} is not semver X.Y.Z"
 
     def test_config_flow_is_true(self) -> None:
         assert _load()["config_flow"] is True

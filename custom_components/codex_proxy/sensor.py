@@ -8,6 +8,7 @@ Exposes two sensors per config entry:
 Both entities are disabled by default so they don't clutter dashboards unless
 the user explicitly enables them.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -51,9 +52,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     async_add_entities(
         [
             CodexChatModelCountSensor(coordinator, entry),

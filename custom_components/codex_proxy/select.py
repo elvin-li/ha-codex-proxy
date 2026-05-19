@@ -9,6 +9,7 @@ The entity is **disabled by default** — most users will manage their model
 via the config-flow sub-agent settings or the update entity. Enable it
 explicitly if you want dashboard-level model switching.
 """
+
 from __future__ import annotations
 
 import logging
@@ -41,9 +42,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Create one model-select entity per LLM subentry."""
-    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     for subentry in entry.subentries.values():
         if subentry.subentry_type not in LLM_BEARING_SUBENTRY_TYPES:
             continue
@@ -53,9 +52,7 @@ async def async_setup_entry(
         )
 
 
-class CodexModelSelectEntity(
-    CoordinatorEntity[CodexModelCoordinator], SelectEntity
-):
+class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEntity):
     """Dropdown for selecting the active chat model on a subentry.
 
     Options are built from the coordinator's live ``chat_models`` list.
@@ -126,9 +123,7 @@ class CodexModelSelectEntity(
             return
 
         new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: option}
-        self.hass.config_entries.async_update_subentry(
-            self._entry, self._subentry, data=new_data
-        )
+        self.hass.config_entries.async_update_subentry(self._entry, self._subentry, data=new_data)
         _LOGGER.info(
             "Model for subentry '%s' changed from '%s' to '%s'; reloading entry",
             self._subentry.title,

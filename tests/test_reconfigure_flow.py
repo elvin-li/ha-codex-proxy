@@ -9,6 +9,7 @@ ha_stubs now provides a real _ConfigFlow base class so that ``class
 CodexConfigFlow(ConfigFlow, domain=DOMAIN)`` produces a genuine Python class
 rather than a MagicMock, enabling direct unit tests of the flow method.
 """
+
 from __future__ import annotations
 
 import sys

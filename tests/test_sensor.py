@@ -2,6 +2,7 @@
 
 Runs without a full HA install by using the shared ha_stubs module.
 """
+
 from __future__ import annotations
 
 import sys
@@ -19,9 +20,7 @@ import tests.ha_stubs  # noqa: F401, E402
 # Extra stubs needed only by sensor.py
 _sen = sys.modules["homeassistant.components.sensor"]
 if not callable(getattr(_sen, "SensorEntityDescription", None)):
-    _sen.SensorEntityDescription = MagicMock(
-        side_effect=lambda **kw: type("Desc", (), kw)()
-    )
+    _sen.SensorEntityDescription = MagicMock(side_effect=lambda **kw: type("Desc", (), kw)())
 
 from custom_components.codex_proxy.sensor import (  # noqa: E402
     CodexChatModelCountSensor,
@@ -49,6 +48,7 @@ def _make_count_sensor(
     entry_id: str = "entry-1",
 ) -> CodexChatModelCountSensor:
     from tests.ha_stubs import _CoordinatorEntity
+
     coord = _make_coordinator(chat_models=chat_models)
     s = object.__new__(CodexChatModelCountSensor)
     _CoordinatorEntity.__init__(s, coord)
@@ -63,6 +63,7 @@ def _make_refresh_sensor(
     entry_id: str = "entry-1",
 ) -> CodexLastRefreshSensor:
     from tests.ha_stubs import _CoordinatorEntity
+
     coord = _make_coordinator(last_update_success_time=last_time)
     s = object.__new__(CodexLastRefreshSensor)
     _CoordinatorEntity.__init__(s, coord)
@@ -86,28 +87,34 @@ class TestClassAttributes:
 class TestEntityDescriptions:
     def test_chat_model_count_key(self) -> None:
         from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+
         assert _CHAT_MODEL_COUNT.key == "chat_model_count"
 
     def test_chat_model_count_disabled_by_default(self) -> None:
         from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
+
         assert _CHAT_MODEL_COUNT.entity_registry_enabled_default is False
 
     def test_chat_model_count_state_class_is_measurement(self) -> None:
         from custom_components.codex_proxy.sensor import _CHAT_MODEL_COUNT
         from homeassistant.components.sensor import SensorStateClass  # type: ignore[attr-defined]
+
         assert _CHAT_MODEL_COUNT.state_class is SensorStateClass.MEASUREMENT
 
     def test_last_refresh_key(self) -> None:
         from custom_components.codex_proxy.sensor import _LAST_REFRESH
+
         assert _LAST_REFRESH.key == "last_model_refresh"
 
     def test_last_refresh_disabled_by_default(self) -> None:
         from custom_components.codex_proxy.sensor import _LAST_REFRESH
+
         assert _LAST_REFRESH.entity_registry_enabled_default is False
 
     def test_last_refresh_device_class_is_timestamp(self) -> None:
         from custom_components.codex_proxy.sensor import _LAST_REFRESH
         from homeassistant.components.sensor import SensorDeviceClass  # type: ignore[attr-defined]
+
         assert _LAST_REFRESH.device_class is SensorDeviceClass.TIMESTAMP
 
 
@@ -125,7 +132,9 @@ class TestChatModelCountSensor:
         assert sensor.native_value == 2
 
     def test_count_five_models(self) -> None:
-        models = [{"id": f"gpt-5.{i}", "created": i, "owned_by": "", "display_name": ""} for i in range(5)]
+        models = [
+            {"id": f"gpt-5.{i}", "created": i, "owned_by": "", "display_name": ""} for i in range(5)
+        ]
         sensor = _make_count_sensor(chat_models=models)
         assert sensor.native_value == 5
 

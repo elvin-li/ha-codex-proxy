@@ -7,6 +7,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.19] – 2026-05-19
+
+### Changed (CI + code style)
+
+- **All source and test files** reformatted with `ruff format` for consistent
+  style (blank lines after docstrings, trailing comma normalisation, etc.).
+  Logic is unchanged — purely mechanical.
+- **`.github/workflows/tests.yml`** — added `ruff format --check
+  custom_components/codex_proxy/ tests/` step in the `lint` job so the CI
+  gate catches format drift on every push/PR.
+- **`CONTRIBUTING.md`** — updated project-layout table to list all 13 source
+  files and all 30 test files accurately; bumped test count to 380+.
+
+---
+
 ## [0.2.18] – 2026-05-19
 
 ### Changed

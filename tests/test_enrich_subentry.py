@@ -4,6 +4,7 @@ Exercises that service_tier=None is always pinned, llm_hass_api defaults to
 []), and that an existing base dict is preserved but overridden by new
 user_input values.  Also covers the _upstream_keys() cache contract.
 """
+
 from __future__ import annotations
 
 import sys
@@ -77,6 +78,7 @@ class TestUpstreamKeys:
     def _reset_cache(self) -> None:
         """Clear the module-level cache before each test."""
         import custom_components.codex_proxy.config_flow as cf
+
         cf._UPSTREAM_KEYS_CACHE = None
 
     def test_returns_dict_with_expected_keys(self) -> None:
@@ -102,4 +104,5 @@ class TestUpstreamKeys:
         self._reset_cache()
         _upstream_keys()
         import custom_components.codex_proxy.config_flow as cf
+
         assert cf._UPSTREAM_KEYS_CACHE is not None

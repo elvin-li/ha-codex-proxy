@@ -9,6 +9,7 @@ our stub class instead of the real one.  This avoids the test-ordering fragility
 caused by ha_stubs potentially replacing sys.modules["openai"] with a MagicMock
 before test_probe_proxy.py is imported.
 """
+
 from __future__ import annotations
 
 import sys
@@ -29,6 +30,7 @@ from custom_components.codex_proxy.config_flow import _probe_proxy  # noqa: E402
 # ---------------------------------------------------------------------------
 # Independent exception stubs — no dependency on real openai package
 # ---------------------------------------------------------------------------
+
 
 class _FakeAuthError(Exception):
     pass
@@ -78,8 +80,10 @@ def _patch_openai(exc_instance=None):
     client_mock = MagicMock()
     client_mock.with_options.return_value = options_mock
 
-    with patch("custom_components.codex_proxy.config_flow.openai") as mock_openai, \
-         patch("custom_components.codex_proxy.config_flow.get_async_client"):
+    with (
+        patch("custom_components.codex_proxy.config_flow.openai") as mock_openai,
+        patch("custom_components.codex_proxy.config_flow.get_async_client"),
+    ):
         mock_openai.AsyncOpenAI.return_value = client_mock
         # Wire our stub classes so except clauses in _probe_proxy match them
         mock_openai.AuthenticationError = _FakeAuthError

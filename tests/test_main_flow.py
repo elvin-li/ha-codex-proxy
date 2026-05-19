@@ -8,6 +8,7 @@ Covers:
 - Entry contains api_key and base_url in entry data
 - Both subentries have service_tier=None in their data
 """
+
 from __future__ import annotations
 
 import sys

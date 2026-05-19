@@ -9,6 +9,7 @@ subentry data to the latest model and reloads the config entry.
 One update entity per LLM-bearing subentry — both conversation agents
 and AI Task entities get tracked.
 """
+
 from __future__ import annotations
 
 import logging
@@ -42,9 +43,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Create one update entity per conversation/ai_task subentry."""
-    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     for subentry in entry.subentries.values():
         if subentry.subentry_type not in LLM_BEARING_SUBENTRY_TYPES:
             continue
@@ -54,9 +53,7 @@ async def async_setup_entry(
         )
 
 
-class CodexModelUpdate(
-    CoordinatorEntity[CodexModelCoordinator], UpdateEntity
-):
+class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
     """Tracks the latest chat model surfaced by the proxy."""
 
     _attr_has_entity_name = True
@@ -101,10 +98,7 @@ class CodexModelUpdate(
             return "尚未从反代取得模型列表（首次刷新最长 6h，可手动 update_entity）。"
         if latest == installed:
             return "已经是反代上的最新模型。"
-        return (
-            f"反代发现新模型 {latest}（当前：{installed}）。"
-            "点击安装可一键切换。"
-        )
+        return f"反代发现新模型 {latest}（当前：{installed}）。点击安装可一键切换。"
 
     @property
     def release_url(self) -> str | None:
@@ -113,9 +107,7 @@ class CodexModelUpdate(
             return None
         return f"https://platform.openai.com/docs/models/{latest}"
 
-    async def async_install(
-        self, version: str | None, backup: bool, **kwargs: Any
-    ) -> None:
+    async def async_install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
         """Switch the subentry's model to the requested (or latest) version
         and reload the config entry."""
         target = version or self.coordinator.latest_chat_model_id
@@ -128,9 +120,7 @@ class CodexModelUpdate(
             self.installed_version,
         )
         new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: target}
-        self.hass.config_entries.async_update_subentry(
-            self._entry, self._subentry, data=new_data
-        )
+        self.hass.config_entries.async_update_subentry(self._entry, self._subentry, data=new_data)
         await self.hass.config_entries.async_reload(self._entry.entry_id)
 
     @callback

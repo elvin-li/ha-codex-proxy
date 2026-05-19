@@ -3,6 +3,7 @@
 Covers options building (coordinator models + current model fallback),
 deduplication, noop on same option, and async_select_option call flow.
 """
+
 from __future__ import annotations
 
 import sys

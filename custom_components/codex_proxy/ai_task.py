@@ -7,6 +7,7 @@ into this integration automatically.
 
 Override is just `device_info` (anchored under our DOMAIN).
 """
+
 from __future__ import annotations
 
 from homeassistant.components.openai_conversation.ai_task import OpenAITaskEntity
@@ -26,9 +27,7 @@ class CodexAITaskEntity(OpenAITaskEntity):
 
     def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
         super().__init__(entry, subentry)
-        self._attr_device_info = build_codex_device_info(
-            subentry, UPSTREAM_CONF_CHAT_MODEL
-        )
+        self._attr_device_info = build_codex_device_info(subentry, UPSTREAM_CONF_CHAT_MODEL)
 
 
 async def async_setup_entry(

@@ -9,6 +9,7 @@ The entity is **enabled by default** because manual refresh is a first-class
 troubleshooting action (the README's "立刻刷新" tip previously required
 navigating to Developer Tools → Services).
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,9 +32,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     async_add_entities([CodexRefreshModelsButton(coordinator, entry)])
 
 

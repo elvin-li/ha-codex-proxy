@@ -5,6 +5,7 @@ Verifies that both thin-shim entities:
 - Override _attr_device_info with the correct identifiers / manufacturer
 Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys
@@ -98,4 +99,6 @@ class TestCodexAITaskEntity:
     def test_device_info_differs_between_entities(self) -> None:
         entity_a = CodexConversationEntity(_make_entry(), _make_subentry("sub-a"))
         entity_b = CodexAITaskEntity(_make_entry(), _make_subentry("sub-b"))
-        assert entity_a._attr_device_info["identifiers"] != entity_b._attr_device_info["identifiers"]
+        assert (
+            entity_a._attr_device_info["identifiers"] != entity_b._attr_device_info["identifiers"]
+        )

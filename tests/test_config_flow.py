@@ -3,6 +3,7 @@
 These tests exercise _pure_helpers.py which has no HA runtime dependency,
 so they run without a full HA install (great for CI / local dev).
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -17,9 +18,7 @@ import pytest
 # __init__.py (which would fail without HA installed).
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_HELPERS_PATH = os.path.join(
-    _REPO_ROOT, "custom_components", "codex_proxy", "_pure_helpers.py"
-)
+_HELPERS_PATH = os.path.join(_REPO_ROOT, "custom_components", "codex_proxy", "_pure_helpers.py")
 
 _spec = importlib.util.spec_from_file_location("_pure_helpers", _HELPERS_PATH)
 assert _spec and _spec.loader

@@ -3,6 +3,7 @@
 Exercises the dropdown building logic: coordinator models, custom values,
 deduplication, and fallback when coordinator has no data.
 """
+
 from __future__ import annotations
 
 import sys
@@ -100,9 +101,7 @@ class TestModelSelectOptions:
     def test_deduplication_by_id(self) -> None:
         # Two entries with same id — should only appear once
         with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(
-                _coord([_m("gpt-5.5"), _m("gpt-5.5")]), None
-            )
+            opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.5")]), None)
         values = [o["value"] for o in opts]
         assert values.count("gpt-5.5") == 1
 

@@ -5,6 +5,7 @@ all have the same top-level keys and that critical sections (config.error,
 entity) are present and non-empty. A mismatch here causes HA to render
 raw translation-key strings in the UI instead of human-readable text.
 """
+
 from __future__ import annotations
 
 import json
@@ -67,9 +68,7 @@ class TestTranslationKeyConsistency:
     def test_config_step_user_present_in_all_files(self) -> None:
         for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
             data = _load(fname)
-            assert "user" in data["config"]["step"], (
-                f"{fname} missing config.step.user"
-            )
+            assert "user" in data["config"]["step"], f"{fname} missing config.step.user"
 
     def test_config_step_reconfigure_present_in_all_files(self) -> None:
         for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
@@ -96,8 +95,12 @@ class TestTranslationKeyConsistency:
         e_platforms = set(en["entity"].keys())
         z_platforms = set(zh["entity"].keys())
 
-        assert s_platforms == e_platforms, f"en.json entity platform mismatch: {s_platforms ^ e_platforms}"
-        assert s_platforms == z_platforms, f"zh-Hans.json entity platform mismatch: {s_platforms ^ z_platforms}"
+        assert s_platforms == e_platforms, (
+            f"en.json entity platform mismatch: {s_platforms ^ e_platforms}"
+        )
+        assert s_platforms == z_platforms, (
+            f"zh-Hans.json entity platform mismatch: {s_platforms ^ z_platforms}"
+        )
 
     def test_entity_keys_consistent_across_all_files(self) -> None:
         """Within each platform, the entity translation keys (proxy_reachable,
@@ -111,7 +114,9 @@ class TestTranslationKeyConsistency:
             e_keys = set(en["entity"].get(platform, {}).keys())
             z_keys = set(zh["entity"].get(platform, {}).keys())
             assert s_keys == e_keys, f"en.json entity.{platform} key mismatch: {s_keys ^ e_keys}"
-            assert s_keys == z_keys, f"zh-Hans.json entity.{platform} key mismatch: {s_keys ^ z_keys}"
+            assert s_keys == z_keys, (
+                f"zh-Hans.json entity.{platform} key mismatch: {s_keys ^ z_keys}"
+            )
 
     def test_all_entity_keys_have_name_field(self) -> None:
         """Every entity translation entry must have a 'name' field so HA can
@@ -123,6 +128,4 @@ class TestTranslationKeyConsistency:
                     assert "name" in entry, (
                         f"{fname} entity.{platform}.{key} is missing 'name' field"
                     )
-                    assert entry["name"], (
-                        f"{fname} entity.{platform}.{key}.name is empty"
-                    )
+                    assert entry["name"], f"{fname} entity.{platform}.{key}.name is empty"

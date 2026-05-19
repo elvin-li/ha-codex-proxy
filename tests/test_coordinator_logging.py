@@ -3,6 +3,7 @@
 Patches asyncio.sleep so retries complete instantly and verifies that
 _LOGGER.debug was called with expected message patterns.
 """
+
 from __future__ import annotations
 
 import sys
@@ -50,9 +51,9 @@ class _DataUpdateCoordinatorBase:
         self.update_interval = update_interval
 
 
-sys.modules["homeassistant.helpers.update_coordinator"].DataUpdateCoordinator = (
-    _DataUpdateCoordinatorBase
-)
+sys.modules[
+    "homeassistant.helpers.update_coordinator"
+].DataUpdateCoordinator = _DataUpdateCoordinatorBase
 sys.modules["homeassistant.helpers.update_coordinator"].UpdateFailed = Exception
 
 from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
@@ -107,19 +108,19 @@ class TestRetryLogging:
 
         # debug should have been called at least once (the retry message)
         assert mock_log.debug.call_count >= 1
-        debug_calls_str = " ".join(
-            str(c) for c in mock_log.debug.call_args_list
-        )
+        debug_calls_str = " ".join(str(c) for c in mock_log.debug.call_args_list)
         assert "Transient" in debug_calls_str or "attempt" in debug_calls_str.lower()
 
     @pytest.mark.asyncio
     async def test_debug_logged_on_timeout_retry(self) -> None:
         coord = _make_coordinator()
         ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 1}]})
-        coord._http.get = AsyncMock(side_effect=[
-            httpx.TimeoutException("timed out"),
-            ok,
-        ])
+        coord._http.get = AsyncMock(
+            side_effect=[
+                httpx.TimeoutException("timed out"),
+                ok,
+            ]
+        )
 
         with (
             patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
@@ -168,12 +169,15 @@ class TestSuccessLogging:
     @pytest.mark.asyncio
     async def test_debug_logged_on_success(self) -> None:
         coord = _make_coordinator()
-        ok = _make_response(200, {
-            "data": [
-                {"id": "gpt-5.5", "created": 100},
-                {"id": "gpt-5.4", "created": 50},
-            ]
-        })
+        ok = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": 100},
+                    {"id": "gpt-5.4", "created": 50},
+                ]
+            },
+        )
         coord._http.get = AsyncMock(return_value=ok)
 
         with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
@@ -189,12 +193,15 @@ class TestSuccessLogging:
     async def test_success_log_shows_zero_for_image_only(self) -> None:
         """Image-only models should show 0 chat-capable in the debug log."""
         coord = _make_coordinator()
-        ok = _make_response(200, {
-            "data": [
-                {"id": "gpt-image-1", "created": 100},
-                {"id": "dall-e-3", "created": 50},
-            ]
-        })
+        ok = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-image-1", "created": 100},
+                    {"id": "dall-e-3", "created": 50},
+                ]
+            },
+        )
         coord._http.get = AsyncMock(return_value=ok)
 
         # Patch the full logger so isEnabledFor(DEBUG) returns True and the

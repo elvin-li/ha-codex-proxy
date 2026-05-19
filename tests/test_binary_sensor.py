@@ -2,6 +2,7 @@
 
 Runs without a full HA install by using the shared ha_stubs module.
 """
+
 from __future__ import annotations
 
 import sys
@@ -108,6 +109,7 @@ class TestMetadata:
 
     def test_device_class_is_connectivity(self) -> None:
         from homeassistant.components.binary_sensor import BinarySensorDeviceClass  # type: ignore[attr-defined]
+
         sensor = _make_sensor()
         # The attribute is set at class level — just verify it is defined
         assert hasattr(sensor, "_attr_device_class")

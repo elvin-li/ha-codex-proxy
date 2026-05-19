@@ -26,6 +26,7 @@ Key design constraints
   this module "wins" for each stub. Import order matters — run your most
   demanding test file first or rely on alphabetical pytest collection order.
 """
+
 from __future__ import annotations
 
 import sys
@@ -147,9 +148,7 @@ class _ConfigFlow:
     def async_create_entry(self, *, title: str = "", data: Any = None, **kw: Any) -> dict:
         return {"type": "create_entry", "title": title, "data": data}
 
-    def async_update_reload_and_abort(
-        self, entry: Any, *, data: Any = None, **kw: Any
-    ) -> dict:
+    def async_update_reload_and_abort(self, entry: Any, *, data: Any = None, **kw: Any) -> dict:
         return {"type": "abort"}
 
 
@@ -322,9 +321,7 @@ _COMPONENTS = sys.modules["homeassistant.components"]
 _COMPONENTS.binary_sensor = sys.modules["homeassistant.components.binary_sensor"]
 _COMPONENTS.button = sys.modules["homeassistant.components.button"]
 _COMPONENTS.diagnostics = sys.modules["homeassistant.components.diagnostics"]
-_COMPONENTS.openai_conversation = sys.modules[
-    "homeassistant.components.openai_conversation"
-]
+_COMPONENTS.openai_conversation = sys.modules["homeassistant.components.openai_conversation"]
 _COMPONENTS.openai_conversation.conversation = sys.modules[
     "homeassistant.components.openai_conversation.conversation"
 ]

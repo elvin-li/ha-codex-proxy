@@ -3,6 +3,7 @@
 Accessible via HA's "Download Diagnostics" button on the integration card.
 The API key is redacted before the data leaves the device.
 """
+
 from __future__ import annotations
 
 from typing import Any

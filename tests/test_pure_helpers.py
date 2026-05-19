@@ -4,6 +4,7 @@ These functions are pure Python with no HA dependencies, so we test them
 directly here.  The package import still loads __init__.py, so ha_stubs must
 be bootstrapped first.
 """
+
 from __future__ import annotations
 
 import sys

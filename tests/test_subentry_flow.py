@@ -8,6 +8,7 @@ Covers:
   async_update_and_abort is called with merged data that preserves existing
   fields and overrides changed ones
 """
+
 from __future__ import annotations
 
 import sys
@@ -171,12 +172,14 @@ class TestAsyncStepReconfigure:
     @pytest.mark.asyncio
     async def test_service_tier_is_none_after_reconfigure(self) -> None:
         """Even after reconfigure, service_tier must remain None."""
-        existing_sub = _make_subentry(data={
-            _CHAT_MODEL_KEY: "gpt-5.5",
-            _REASONING_KEY: "medium",
-            _STORE_KEY: True,
-            _SERVICE_TIER_KEY: None,
-        })
+        existing_sub = _make_subentry(
+            data={
+                _CHAT_MODEL_KEY: "gpt-5.5",
+                _REASONING_KEY: "medium",
+                _STORE_KEY: True,
+                _SERVICE_TIER_KEY: None,
+            }
+        )
         flow = _make_flow(ConversationSubentryFlowHandler, subentry=existing_sub)
         await flow.async_step_reconfigure(_VALID_USER_INPUT)
         call_args = flow.async_update_and_abort.call_args
@@ -188,13 +191,15 @@ class TestAsyncStepReconfigure:
     async def test_reconfigure_preserves_existing_data_keys(self) -> None:
         """_enrich_subentry_data(user_input, base=existing) must keep all
         existing subentry fields — including those not exposed in the form."""
-        existing_sub = _make_subentry(data={
-            _CHAT_MODEL_KEY: "gpt-5.5",
-            _REASONING_KEY: "medium",
-            _STORE_KEY: True,
-            _SERVICE_TIER_KEY: None,
-            "llm_hass_api": ["assist"],  # not in form, must be preserved
-        })
+        existing_sub = _make_subentry(
+            data={
+                _CHAT_MODEL_KEY: "gpt-5.5",
+                _REASONING_KEY: "medium",
+                _STORE_KEY: True,
+                _SERVICE_TIER_KEY: None,
+                "llm_hass_api": ["assist"],  # not in form, must be preserved
+            }
+        )
         flow = _make_flow(ConversationSubentryFlowHandler, subentry=existing_sub)
         await flow.async_step_reconfigure(_VALID_USER_INPUT)
         call_args = flow.async_update_and_abort.call_args

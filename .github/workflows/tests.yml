@@ -24,6 +24,9 @@ jobs:
       - name: Lint with ruff
         run: python -m ruff check custom_components/codex_proxy/
 
+      - name: Check formatting with ruff
+        run: python -m ruff format --check custom_components/codex_proxy/ tests/
+
   test:
     needs: lint
     runs-on: ubuntu-latest

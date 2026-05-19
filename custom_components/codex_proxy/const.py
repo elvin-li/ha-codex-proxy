@@ -7,6 +7,7 @@ Responses API streaming layer) flow through to this integration automatically.
 Anything we override or add lives in this module; anything we re-use comes from
 the upstream module via lazy imports inside the call sites.
 """
+
 from __future__ import annotations
 
 from datetime import timedelta

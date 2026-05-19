@@ -1,4 +1,5 @@
 """Shared fixtures for codex_proxy tests."""
+
 from __future__ import annotations
 
 from collections.abc import Generator

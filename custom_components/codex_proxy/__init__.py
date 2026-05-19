@@ -10,6 +10,7 @@ proxies. We only swap those two layers and inherit everything else
 (streaming, tool calls, reasoning, structured output, etc.) from upstream so
 that future Home Assistant releases automatically extend this integration.
 """
+
 from __future__ import annotations
 
 import logging
@@ -120,9 +121,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> b
     CodexConfigFlow. Add new ``if entry.version < N`` blocks here as the schema
     evolves so existing users are migrated non-destructively on upgrade.
     """
-    _LOGGER.debug(
-        "Migrating Codex Token Pool config entry from version %s", entry.version
-    )
+    _LOGGER.debug("Migrating Codex Token Pool config entry from version %s", entry.version)
     # No migrations needed yet — version 1 is the only schema.
     # Future example:
     #   if entry.version < 2:
@@ -143,8 +142,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bo
     return unloaded
 
 
-async def _async_update_listener(
-    hass: HomeAssistant, entry: CodexConfigEntry
-) -> None:
+async def _async_update_listener(hass: HomeAssistant, entry: CodexConfigEntry) -> None:
     """Reload the entry when options change."""
     await hass.config_entries.async_reload(entry.entry_id)

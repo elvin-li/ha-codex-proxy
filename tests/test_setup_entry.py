@@ -8,6 +8,7 @@ Focuses on:
 - async_forward_entry_setups is called with PLATFORMS
 Runs without a full HA install.
 """
+
 from __future__ import annotations
 
 import sys
@@ -93,6 +94,7 @@ class TestInstallationId:
         assert CONF_INSTALLATION_ID in new_data
         # Should be a valid UUID string
         import uuid
+
         uuid.UUID(new_data[CONF_INSTALLATION_ID])  # raises if invalid
 
     @pytest.mark.asyncio
@@ -151,9 +153,7 @@ class TestSetupResult:
         with patcher:
             await async_setup_entry(hass, entry)
 
-        hass.config_entries.async_forward_entry_setups.assert_awaited_once_with(
-            entry, PLATFORMS
-        )
+        hass.config_entries.async_forward_entry_setups.assert_awaited_once_with(entry, PLATFORMS)
 
 
 # ---------------------------------------------------------------------------

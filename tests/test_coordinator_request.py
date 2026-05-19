@@ -3,6 +3,7 @@
 Verifies that _async_update_data sends the correct URL, headers, and
 timeout to the httpx client on a successful fetch.
 """
+
 from __future__ import annotations
 
 import sys

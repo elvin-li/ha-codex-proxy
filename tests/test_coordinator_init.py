@@ -4,6 +4,7 @@ Verifies that _api_key, _base_url, _installation_id, and _http are set
 correctly from the config entry and hass. Uses the ha_stubs DataUpdateCoordinator
 so the actual __init__ code path is exercised (not bypassed via object.__new__).
 """
+
 from __future__ import annotations
 
 import sys

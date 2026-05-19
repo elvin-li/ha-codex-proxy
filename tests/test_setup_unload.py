@@ -3,6 +3,7 @@ in custom_components/codex_proxy/__init__.py.
 
 Runs without a full HA install — all HA modules are mocked via ha_stubs.
 """
+
 from __future__ import annotations
 
 import sys
@@ -109,9 +110,7 @@ class TestAsyncUnloadEntry:
 
         await async_unload_entry(hass, entry)
 
-        hass.config_entries.async_unload_platforms.assert_awaited_once_with(
-            entry, PLATFORMS
-        )
+        hass.config_entries.async_unload_platforms.assert_awaited_once_with(entry, PLATFORMS)
 
 
 # ---------------------------------------------------------------------------

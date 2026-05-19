@@ -4,6 +4,7 @@ We mock httpx at the call-site so we can simulate 5xx, timeout, DNS failure,
 and bad JSON without a live proxy. asyncio.sleep is patched to avoid actually
 waiting in tests.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -72,12 +73,15 @@ class TestCoordinatorSuccess:
     @pytest.mark.asyncio
     async def test_returns_models_list_on_success(self) -> None:
         coord = _make_coordinator()
-        response = _make_response(200, {
-            "data": [
-                {"id": "gpt-5.5", "created": 100, "owned_by": "openai"},
-                {"id": "gpt-5.4", "created": 50, "owned_by": "openai"},
-            ]
-        })
+        response = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": 100, "owned_by": "openai"},
+                    {"id": "gpt-5.4", "created": 50, "owned_by": "openai"},
+                ]
+            },
+        )
         coord._http.get = AsyncMock(return_value=response)
 
         result = await coord._async_update_data()
@@ -88,13 +92,16 @@ class TestCoordinatorSuccess:
     @pytest.mark.asyncio
     async def test_models_sorted_newest_first(self) -> None:
         coord = _make_coordinator()
-        response = _make_response(200, {
-            "data": [
-                {"id": "gpt-5.4", "created": 50},
-                {"id": "gpt-5.5", "created": 100},
-                {"id": "gpt-5.3", "created": 10},
-            ]
-        })
+        response = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.4", "created": 50},
+                    {"id": "gpt-5.5", "created": 100},
+                    {"id": "gpt-5.3", "created": 10},
+                ]
+            },
+        )
         coord._http.get = AsyncMock(return_value=response)
 
         result = await coord._async_update_data()
@@ -105,12 +112,15 @@ class TestCoordinatorSuccess:
     @pytest.mark.asyncio
     async def test_deduplication_on_success(self) -> None:
         coord = _make_coordinator()
-        response = _make_response(200, {
-            "data": [
-                {"id": "gpt-5.5", "created": 100},
-                {"id": "gpt-5.5", "created": 100},  # duplicate
-            ]
-        })
+        response = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-5.5", "created": 100},
+                    {"id": "gpt-5.5", "created": 100},  # duplicate
+                ]
+            },
+        )
         coord._http.get = AsyncMock(return_value=response)
 
         result = await coord._async_update_data()
@@ -140,10 +150,12 @@ class TestCoordinatorRetry:
     async def test_retries_on_timeout_and_succeeds(self) -> None:
         coord = _make_coordinator()
         ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 100}]})
-        coord._http.get = AsyncMock(side_effect=[
-            httpx.TimeoutException("timed out"),
-            ok,
-        ])
+        coord._http.get = AsyncMock(
+            side_effect=[
+                httpx.TimeoutException("timed out"),
+                ok,
+            ]
+        )
 
         with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()):
             result = await coord._async_update_data()
@@ -153,9 +165,7 @@ class TestCoordinatorRetry:
     @pytest.mark.asyncio
     async def test_raises_update_failed_after_max_retries(self) -> None:
         coord = _make_coordinator()
-        coord._http.get = AsyncMock(
-            side_effect=httpx.TimeoutException("timed out")
-        )
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
 
         with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()):
             with pytest.raises(Exception):  # UpdateFailed (mocked as Exception)
@@ -164,9 +174,7 @@ class TestCoordinatorRetry:
     @pytest.mark.asyncio
     async def test_sleep_called_between_retries(self) -> None:
         coord = _make_coordinator()
-        coord._http.get = AsyncMock(
-            side_effect=httpx.TimeoutException("timed out")
-        )
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
 
         sleep_mock = AsyncMock()
         with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock):
@@ -186,9 +194,7 @@ class TestCoordinatorNonTransient:
     @pytest.mark.asyncio
     async def test_connection_error_raises_immediately(self) -> None:
         coord = _make_coordinator()
-        coord._http.get = AsyncMock(
-            side_effect=httpx.ConnectError("connection refused")
-        )
+        coord._http.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
 
         with pytest.raises(Exception):  # UpdateFailed
             await coord._async_update_data()
@@ -208,9 +214,7 @@ class TestCoordinatorNonTransient:
     async def test_connection_error_does_not_retry(self) -> None:
         """ConnectError is non-transient — should NOT retry."""
         coord = _make_coordinator()
-        coord._http.get = AsyncMock(
-            side_effect=httpx.ConnectError("connection refused")
-        )
+        coord._http.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
 
         sleep_mock = AsyncMock()
         with patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=sleep_mock):
@@ -231,10 +235,13 @@ class TestPayloadFormats:
     async def test_standard_data_wrapper(self) -> None:
         """{"object":"list","data":[...]} — standard OpenAI format."""
         coord = _make_coordinator()
-        response = _make_response(200, {
-            "object": "list",
-            "data": [{"id": "gpt-5.5", "created": 100}],
-        })
+        response = _make_response(
+            200,
+            {
+                "object": "list",
+                "data": [{"id": "gpt-5.5", "created": 100}],
+            },
+        )
         coord._http.get = AsyncMock(return_value=response)
 
         result = await coord._async_update_data()
@@ -288,9 +295,7 @@ class TestRetryDelayClamping:
         """With COORDINATOR_MAX_RETRIES=3 and COORDINATOR_RETRY_DELAYS=(5, 30),
         two sleeps should occur with the exact delay values from the table."""
         coord = _make_coordinator()
-        coord._http.get = AsyncMock(
-            side_effect=httpx.TimeoutException("timed out")
-        )
+        coord._http.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
 
         sleep_delays: list = []
 
@@ -303,6 +308,7 @@ class TestRetryDelayClamping:
 
         # COORDINATOR_MAX_RETRIES=3 means 2 sleeps (between attempt 0→1 and 1→2)
         from custom_components.codex_proxy.const import COORDINATOR_RETRY_DELAYS
+
         assert len(sleep_delays) == 2
         assert sleep_delays[0] == COORDINATOR_RETRY_DELAYS[0]
         assert sleep_delays[1] == COORDINATOR_RETRY_DELAYS[1]

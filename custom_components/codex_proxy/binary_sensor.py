@@ -12,6 +12,7 @@ health signal users want to monitor.
 automations and template sensors that need the exact timestamp of the last
 successful poll.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -36,15 +37,11 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][DATA_COORDINATOR]
     async_add_entities([CodexProxyReachableSensor(coordinator, entry)])
 
 
-class CodexProxyReachableSensor(
-    CoordinatorEntity[CodexModelCoordinator], BinarySensorEntity
-):
+class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], BinarySensorEntity):
     """``ON`` while the proxy's /v1/models endpoint is responding successfully."""
 
     _attr_has_entity_name = True
