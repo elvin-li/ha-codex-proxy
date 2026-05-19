@@ -260,3 +260,38 @@ class TestCoordinatorFailurePath:
             "startup coordinator failure log — operators cannot distinguish "
             "startup-phase failures without the specific prefix in HA logs"
         )
+
+    @pytest.mark.asyncio
+    async def test_warning_log_includes_exception_message(self) -> None:
+        """The warning call must pass the exception as a format argument so the
+        specific error message ('proxy unreachable') appears in HA logs.
+
+        The existing test_warning_logged_when_coordinator_refresh_fails uses an
+        OR condition: it passes whether the exception text OR the format prefix
+        is present.  test_warning_log_prefix_is_initial_model_refresh_failed
+        covers the prefix half; this test covers the exception-text half.
+
+        Without the ``%s`` arg (e.g. ``_LOGGER.warning("Initial model refresh
+        failed")`` with no error arg), operators see the static prefix but not
+        the root cause — 'proxy unreachable', 'timeout', etc. — forcing them to
+        correlate timestamps with other log entries to find the failure reason."""
+        from unittest.mock import patch
+
+        entry = _make_entry(installation_id="iid-excmsg")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator(
+            first_refresh_side_effect=UpdateFailed("proxy unreachable")
+        )
+
+        with (
+            patcher,
+            patch("custom_components.codex_proxy._LOGGER") as mock_log,
+        ):
+            await async_setup_entry(hass, entry)
+
+        logged = str(mock_log.warning.call_args)
+        assert "proxy unreachable" in logged, (
+            "Exception message 'proxy unreachable' missing from warning log — "
+            "operators need the root-cause text to diagnose startup failures "
+            "without enabling coordinator DEBUG logging"
+        )

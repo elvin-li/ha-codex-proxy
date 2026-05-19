@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.91] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_setup_entry.py`** — `TestCoordinatorFailurePath.test_warning_log_includes_exception_message`
+  verifies that the exception message (`"proxy unreachable"`) appears in the
+  startup warning call.  `test_warning_log_prefix_is_initial_model_refresh_failed`
+  (v0.2.82) covers the format prefix; `test_warning_logged_when_coordinator_refresh_fails`
+  uses an OR condition covering either prefix or error text.  This test
+  directly checks the exception-text half so a refactor that drops the `%s`
+  argument (logging only the static prefix) is caught here.
+
+---
+
 ## [0.2.90] – 2026-05-19
 
 ### Added (tests)
