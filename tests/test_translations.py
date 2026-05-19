@@ -242,15 +242,12 @@ class TestTranslationKeyConsistency:
             attrs = ps["state_attributes"]
             for key in ("last_checked", "latest_model", "last_error"):
                 assert key in attrs, (
-                    f"{fname} entity.binary_sensor.proxy_reachable.state_attributes "
-                    f"missing {key!r}"
+                    f"{fname} entity.binary_sensor.proxy_reachable.state_attributes missing {key!r}"
                 )
                 assert "name" in attrs[key], (
                     f"{fname} state_attributes.{key} is missing 'name' field"
                 )
-                assert attrs[key]["name"], (
-                    f"{fname} state_attributes.{key}.name is empty"
-                )
+                assert attrs[key]["name"], f"{fname} state_attributes.{key}.name is empty"
 
     def test_all_translation_keys_in_sync(self) -> None:
         """Deep structural check: the full set of dotted key paths in strings.json,

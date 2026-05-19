@@ -218,9 +218,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # comprehension below to raise TypeError / AttributeError.
             return []
         return [
-            m
-            for m in models
-            if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
+            m for m in models if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
         ]
 
     @property

@@ -238,8 +238,7 @@ class TestEntryCreation:
         types = {s["subentry_type"] for s in subentries}
         expected = {SUBENTRY_TYPE_CONVERSATION, SUBENTRY_TYPE_AI_TASK}
         assert types == expected, (
-            f"Expected subentry types {expected}, got {types}. "
-            f"Unexpected: {types - expected}"
+            f"Expected subentry types {expected}, got {types}. Unexpected: {types - expected}"
         )
 
     @pytest.mark.asyncio
@@ -273,9 +272,7 @@ class TestEntryCreation:
 
         mock_probe.assert_awaited_once()
         probe_args = mock_probe.call_args[0]
-        assert probe_args[1] == "sk-test", (
-            f"probe received wrong api_key: {probe_args[1]!r}"
-        )
+        assert probe_args[1] == "sk-test", f"probe received wrong api_key: {probe_args[1]!r}"
         assert probe_args[2] == "https://proxy.example.com", (
             f"probe received wrong base_url: {probe_args[2]!r}"
         )

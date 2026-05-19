@@ -232,8 +232,7 @@ class TestProbeProxySuccess:
 
         fmt = mock_log.debug.call_args.args[0]
         assert fmt == "Probing proxy at %s with model %s", (
-            f"Expected exact format string 'Probing proxy at %s with model %s', "
-            f"got {fmt!r}"
+            f"Expected exact format string 'Probing proxy at %s with model %s', got {fmt!r}"
         )
 
     @pytest.mark.asyncio

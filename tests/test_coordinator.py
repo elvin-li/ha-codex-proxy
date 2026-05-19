@@ -173,7 +173,9 @@ class TestModelProcessing:
     def test_display_name_surrounding_whitespace_stripped(self) -> None:
         """Surrounding whitespace on a non-empty display_name must be stripped
         so the dropdown doesn't show '  GPT 5.5  ' with padding."""
-        data = [{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": "  GPT 5.5 Preview  "}]
+        data = [
+            {"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": "  GPT 5.5 Preview  "}
+        ]
         models = _process_models(data)
         assert models[0]["display_name"] == "GPT 5.5 Preview"
 
@@ -184,8 +186,8 @@ class TestModelProcessing:
         data: list = [
             _make_model("gpt-5.5"),
             "some-bare-string-entry",  # str — .get() would raise AttributeError
-            None,                       # NoneType — same
-            42,                         # int — same
+            None,  # NoneType — same
+            42,  # int — same
         ]
         models = _process_models(data)
         # Only the valid dict entry should appear in the result
@@ -219,9 +221,7 @@ class TestChatModelFilter:
         models = _process_models([_make_model("dall-e-3"), _make_model("gpt-5.5")])
         chat = _filter_chat(models)
         ids = [m["id"] for m in chat]
-        assert ids == ["gpt-5.5"], (
-            f"Expected exactly ['gpt-5.5'] after dall-e filter, got {ids!r}"
-        )
+        assert ids == ["gpt-5.5"], f"Expected exactly ['gpt-5.5'] after dall-e filter, got {ids!r}"
 
     def test_excludes_image_prefix(self) -> None:
         models = _process_models([_make_model("image-alpha-001"), _make_model("gpt-5.5")])
@@ -237,9 +237,7 @@ class TestChatModelFilter:
         models = _process_models([_make_model("image-alpha-001"), _make_model("gpt-5.5")])
         chat = _filter_chat(models)
         ids = [m["id"] for m in chat]
-        assert ids == ["gpt-5.5"], (
-            f"Expected exactly ['gpt-5.5'] after image- filter, got {ids!r}"
-        )
+        assert ids == ["gpt-5.5"], f"Expected exactly ['gpt-5.5'] after image- filter, got {ids!r}"
 
     def test_all_chat_models_pass_through(self) -> None:
         data = [_make_model(f"gpt-5.{i}", i) for i in range(5)]

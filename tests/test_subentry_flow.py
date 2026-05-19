@@ -154,8 +154,7 @@ class TestBuildSchemaWithCoordinator:
         options = _model_select_options(coord, None)
         option_values = [o["value"] for o in options]
         assert option_values == ["gpt-5.5", "gpt-5.6"], (
-            f"Expected exactly ['gpt-5.5', 'gpt-5.6'] in coordinator order, "
-            f"got {option_values!r}"
+            f"Expected exactly ['gpt-5.5', 'gpt-5.6'] in coordinator order, got {option_values!r}"
         )
 
     @pytest.mark.asyncio
@@ -255,8 +254,7 @@ class TestAsyncStepUser:
         data = flow.async_create_entry.call_args[1]["data"]
         # _VALID_USER_INPUT has _CHAT_MODEL_KEY: "gpt-5.5"
         assert data.get(_CHAT_MODEL_KEY) == "gpt-5.5", (
-            f"chat_model key {_CHAT_MODEL_KEY!r} missing or wrong in created "
-            f"entry data: {data!r}"
+            f"chat_model key {_CHAT_MODEL_KEY!r} missing or wrong in created entry data: {data!r}"
         )
 
 

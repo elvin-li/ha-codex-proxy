@@ -97,9 +97,7 @@ class TestBinarySensorSetup:
         )
 
     @pytest.mark.asyncio
-    async def test_binary_sensor_coordinator_reference(
-        self, mock_entry, mock_coordinator
-    ) -> None:
+    async def test_binary_sensor_coordinator_reference(self, mock_entry, mock_coordinator) -> None:
         """The binary sensor entity must reference the coordinator retrieved
         from hass.data so it can read last_update_success during is_on.
 
@@ -191,8 +189,7 @@ class TestSensorSetup:
         types = {type(e) for e in added}
         expected = {CodexChatModelCountSensor, CodexLastRefreshSensor}
         assert types == expected, (
-            f"Expected sensor types {expected}, got {types}. "
-            f"Unexpected: {types - expected}"
+            f"Expected sensor types {expected}, got {types}. Unexpected: {types - expected}"
         )
 
     @pytest.mark.asyncio

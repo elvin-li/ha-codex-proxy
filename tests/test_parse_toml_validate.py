@@ -145,9 +145,7 @@ base_url = "https://from-toml.example.com"
 [model_providers.p]
 base_url = "https://from-toml.example.com"
 """
-        result = _parse_toml_and_validate(
-            _input(base_url="https://manual.example.com", toml=toml)
-        )
+        result = _parse_toml_and_validate(_input(base_url="https://manual.example.com", toml=toml))
         assert not result.errors
         assert result.base_url == "https://from-toml.example.com"
 
@@ -177,9 +175,7 @@ base_url = "https://from-toml.example.com"
         assert result.errors.get("base") == "toml_no_base_url"
 
     def test_bad_toml_returns_bad_toml_error(self) -> None:
-        result = _parse_toml_and_validate(
-            _input(base_url="", toml="this [ is not [ valid toml")
-        )
+        result = _parse_toml_and_validate(_input(base_url="", toml="this [ is not [ valid toml"))
         assert result.errors.get("base") == "bad_toml"
 
     def test_toml_trailing_slash_stripped(self) -> None:
@@ -189,9 +185,7 @@ base_url = "https://from-toml.example.com"
         assert not result.base_url.endswith("/")
 
     def test_defaults_preserved_when_toml_empty_string(self) -> None:
-        result = _parse_toml_and_validate(
-            _input(base_url="https://proxy.example.com", toml="")
-        )
+        result = _parse_toml_and_validate(_input(base_url="https://proxy.example.com", toml=""))
         assert not result.errors
         assert result.reasoning_effort == DEFAULT_REASONING_EFFORT
         assert result.store_responses == DEFAULT_STORE

@@ -115,8 +115,7 @@ class TestCoordinatorSuccess:
         result = await coord._async_update_data()
 
         assert set(result.keys()) == {"models"}, (
-            f"_async_update_data must return exactly {{'models'}}, "
-            f"got keys: {set(result.keys())!r}"
+            f"_async_update_data must return exactly {{'models'}}, got keys: {set(result.keys())!r}"
         )
 
     @pytest.mark.asyncio
@@ -193,9 +192,9 @@ class TestCoordinatorSuccess:
             {
                 "data": [
                     {"id": "gpt-5.5", "created": 100},
-                    "bare-string-entry",   # would crash .get() without isinstance guard
-                    None,                  # NoneType — same
-                    42,                    # int — same
+                    "bare-string-entry",  # would crash .get() without isinstance guard
+                    None,  # NoneType — same
+                    42,  # int — same
                 ]
             },
         )
@@ -321,7 +320,6 @@ class TestCoordinatorRetry:
             "type name ('TimeoutException') so operators can distinguish timeout "
             "failures from HTTP 5xx failures without enabling DEBUG logging"
         )
-
 
     @pytest.mark.asyncio
     async def test_exhausted_retries_message_contains_attempt_count(self) -> None:

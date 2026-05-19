@@ -264,9 +264,7 @@ class TestCoordinatorFailurePath:
 
         entry = _make_entry(installation_id="iid-warn")
         hass = _make_hass()
-        patcher, _ = _patch_coordinator(
-            first_refresh_side_effect=UpdateFailed("proxy unreachable")
-        )
+        patcher, _ = _patch_coordinator(first_refresh_side_effect=UpdateFailed("proxy unreachable"))
 
         with (
             patcher,
@@ -293,9 +291,7 @@ class TestCoordinatorFailurePath:
 
         entry = _make_entry(installation_id="iid-prefix")
         hass = _make_hass()
-        patcher, _ = _patch_coordinator(
-            first_refresh_side_effect=UpdateFailed("proxy unreachable")
-        )
+        patcher, _ = _patch_coordinator(first_refresh_side_effect=UpdateFailed("proxy unreachable"))
 
         with (
             patcher,
@@ -328,9 +324,7 @@ class TestCoordinatorFailurePath:
 
         entry = _make_entry(installation_id="iid-excmsg")
         hass = _make_hass()
-        patcher, _ = _patch_coordinator(
-            first_refresh_side_effect=UpdateFailed("proxy unreachable")
-        )
+        patcher, _ = _patch_coordinator(first_refresh_side_effect=UpdateFailed("proxy unreachable"))
 
         with (
             patcher,
@@ -363,9 +357,7 @@ class TestCoordinatorFailurePath:
 
         entry = _make_entry(installation_id="iid-fmtpin")
         hass = _make_hass()
-        patcher, _ = _patch_coordinator(
-            first_refresh_side_effect=UpdateFailed("proxy unreachable")
-        )
+        patcher, _ = _patch_coordinator(first_refresh_side_effect=UpdateFailed("proxy unreachable"))
 
         with (
             patcher,

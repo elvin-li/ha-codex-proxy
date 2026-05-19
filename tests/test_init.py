@@ -178,8 +178,7 @@ class TestConstants:
         suffix is dropped.  Pinning the exact string ensures the User-Agent
         header sent to the proxy is well-known and operator-documented."""
         assert CODEX_USER_AGENT == "codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)", (
-            f"Expected 'codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)', "
-            f"got {CODEX_USER_AGENT!r}"
+            f"Expected 'codex_cli_rs/0.21.0 (HomeAssistant; codex_proxy)', got {CODEX_USER_AGENT!r}"
         )
 
     def test_codex_openai_beta_exact_value(self) -> None:

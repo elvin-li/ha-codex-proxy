@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.169] - 2026-05-19
+### Changed
+- Apply `ruff format` across `custom_components/codex_proxy/` and `tests/` to satisfy the format-check step in CI. Pure whitespace/line-break normalisation; no behavioural changes
+
 ## [0.2.168] - 2026-05-19
 ### Tests
 - `test_const.py`: add `TestImageModelPrefixes.test_image_model_prefixes_exact_value` — pins `IMAGE_MODEL_ID_PREFIXES` to exactly `("gpt-image", "dall-e", "image-")`; the existing `any()`-with-`startswith` checks would pass even if extra prefixes were added or an existing prefix was over-specified

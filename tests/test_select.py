@@ -352,7 +352,9 @@ class TestClassAttributes:
 class TestDeviceInfo:
     """Device info must use build_codex_device_info for full metadata."""
 
-    def _make_full_entity(self, model: str = "gpt-5.5", title: str = "My Agent") -> CodexModelSelectEntity:
+    def _make_full_entity(
+        self, model: str = "gpt-5.5", title: str = "My Agent"
+    ) -> CodexModelSelectEntity:
         """Build an entity via __init__ so device_info is set by the real constructor."""
         coord = _make_coordinator([])
         entry = _make_entry()

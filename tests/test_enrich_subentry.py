@@ -179,8 +179,7 @@ class TestUpstreamKeys:
             f"got {keys['store_responses']!r}"
         )
         assert keys["service_tier"] == "service_tier", (
-            f"Expected keys['service_tier'] == 'service_tier', "
-            f"got {keys['service_tier']!r}"
+            f"Expected keys['service_tier'] == 'service_tier', got {keys['service_tier']!r}"
         )
 
     def test_second_call_returns_same_object(self) -> None:

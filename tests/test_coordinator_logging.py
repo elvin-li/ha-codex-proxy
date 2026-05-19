@@ -118,8 +118,7 @@ class TestRetryLogging:
         assert retry_calls, "Expected at least one retry debug log call containing 'Transient'"
         fmt = retry_calls[0].args[0]
         assert fmt.startswith("Transient error on attempt"), (
-            f"Retry log format string must start with 'Transient error on attempt', "
-            f"got {fmt!r}"
+            f"Retry log format string must start with 'Transient error on attempt', got {fmt!r}"
         )
 
     @pytest.mark.asyncio

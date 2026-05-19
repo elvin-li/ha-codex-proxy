@@ -68,8 +68,7 @@ class TestCodexConversationEntity:
         entity = CodexConversationEntity(entry, sub)
         expected = {(DOMAIN, "sub-conv")}
         assert entity._attr_device_info["identifiers"] == expected, (
-            f"Expected identifiers {expected!r}, "
-            f"got {entity._attr_device_info['identifiers']!r}"
+            f"Expected identifiers {expected!r}, got {entity._attr_device_info['identifiers']!r}"
         )
 
     def test_device_info_name_matches_subentry_title(self) -> None:
@@ -131,8 +130,7 @@ class TestCodexAITaskEntity:
         entity = CodexAITaskEntity(entry, sub)
         expected = {(DOMAIN, "sub-task")}
         assert entity._attr_device_info["identifiers"] == expected, (
-            f"Expected identifiers {expected!r}, "
-            f"got {entity._attr_device_info['identifiers']!r}"
+            f"Expected identifiers {expected!r}, got {entity._attr_device_info['identifiers']!r}"
         )
 
     def test_device_info_name_matches_subentry_title(self) -> None:

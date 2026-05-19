@@ -391,8 +391,7 @@ class TestDiagnosticsSubentries:
         types = {s["subentry_type"] for s in result["subentries"]}
         expected = {"conversation", "ai_task_data"}
         assert types == expected, (
-            f"Unexpected subentry types: {types - expected}. "
-            f"Missing: {expected - types}."
+            f"Unexpected subentry types: {types - expected}. Missing: {expected - types}."
         )
 
     @pytest.mark.asyncio

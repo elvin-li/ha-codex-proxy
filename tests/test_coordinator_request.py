@@ -158,7 +158,6 @@ class TestRequestHeaders:
         headers = coord._http.get.call_args[1]["headers"]
         assert headers["Accept"] == "application/json"
 
-
     @pytest.mark.asyncio
     async def test_exact_header_keys_sent_in_request(self) -> None:
         """The HTTP GET request must include exactly the six expected headers —

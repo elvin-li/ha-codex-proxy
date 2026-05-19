@@ -174,6 +174,5 @@ class TestRefreshModelsButton:
             await btn.async_press()
         fmt = mock_log.debug.call_args.args[0]
         assert fmt == "Manual /v1/models refresh requested", (
-            f"Expected exact log message 'Manual /v1/models refresh requested', "
-            f"got {fmt!r}"
+            f"Expected exact log message 'Manual /v1/models refresh requested', got {fmt!r}"
         )
