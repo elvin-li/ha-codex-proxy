@@ -277,18 +277,18 @@ class CodexConfigFlow(ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
 
         keys = _upstream_keys()
-        # Codex reverse-proxies routinely return 502 for any non-null
-        # `service_tier` value. Set it to None so upstream's
-        # `options.get(CONF_SERVICE_TIER, "auto")` resolves to None and the
-        # SDK omits the field from the request payload.
-        common_data = {
-            keys["chat_model"]: model,
-            keys["prompt"]: DEFAULT_PROMPT,
-            keys["reasoning_effort"]: reasoning_effort,
-            keys["store_responses"]: store_responses,
-            keys["service_tier"]: None,
-            CONF_LLM_HASS_API: [],
-        }
+        # Build initial subentry data via the shared helper so service_tier=None
+        # and llm_hass_api=[] are applied centrally — the same way the subentry
+        # reconfigure flow applies them.  Codex reverse-proxies routinely return
+        # 502 for any non-null service_tier value.
+        common_data = _enrich_subentry_data(
+            {
+                keys["chat_model"]: model,
+                keys["prompt"]: DEFAULT_PROMPT,
+                keys["reasoning_effort"]: reasoning_effort,
+                keys["store_responses"]: store_responses,
+            }
+        )
         return self.async_create_entry(
             title=f"Codex 号池 ({base_url.split('//', 1)[-1]})",
             data={
@@ -384,6 +384,13 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
     _default_title: str = "Codex 号池代理"
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        """Handle the 'add new subentry' step.
+
+        Shows the model-and-settings form on the first call (``user_input``
+        is ``None``); creates a new subentry on submit.  The submitted data is
+        passed through :func:`_enrich_subentry_data` to pin ``service_tier``
+        and ``llm_hass_api`` before storage.
+        """
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=self._build_schema(None))
         return self.async_create_entry(
@@ -394,6 +401,15 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
+        """Handle the 'edit existing subentry' step.
+
+        Pre-fills the form with the current subentry data on the first call
+        (``user_input`` is ``None``); merges changes into the existing data on
+        submit, preserving any fields not exposed in the form (e.g. future
+        keys added after initial setup).  The merged dict is passed through
+        :func:`_enrich_subentry_data` to re-pin ``service_tier`` and
+        ``llm_hass_api``.
+        """
         subentry = self._get_reconfigure_subentry()
         if user_input is None:
             return self.async_show_form(
@@ -407,6 +423,14 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
         )
 
     def _build_schema(self, defaults: dict[str, Any] | None) -> vol.Schema:
+        """Build the voluptuous schema for the LLM-settings form.
+
+        Fetches available models from the coordinator (if already running) to
+        populate the model dropdown with live choices.  ``defaults`` is
+        ``None`` for a fresh *add* flow or a snapshot of the existing subentry
+        data for a *reconfigure* flow; either way the current selection is
+        preserved as the pre-selected dropdown value.
+        """
         keys = _upstream_keys()
         existing = defaults or {}
         entry = self._get_entry()

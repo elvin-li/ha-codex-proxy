@@ -10,7 +10,7 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/elvin-li/ha-codex-proxy/issues",
   "requirements": [],
-  "version": "0.2.44",
+  "version": "0.2.45",
   "integration_type": "service",
   "quality_scale": "silver"
 }

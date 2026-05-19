@@ -13,6 +13,24 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.45] – 2026-05-19
+
+### Changed
+
+- **`config_flow.py`** — `async_step_user` in `CodexConfigFlow` now builds the
+  initial subentry data via `_enrich_subentry_data()` (the same helper used by
+  the subentry reconfigure flow) instead of constructing the dict manually.
+  Removes a redundant literal assignment for `service_tier=None` /
+  `llm_hass_api=[]` in the top-level flow, ensuring the two code-paths stay in
+  sync automatically.
+- **`config_flow.py`** — Added developer-facing docstrings to
+  `_LLMSubentryFlowHandlerBase.async_step_user`, `async_step_reconfigure`, and
+  `_build_schema` explaining the two-phase (show-form / submit) flow, the
+  `_enrich_subentry_data` contract, and how defaults differ between *add* and
+  *reconfigure* paths.
+
+---
+
 ## [0.2.44] – 2026-05-19
 
 ### Fixed
