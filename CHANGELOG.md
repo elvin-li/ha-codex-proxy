@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.112] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_button.py`** —
+  `TestRefreshModelsButton.test_press_debug_log_message_content` checks that
+  the format string at `call_args.args[0]` contains `"refresh"` (case-insensitive).
+  The existing `test_press_emits_debug_log` only asserts `assert_called_once()`;
+  a refactor that changed the message to a generic `"OK"` would still pass that
+  test but leave operators unable to identify manual-refresh events in HA logs.
+
+---
+
 ## [0.2.111] – 2026-05-19
 
 ### Added (tests)

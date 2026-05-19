@@ -137,3 +137,23 @@ class TestRefreshModelsButton:
         with patch("custom_components.codex_proxy.button._LOGGER") as mock_log:
             await btn.async_press()
         mock_log.debug.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_press_debug_log_message_content(self) -> None:
+        """The debug log format string must mention 'refresh' so the message is
+        self-explanatory in HA logs without needing to cross-reference source code.
+
+        test_press_emits_debug_log only asserts the logger was called once; a
+        refactor that changed the message to a generic 'OK' or an empty string
+        would still pass that test.  This test pins the format string at args[0]
+        so a content change is caught immediately."""
+        from unittest.mock import patch
+
+        btn = _make_button()
+        with patch("custom_components.codex_proxy.button._LOGGER") as mock_log:
+            await btn.async_press()
+        fmt = mock_log.debug.call_args.args[0]
+        assert "refresh" in fmt.lower(), (
+            f"Button debug log message {fmt!r} must mention 'refresh' — "
+            "operators look for this keyword when triaging manual-refresh events"
+        )
