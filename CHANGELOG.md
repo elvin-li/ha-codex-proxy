@@ -7,6 +7,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.17] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_main_flow.py`** (12 tests) — direct unit tests for
+  `CodexConfigFlow.async_step_user`: form displayed on initial load,
+  form with errors on bad URL / failed probe, and entry creation on
+  success (correct data, title, 2 subentries, both with
+  `service_tier=None`).
+
+---
+
 ## [0.2.16] – 2026-05-19
 
 ### Added (tests + CI)
