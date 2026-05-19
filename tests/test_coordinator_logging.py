@@ -290,6 +290,48 @@ class TestSuccessLogging:
         )
 
     @pytest.mark.asyncio
+    async def test_success_log_total_count_arg_is_len_models(self) -> None:
+        """The first count format arg (args[1]) must equal the *total* number of
+        models returned by the API — including image-only models that are filtered
+        out of chat_models.
+
+        test_success_log_shows_zero_for_image_only pins args[3]==0 (chat-capable)
+        for an image-only payload, but does not verify args[1] (total).  A refactor
+        that accidentally passes chat_count twice — ``debug(fmt, 0, url, 0)``
+        instead of ``debug(fmt, 2, url, 0)`` — would pass every existing test
+        because none checks args[1] explicitly.
+
+        With 2 image-only models the correct values are:
+          args[1] = 2  (total fetched)
+          args[3] = 0  (chat-capable after filtering)
+        """
+        coord = _make_coordinator()
+        ok = _make_response(
+            200,
+            {
+                "data": [
+                    {"id": "gpt-image-1", "created": 100},
+                    {"id": "dall-e-3", "created": 50},
+                ]
+            },
+        )
+        coord._http.get = AsyncMock(return_value=ok)
+
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = True
+            await coord._async_update_data()
+
+        debug_calls = mock_log.debug.call_args_list
+        fetched_calls = [c for c in debug_calls if "Fetched" in str(c)]
+        assert fetched_calls, "Expected a 'Fetched … models' debug log call"
+        call_args = fetched_calls[-1][0]
+        assert call_args[1] == 2, (
+            f"Expected total model count 2 at args[1], got {call_args[1]!r} — "
+            "the first format arg must be len(models) (including image-only), "
+            "not the filtered chat-capable count"
+        )
+
+    @pytest.mark.asyncio
     async def test_success_log_includes_proxy_url(self) -> None:
         """The success 'Fetched …' debug message must include the proxy URL.
 

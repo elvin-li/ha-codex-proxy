@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.102] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_logging.py`** —
+  `TestSuccessLogging.test_success_log_total_count_arg_is_len_models` pins
+  `args[1] == 2` (total model count) for an image-only payload.  Existing tests
+  only verified `args[3]` (chat-capable count); a refactor that passed
+  `chat_count` twice (`debug(fmt, 0, url, 0)`) instead of `(len(models), url,
+  chat_count)` would silently pass all prior tests but is caught here.
+
+---
+
 ## [0.2.101] – 2026-05-19
 
 ### Added (tests)
