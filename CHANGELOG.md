@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.117] - 2026-05-19
+### Tests
+- `test_diagnostics.py`: add `TestDiagnosticsSubentries.test_subentries_types_exact_set` — exact set equality on subentry types catches unexpected additions that the two prior `in` membership checks would miss
+
 <!-- Add new changes here. Move to a versioned section on release. -->
 
 ---

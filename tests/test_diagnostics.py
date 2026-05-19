@@ -372,6 +372,30 @@ class TestDiagnosticsSubentries:
         assert "ai_task_data" in types
 
     @pytest.mark.asyncio
+    async def test_subentries_types_exact_set(self) -> None:
+        """diagnostics['subentries'] must contain exactly 'conversation' and
+        'ai_task_data' subentry types — no more, no less.
+
+        test_subentries_section_present uses two 'in' checks that pass even if
+        a third unexpected subentry type is included.  Exact set equality here
+        catches both omissions and accidental extras (e.g. a duplicated entry or
+        a stale test fixture that registers an unknown type)."""
+        conv = _make_subentry("conversation", "Codex 号池对话")
+        task = _make_subentry("ai_task_data", "Codex 号池 AI Task")
+        entry = _make_entry(subentries={"s1": conv, "s2": task})
+        coord = _make_coordinator()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        types = {s["subentry_type"] for s in result["subentries"]}
+        expected = {"conversation", "ai_task_data"}
+        assert types == expected, (
+            f"Unexpected subentry types: {types - expected}. "
+            f"Missing: {expected - types}."
+        )
+
+    @pytest.mark.asyncio
     async def test_empty_subentries(self) -> None:
         entry = _make_entry(subentries={})
         coord = _make_coordinator()
