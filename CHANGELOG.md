@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.153] - 2026-05-19
+### Tests
+- `test_update_entity.py`: add `TestReleaseSummary.test_no_coordinator_data_exact_release_summary` — pins the full "Model list not yet available …" string to exact equality, replacing two independent substring checks that left the wording unconstrained
+
 ## [0.2.152] - 2026-05-19
 ### Tests
 - `test_update_entity.py`: add `TestAsyncInstall.test_install_log_format_string_exact` — pins `args[0]` of the async_install info log to the exact template, closing the gap left by positional-arg tests that checked args[1-3] but never the format string itself

@@ -103,6 +103,27 @@ class TestReleaseSummary:
         entity = _make_entity("gpt-5.5", None)
         assert "Refresh Models" in entity.release_summary
 
+    def test_no_coordinator_data_exact_release_summary(self) -> None:
+        """When no model list is available yet, release_summary must be exactly
+        'Model list not yet available (first refresh runs within 6 hours; use the
+        Refresh Models button to force an immediate check).'
+
+        test_no_coordinator_data uses a substring check ('not yet available')
+        and test_no_coordinator_data_mentions_refresh_button uses another
+        ('Refresh Models') — together they leave the exact wording unconstrained.
+        A refactor that truncated the hint or changed 'Refresh Models' to
+        'Reload Integration' would pass both substring tests while the user-visible
+        UX text changes silently in the HA update card."""
+        entity = _make_entity("gpt-5.5", None)
+        expected = (
+            "Model list not yet available "
+            "(first refresh runs within 6 hours; "
+            "use the Refresh Models button to force an immediate check)."
+        )
+        assert entity.release_summary == expected, (
+            f"Expected {expected!r}, got {entity.release_summary!r}"
+        )
+
     def test_up_to_date(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.5")
         assert "latest" in entity.release_summary
