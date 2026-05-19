@@ -221,5 +221,32 @@ class TestCodexHeaders:
     def test_openai_beta_references_responses(self) -> None:
         assert "responses" in CODEX_OPENAI_BETA
 
+    def test_openai_beta_exact_value(self) -> None:
+        """CODEX_OPENAI_BETA must equal exactly 'responses=experimental'.
+
+        test_openai_beta_references_responses only checks that 'responses' is a
+        substring — it passes if the value is 'responses=v2' or even just
+        'responses'.  The OpenAI-Beta header is a fixed API contract; changing it
+        silently breaks the proxy integration.  Pinning the exact value catches a
+        refactor that updates the string without a corresponding protocol review."""
+        assert CODEX_OPENAI_BETA == "responses=experimental", (
+            f"CODEX_OPENAI_BETA must be 'responses=experimental', got {CODEX_OPENAI_BETA!r} — "
+            "this is a fixed OpenAI API header value; changing it breaks the proxy protocol"
+        )
+
     def test_originator_is_non_empty(self) -> None:
         assert CODEX_ORIGINATOR and isinstance(CODEX_ORIGINATOR, str)
+
+    def test_originator_exact_value(self) -> None:
+        """CODEX_ORIGINATOR must equal exactly 'codex_cli_rs'.
+
+        test_originator_is_non_empty only checks type and truthiness — any
+        non-empty string would pass.  The originator header identifies requests as
+        coming from the codex CLI; a typo or rename here would break proxy-side
+        routing rules that filter on this header.  Exact value equality catches
+        that in the test suite before it reaches production."""
+        assert CODEX_ORIGINATOR == "codex_cli_rs", (
+            f"CODEX_ORIGINATOR must be 'codex_cli_rs', got {CODEX_ORIGINATOR!r} — "
+            "this identifies the request originator to the proxy; changing it "
+            "may break proxy-side routing rules"
+        )

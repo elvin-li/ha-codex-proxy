@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.131] - 2026-05-19
+### Tests
+- `test_const.py`: add `TestCodexHeaders.test_openai_beta_exact_value` and `test_originator_exact_value` — exact string equality for both constants, replacing weak substring/type checks
+
 ## [0.2.130] - 2026-05-19
 ### Tests
 - `test_coordinator.py`: add `TestChatModelFilter.test_excludes_dall_e_prefix_exact_result` and `test_excludes_image_prefix_exact_result` — exact list equality replaces vacuous `all/any` checks that pass on empty lists
