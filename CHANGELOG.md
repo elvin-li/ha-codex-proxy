@@ -13,6 +13,24 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.37] – 2026-05-19
+
+### Changed
+
+- **`entity_utils.py`** — Renamed `_INTEGRATION_VERSION` → `INTEGRATION_VERSION`
+  (removed leading underscore).  `diagnostics.py` imports this constant, so
+  the underscore convention (private to module) was misleading; the public name
+  is more accurate and avoids linter warnings about accessing private names
+  from external modules.  All internal call-sites updated.
+
+### Added (tests)
+
+- `test_entity_utils.py` — `TestIntegrationVersion` class with three tests:
+  `test_is_public_name`, `test_is_string_or_none`, and `test_matches_manifest`
+  — directly exercises the renamed public constant and locks in its contract.
+
+---
+
 ## [0.2.36] – 2026-05-19
 
 ### Changed

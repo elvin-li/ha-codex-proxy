@@ -14,9 +14,9 @@ from .const import DEFAULT_MODEL, DOMAIN
 # HA reflects the installed integration version without manual maintenance.
 _MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.json"
 try:
-    _INTEGRATION_VERSION: str | None = json.loads(_MANIFEST_PATH.read_text()).get("version")
+    INTEGRATION_VERSION: str | None = json.loads(_MANIFEST_PATH.read_text()).get("version")
 except (OSError, ValueError, KeyError):  # pragma: no cover
-    _INTEGRATION_VERSION = None  # pragma: no cover
+    INTEGRATION_VERSION = None  # pragma: no cover
 
 
 def build_codex_device_info(subentry: ConfigSubentry, chat_model_key: str) -> dr.DeviceInfo:
@@ -32,7 +32,7 @@ def build_codex_device_info(subentry: ConfigSubentry, chat_model_key: str) -> dr
         manufacturer="OpenAI Codex Token Pool",
         model=subentry.data.get(chat_model_key, DEFAULT_MODEL),
         entry_type=dr.DeviceEntryType.SERVICE,
-        sw_version=_INTEGRATION_VERSION,
+        sw_version=INTEGRATION_VERSION,
     )
 
 
@@ -50,5 +50,5 @@ def build_codex_entry_device_info(entry: ConfigEntry) -> dr.DeviceInfo:
         name=entry.title,
         manufacturer="OpenAI Codex Token Pool",
         entry_type=dr.DeviceEntryType.SERVICE,
-        sw_version=_INTEGRATION_VERSION,
+        sw_version=INTEGRATION_VERSION,
     )

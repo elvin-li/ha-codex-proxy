@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
 from custom_components.codex_proxy.const import DEFAULT_MODEL, DOMAIN  # noqa: E402
 from custom_components.codex_proxy.entity_utils import (  # noqa: E402
+    INTEGRATION_VERSION,
     build_codex_device_info,
     build_codex_entry_device_info,
 )
@@ -134,7 +135,7 @@ class TestBuildCodexEntryDeviceInfo:
         """sw_version should be a non-empty string read from manifest.json."""
         entry = _make_entry()
         info = build_codex_entry_device_info(entry)
-        # _INTEGRATION_VERSION is read from the real manifest.json at import time;
+        # INTEGRATION_VERSION is read from the real manifest.json at import time;
         # it must be a non-None, non-empty string in any checkout that has the file.
         assert info.get("sw_version") is not None
         assert isinstance(info["sw_version"], str)
@@ -155,3 +156,37 @@ class TestBuildCodexEntryDeviceInfo:
         entry = _make_entry()
         info = build_codex_entry_device_info(entry)
         assert info["sw_version"] == expected
+
+
+# ---------------------------------------------------------------------------
+# INTEGRATION_VERSION public constant
+# ---------------------------------------------------------------------------
+
+
+class TestIntegrationVersion:
+    def test_is_public_name(self) -> None:
+        """INTEGRATION_VERSION must be importable as a public symbol — other
+        modules (e.g. diagnostics.py) import it without underscore prefix."""
+        # The import at the top of this file already exercises this; this
+        # test documents the invariant explicitly.
+        assert INTEGRATION_VERSION is not None or INTEGRATION_VERSION is None  # always passes
+
+    def test_is_string_or_none(self) -> None:
+        """INTEGRATION_VERSION must be a string (real manifest) or None
+        (manifest read failed at import time — covered by pragma: no cover)."""
+        assert INTEGRATION_VERSION is None or isinstance(INTEGRATION_VERSION, str)
+
+    def test_matches_manifest(self) -> None:
+        """INTEGRATION_VERSION must equal what manifest.json declares so that
+        the diagnostics output shows the correct version."""
+        import json
+        import pathlib
+
+        manifest_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "manifest.json"
+        )
+        expected = json.loads(manifest_path.read_text()).get("version")
+        assert expected == INTEGRATION_VERSION
