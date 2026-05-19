@@ -114,3 +114,10 @@ class TestCoordinatorInit:
         ):
             coord = CodexModelCoordinator(hass, entry, "iid-1")
         assert "my-unique-entry" in coord.name
+
+    def test_last_exception_initially_none(self) -> None:
+        """last_exception must be None immediately after construction so that
+        binary_sensor and diagnostics code can safely access it without
+        AttributeError on a freshly created coordinator."""
+        coord = _make_coordinator()
+        assert coord.last_exception is None

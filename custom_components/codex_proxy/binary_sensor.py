@@ -8,9 +8,14 @@ the reverse proxy is unreachable.
 The entity is **enabled by default** because proxy reachability is a primary
 health signal users want to monitor.
 
-``extra_state_attributes`` exposes ``last_checked`` (ISO-8601 string) for
-automations and template sensors that need the exact timestamp of the last
-successful poll.
+``extra_state_attributes`` exposes three optional attributes:
+
+* ``last_checked`` — ISO-8601 timestamp of the most recent successful
+  ``/v1/models`` poll; absent until the first successful poll.
+* ``latest_model`` — model id of the newest chat-capable model known to the
+  coordinator; absent until the first successful poll.
+* ``last_error`` — ``str(last_exception)`` from the coordinator when the
+  most recent poll failed; absent when the proxy is reachable.
 """
 
 from __future__ import annotations
@@ -75,12 +80,19 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose last_checked timestamp and latest_model for automations.
+        """Expose last_checked, latest_model, and last_error for automations.
 
-        ``last_checked`` is an ISO-8601 string of the most recent successful
-        ``/v1/models`` poll.  ``latest_model`` is the newest chat-capable model
-        id known to the coordinator — both attributes are absent when the
-        coordinator has not yet completed its first successful poll.
+        * ``last_checked`` — ISO-8601 string of the most recent **successful**
+          ``/v1/models`` poll; absent until the first successful poll.
+        * ``latest_model`` — id of the newest chat-capable model known to the
+          coordinator; absent until the first successful poll.
+        * ``last_error`` — ``str(coordinator.last_exception)`` when the most
+          recent poll failed; absent when the proxy is healthy.  Enables
+          automations to surface the failure reason via
+          ``{{ state_attr('binary_sensor.proxy_reachable', 'last_error') }}``
+          without requiring a full diagnostics download.
+
+        Returns ``None`` (no attributes) when none of the three have data yet.
         """
         attrs: dict[str, Any] = {}
         t = self.coordinator.last_update_success_time

@@ -58,6 +58,11 @@ class _DataUpdateCoordinator(_Subscriptable):
         self.data: dict[str, Any] | None = None
         self.last_update_success: bool = True
         self.last_update_success_time: Any = None
+        # Mirrors DataUpdateCoordinator.last_exception in HA Core: set to the
+        # most recent Exception when an update fails; None on success.  Declared
+        # here so test code that creates a coordinator via __init__ (rather than
+        # object.__new__) can access it without AttributeError.
+        self.last_exception: Exception | None = None
 
     def _handle_coordinator_update(self) -> None:
         """Stub — real implementation notifies the HA state machine."""

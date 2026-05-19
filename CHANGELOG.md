@@ -13,6 +13,32 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.57] – 2026-05-19
+
+### Changed
+
+- **`binary_sensor.py`** — module docstring and `extra_state_attributes`
+  docstring updated to accurately document all three attributes
+  (``last_checked``, ``latest_model``, ``last_error``) instead of only
+  ``last_checked``.  The previous wording was written before
+  ``latest_model`` (v0.2.x) and ``last_error`` (v0.2.55) were added.
+- **`tests/ha_stubs.py`** — `_DataUpdateCoordinator.__init__` now initialises
+  ``self.last_exception = None``, matching the attribute HA Core's real
+  ``DataUpdateCoordinator`` exposes.  Without this, test code that creates a
+  coordinator via ``__init__`` (instead of bypassing it with
+  ``object.__new__``) would raise ``AttributeError`` when accessing
+  ``coord.last_exception`` — the attribute accessed by ``binary_sensor.py``
+  and ``diagnostics.py``.
+
+### Changed (tests)
+
+- `test_coordinator_init.py` — new test ``test_last_exception_initially_none``
+  verifies the stub initialises ``last_exception`` to ``None``, documenting
+  the invariant and catching any future regression where the stub drifts from
+  the real HA class.
+
+---
+
 ## [0.2.56] – 2026-05-19
 
 ### Changed
