@@ -17,56 +17,13 @@ import pytest
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-
-_HA_MODULES = [
-    "homeassistant",
-    "homeassistant.components",
-    "homeassistant.components.openai_conversation",
-    "homeassistant.components.openai_conversation.const",
-    "homeassistant.components.select",
-    "homeassistant.config_entries",
-    "homeassistant.const",
-    "homeassistant.core",
-    "homeassistant.exceptions",
-    "homeassistant.helpers",
-    "homeassistant.helpers.device_registry",
-    "homeassistant.helpers.entity_platform",
-    "homeassistant.helpers.httpx_client",
-    "homeassistant.helpers.update_coordinator",
-]
-for _mod in _HA_MODULES:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
-
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_CHAT_MODEL = "chat_model"
-sys.modules["homeassistant.const"].EntityCategory = MagicMock()
-sys.modules["homeassistant.helpers.device_registry"].DeviceInfo = dict
-sys.modules["homeassistant.helpers.device_registry"].DeviceEntryType = MagicMock()
-
-
-class _Subscriptable:
-    def __class_getitem__(cls, item: Any) -> type:
-        return cls
-
-
-class _SelectEntityBase:
-    pass
-
-
-class _CoordinatorEntityBase(_Subscriptable):
-    def __init__(self, coordinator: Any) -> None:
-        self.coordinator = coordinator
-
-
-sys.modules["homeassistant.components.select"].SelectEntity = _SelectEntityBase
-sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
-    _CoordinatorEntityBase
-)
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 
 from custom_components.codex_proxy.select import CodexModelSelectEntity  # noqa: E402
 from custom_components.codex_proxy.const import DEFAULT_MODEL  # noqa: E402
+
+# Use the shared CoordinatorEntity base from ha_stubs
+from tests.ha_stubs import _CoordinatorEntity as _CoordinatorEntityBase  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
