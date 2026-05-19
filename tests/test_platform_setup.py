@@ -287,6 +287,28 @@ class TestSelectSetup:
         assert len(set(uids)) == 2
 
     @pytest.mark.asyncio
+    async def test_select_unique_ids_exact_format(self, mock_entry, mock_coordinator) -> None:
+        """Each select entity unique_id must be exactly '<subentry_id>_model_select'.
+
+        test_select_unique_ids_are_distinct only checks that the two IDs are
+        different — it passes even if the suffix changes (e.g. '_select' or
+        '_model').  The unique_id is HA's stable entity-registry key; a suffix
+        change silently orphans dashboard cards and automations that reference
+        the old entity_id."""
+        from custom_components.codex_proxy.select import async_setup_entry
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        uids = {e._attr_unique_id for e in added}
+        expected = {"sub-conv-1_model_select", "sub-task-1_model_select"}
+        assert uids == expected, (
+            f"Expected select unique_ids {expected}, got {uids}. "
+            f"Unexpected: {uids - expected}. Missing: {expected - uids}."
+        )
+
+    @pytest.mark.asyncio
     async def test_non_llm_subentry_skipped(self, mock_entry, mock_coordinator) -> None:
         """A subentry of an unknown type must not produce a select entity."""
         from custom_components.codex_proxy.select import async_setup_entry
@@ -358,6 +380,29 @@ class TestUpdateSetup:
 
         uids = [e._attr_unique_id for e in added]
         assert len(set(uids)) == 2
+
+    @pytest.mark.asyncio
+    async def test_update_unique_ids_exact_format(self, mock_entry, mock_coordinator) -> None:
+        """Each update entity unique_id must be exactly '<subentry_id>_model_update'.
+
+        test_update_unique_ids_are_distinct only checks that the two IDs are
+        different — it passes even if the suffix changes (e.g. '_update' or
+        '_model').  The unique_id is HA's stable entity-registry key; a suffix
+        change silently orphans dashboard cards and automations that reference
+        the old entity_id.  Parity with test_sensor_unique_ids_exact_format
+        and test_select_unique_ids_exact_format."""
+        from custom_components.codex_proxy.update import async_setup_entry
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        uids = {e._attr_unique_id for e in added}
+        expected = {"sub-conv-1_model_update", "sub-task-1_model_update"}
+        assert uids == expected, (
+            f"Expected update unique_ids {expected}, got {uids}. "
+            f"Unexpected: {uids - expected}. Missing: {expected - uids}."
+        )
 
     @pytest.mark.asyncio
     async def test_non_llm_subentry_skipped(self, mock_entry, mock_coordinator) -> None:

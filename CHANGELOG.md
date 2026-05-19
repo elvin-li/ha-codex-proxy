@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.156] - 2026-05-19
+### Tests
+- `test_platform_setup.py`: add `TestSelectSetup.test_select_unique_ids_exact_format` and `TestUpdateSetup.test_update_unique_ids_exact_format` — pin select and update unique_ids to exact `{subentry_id}_model_select` / `{subentry_id}_model_update` format, replacing distinctness-only checks
+
 ## [0.2.155] - 2026-05-19
 ### Tests
 - `test_platform_setup.py`: add `TestSensorSetup.test_sensor_unique_ids_exact_format` — pins both sensor unique_ids to exact `{entry_id}_chat_model_count` / `{entry_id}_last_model_refresh` format, replacing the distinctness-only check
