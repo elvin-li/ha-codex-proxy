@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.94] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_migrate_entry.py`** — `TestAsyncMigrateEntry.test_debug_log_version_passed_as_format_arg`
+  checks that the entry version is passed as `call_args.args[1] == 42` (a
+  dynamic positional format argument) rather than being hardcoded in the format
+  string.  The existing `test_emits_debug_log_with_version` uses an OR: `"42"
+  in str(call_args) or args[1] == 42` — the first branch passes even if 42 is
+  in the format string literal, not a dynamic arg.
+
+---
+
 ## [0.2.93] – 2026-05-19
 
 ### Added (tests)

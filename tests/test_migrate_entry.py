@@ -99,3 +99,29 @@ class TestAsyncMigrateEntry:
         call_args = mock_logger.debug.call_args
         # First positional arg is the format string; second is the version
         assert "42" in str(call_args) or call_args.args[1] == 42
+
+    @pytest.mark.asyncio
+    async def test_debug_log_version_passed_as_format_arg(self) -> None:
+        """The debug call must pass the entry version as a positional format
+        argument (not hardcoded in the format string) so a future version bump
+        is automatically reflected in the log without editing the format string.
+
+        The existing test_emits_debug_log_with_version uses an OR condition:
+        it passes if '42' is anywhere in str(call_args) — including hardcoded
+        in the format string itself.  This test requires the version to be the
+        second positional arg (call_args.args[1] == 42), ensuring the ``%s``
+        (or ``%d``) placeholder is used and filled dynamically."""
+        from unittest.mock import patch
+
+        hass = _make_hass()
+        entry = _make_entry(version=42)
+
+        with patch("custom_components.codex_proxy._LOGGER") as mock_logger:
+            await async_migrate_entry(hass, entry)
+
+        call_args = mock_logger.debug.call_args
+        assert call_args.args[1] == 42, (
+            f"Expected version 42 as second positional format arg, got {call_args.args!r} — "
+            "the version must be passed dynamically to the debug log, not hardcoded in the "
+            "format string, so version bumps are reflected automatically"
+        )
