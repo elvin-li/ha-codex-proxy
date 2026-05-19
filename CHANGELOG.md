@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.93] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_model_select.py`** — `TestModelSelectOptions.test_current_model_label_equals_id_when_prepended`
+  verifies that when the current model is prepended (not in the coordinator
+  list), its dropdown `label` equals the model id string.  The existing
+  `test_current_model_prepended_if_not_in_coordinator` only checks `value`;
+  a refactor producing a blank label would be invisible to that test but
+  obvious in the UI dropdown.
+
+---
+
 ## [0.2.92] – 2026-05-19
 
 ### Added (tests)

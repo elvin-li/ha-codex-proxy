@@ -67,6 +67,21 @@ class TestModelSelectOptions:
         opts = _model_select_options(_coord([_m("gpt-5.5")]), "gpt-5.3-turbo")
         assert opts[0]["value"] == "gpt-5.3-turbo"
 
+    def test_current_model_label_equals_id_when_prepended(self) -> None:
+        """When the current model is prepended (it is not in the coordinator's
+        list), its dropdown label must equal its model id.
+
+        The existing test_current_model_prepended_if_not_in_coordinator only
+        checks the *value*; without this test a refactor that sets a blank label
+        or raises for the prepended option (no display_name lookup) would produce
+        an empty label in the UI dropdown — invisible to the operator but caught
+        by checking both value and label here."""
+        opts = _model_select_options(_coord([_m("gpt-5.5")]), "gpt-5.3-turbo")
+        assert opts[0]["label"] == "gpt-5.3-turbo", (
+            "Prepended current model must use model id as label — "
+            "the proxy hasn't seen this model so no display_name is available"
+        )
+
     def test_current_model_not_duplicated_if_already_present(self) -> None:
         opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.4")]), "gpt-5.5")
         values = [o["value"] for o in opts]
