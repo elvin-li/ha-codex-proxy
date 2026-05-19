@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.69] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_init.py`** — `test_name_format_is_domain_models_entry_id`:
+  pins the exact coordinator name format `"{DOMAIN}_models_{entry_id}"`.
+  The previous `test_name_contains_entry_id` only verified the entry_id appeared
+  anywhere in the name; the new test prevents a refactor that drops the domain prefix
+  or changes the separator from silently making coordinator log lines unidentifiable
+  when multiple Codex entries are configured in HA.
+
+---
+
 ## [0.2.68] – 2026-05-19
 
 ### Changed / Added (tests)

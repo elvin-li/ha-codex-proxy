@@ -115,6 +115,26 @@ class TestCoordinatorInit:
             coord = CodexModelCoordinator(hass, entry, "iid-1")
         assert "my-unique-entry" in coord.name
 
+    def test_name_format_is_domain_models_entry_id(self) -> None:
+        """coord.name must follow the exact format '{DOMAIN}_models_{entry_id}'.
+
+        This name appears in every HA log line emitted by the coordinator
+        (e.g. 'codex_proxy_models_abc123: Fetched 5 models…').  Pinning the
+        full format catches a refactor that drops the domain prefix or changes
+        the separator, which would make coordinator log entries unidentifiable
+        when multiple Codex entries are configured."""
+        from custom_components.codex_proxy.const import DOMAIN
+
+        entry_id = "test-entry-format-42"
+        hass = MagicMock()
+        entry = _make_entry(entry_id=entry_id)
+        with patch(
+            "custom_components.codex_proxy.coordinator.get_async_client",
+            return_value=MagicMock(),
+        ):
+            coord = CodexModelCoordinator(hass, entry, "iid-1")
+        assert coord.name == f"{DOMAIN}_models_{entry_id}"
+
     def test_last_exception_initially_none(self) -> None:
         """last_exception must be None immediately after construction so that
         binary_sensor and diagnostics code can safely access it without
