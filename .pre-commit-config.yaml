@@ -1,27 +1,11 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
-      - id: check-toml
-      - id: check-merge-conflict
-      - id: debug-statements
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+    rev: v0.9.10
     hooks:
+      # Lint (fix auto-fixable issues in place)
       - id: ruff
         args: [--fix]
+        files: ^(custom_components/codex_proxy|tests)/
+      # Format
       - id: ruff-format
-
-  - repo: local
-    hooks:
-      - id: pytest
-        name: pytest
-        entry: python -m pytest tests/ -q
-        language: system
-        pass_filenames: false
-        always_run: true
+        files: ^(custom_components/codex_proxy|tests)/

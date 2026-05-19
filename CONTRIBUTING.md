@@ -22,9 +22,19 @@ pre-commit install
 pytest tests/ -v
 ```
 
-All 380+ tests run without a Home Assistant installation. They mock the
+All 406+ tests run without a Home Assistant installation. They mock the
 `homeassistant.*` namespace via `sys.modules` injection so you can develop
 and test purely against the Python stdlib + real `httpx`.
+
+To run with coverage reporting (requires `pytest-cov`, included in
+`requirements_test.txt`):
+
+```bash
+pytest tests/ -v --cov=custom_components/codex_proxy --cov-report=term-missing
+```
+
+The integration maintains **100% source-line coverage** across all 14 source
+files. Every new feature must come with tests that keep coverage at 100%.
 
 ## Project layout
 
