@@ -53,6 +53,27 @@ base_url = "https://proxy.example.com/api"
         result = parse_codex_toml(toml)
         assert result["store_responses"] is True
 
+    def test_store_responses_absent_when_key_missing(self) -> None:
+        """When ``disable_response_storage`` is absent from the TOML,
+        ``store_responses`` must NOT appear in the returned dict.
+
+        The caller (``_parse_toml_and_validate``) falls back to
+        ``DEFAULT_STORE`` via ``parsed.store_responses`` — which is set to the
+        default before TOML values are applied.  If ``parse_codex_toml``
+        unconditionally added ``store_responses=True`` here, it would silently
+        override a user's manual form selection whenever they also pasted a TOML
+        snippet that lacked the key.
+
+        Complements test_disable_response_storage_false_means_store_true which
+        pins the mapping *when the key is present*; this test pins the *absence*
+        of the key when it should be absent."""
+        toml = '[model_providers.p]\nbase_url = "https://x.com"\n'
+        result = parse_codex_toml(toml)
+        assert "store_responses" not in result, (
+            "store_responses must be absent when disable_response_storage is "
+            "not in the TOML — its presence would override the caller's default"
+        )
+
     def test_strips_whitespace_from_model(self) -> None:
         toml = 'model = "  gpt-5.5  "\n'
         result = parse_codex_toml(toml)

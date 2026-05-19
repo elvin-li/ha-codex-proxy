@@ -13,6 +13,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.96] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_pure_helpers.py`** — `TestParseCodexToml.test_store_responses_absent_when_key_missing`
+  verifies that `store_responses` is absent from `parse_codex_toml`'s return
+  dict when `disable_response_storage` is not in the TOML.  An unconditional
+  `store_responses=True` in the output would silently override the caller's
+  default whenever a TOML snippet lacked the key.
+
+---
+
 ## [0.2.95] – 2026-05-19
 
 ### Added (tests)
