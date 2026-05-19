@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.113] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_manifest.py`** —
+  `TestManifestValidity.test_iot_class_is_cloud_polling` pins the exact
+  `iot_class` value as `"cloud_polling"`.  The existing `test_iot_class_present`
+  only checks key presence; a change to `"local_polling"` would pass that test
+  while causing HA and HACS to display incorrect metadata about the integration's
+  connectivity class.
+
+---
+
 ## [0.2.112] – 2026-05-19
 
 ### Added (tests)

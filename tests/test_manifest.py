@@ -50,6 +50,17 @@ class TestManifestValidity:
     def test_iot_class_present(self) -> None:
         assert "iot_class" in _load()
 
+    def test_iot_class_is_cloud_polling(self) -> None:
+        """iot_class must be 'cloud_polling' — this proxy fetches model lists from a
+        remote server on a schedule.  If it were changed to 'local_polling' HA would
+        show incorrect metadata (no cloud dependency) and HACS would mis-categorise
+        the integration.  test_iot_class_present only checks presence; this test
+        pins the exact value."""
+        assert _load()["iot_class"] == "cloud_polling", (
+            "iot_class must be 'cloud_polling' — the integration polls a remote "
+            "proxy over the network and should be labelled accordingly"
+        )
+
     def test_homeassistant_min_version_present(self) -> None:
         data = _load()
         assert "homeassistant" in data
