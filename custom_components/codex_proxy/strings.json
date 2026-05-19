@@ -122,6 +122,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "proxy_reachable": {
+        "name": "Proxy reachable"
+      }
+    },
     "button": {
       "refresh_models": {
         "name": "Refresh models"

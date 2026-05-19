@@ -7,6 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.3] – 2026-05-19
+
+### Added
+
+- **Proxy-reachable binary sensor** (`binary_sensor.*_proxy_reachable`) — a
+  `CONNECTIVITY`-class diagnostic entity that is `ON` when the coordinator's
+  last `/v1/models` poll succeeded and `OFF` when it failed. Enables HA
+  automations and dashboard badges for proxy health monitoring.
+- **Binary sensor translations** — entity name translated to English
+  ("Proxy reachable") and Simplified Chinese ("反代可达") in all three
+  string files.
+- **10 new tests** in `tests/test_binary_sensor.py` covering `is_on` True/False,
+  truthy/falsy coercion, unique-id suffix, translation key, device class, and
+  `has_entity_name`.
+
+---
+
 ## [0.2.2] – 2026-05-19
 
 ### Added

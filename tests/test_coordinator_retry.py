@@ -256,3 +256,59 @@ class TestCoordinatorNonTransient:
 
         # No sleep between retries — it failed immediately
         sleep_mock.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Payload format resilience
+# ---------------------------------------------------------------------------
+
+
+class TestPayloadFormats:
+    @pytest.mark.asyncio
+    async def test_standard_data_wrapper(self) -> None:
+        """{"object":"list","data":[...]} — standard OpenAI format."""
+        coord = _make_coordinator()
+        response = _make_response(200, {
+            "object": "list",
+            "data": [{"id": "gpt-5.5", "created": 100}],
+        })
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+        assert len(result["models"]) == 1
+        assert result["models"][0]["id"] == "gpt-5.5"
+
+    @pytest.mark.asyncio
+    async def test_bare_list_payload(self) -> None:
+        """Some proxies return a bare JSON array instead of {"data":[...]}."""
+        coord = _make_coordinator()
+        bare_response = MagicMock()
+        bare_response.raise_for_status.return_value = None
+        bare_response.json.return_value = [{"id": "gpt-5.5", "created": 100}]
+        coord._http.get = AsyncMock(return_value=bare_response)
+
+        result = await coord._async_update_data()
+        assert len(result["models"]) == 1
+        assert result["models"][0]["id"] == "gpt-5.5"
+
+    @pytest.mark.asyncio
+    async def test_empty_data_list(self) -> None:
+        """Empty model list returns empty models dict."""
+        coord = _make_coordinator()
+        response = _make_response(200, {"data": []})
+        coord._http.get = AsyncMock(return_value=response)
+
+        result = await coord._async_update_data()
+        assert result["models"] == []
+
+    @pytest.mark.asyncio
+    async def test_non_list_payload_treated_as_empty(self) -> None:
+        """A scalar JSON value (e.g. null) should not crash the coordinator."""
+        coord = _make_coordinator()
+        bad_response = MagicMock()
+        bad_response.raise_for_status.return_value = None
+        bad_response.json.return_value = None  # scalar — not a dict or list
+        coord._http.get = AsyncMock(return_value=bad_response)
+
+        result = await coord._async_update_data()
+        assert result["models"] == []

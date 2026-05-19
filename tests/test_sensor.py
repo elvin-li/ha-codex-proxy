@@ -1,6 +1,6 @@
 """Tests for CodexChatModelCountSensor and CodexLastRefreshSensor.
 
-Runs without a full HA install by mocking the homeassistant namespace.
+Runs without a full HA install by using the shared ha_stubs module.
 """
 from __future__ import annotations
 
@@ -12,66 +12,17 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# Bootstrap HA stubs before any codex_proxy import.
-# ---------------------------------------------------------------------------
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, _REPO_ROOT)
+# Bootstrap HA stubs BEFORE any codex_proxy import
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import tests.ha_stubs  # noqa: F401, E402
 
-_HA_MODULES = [
-    "homeassistant",
-    "homeassistant.components",
-    "homeassistant.components.openai_conversation",
-    "homeassistant.components.openai_conversation.const",
-    "homeassistant.components.openai_conversation.conversation",
-    "homeassistant.components.openai_conversation.ai_task",
-    "homeassistant.components.sensor",
-    "homeassistant.config_entries",
-    "homeassistant.const",
-    "homeassistant.core",
-    "homeassistant.exceptions",
-    "homeassistant.helpers",
-    "homeassistant.helpers.device_registry",
-    "homeassistant.helpers.entity_platform",
-    "homeassistant.helpers.httpx_client",
-    "homeassistant.helpers.update_coordinator",
-]
-for _mod in _HA_MODULES:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
+# Extra stubs needed only by sensor.py
+_sen = sys.modules["homeassistant.components.sensor"]
+if not callable(getattr(_sen, "SensorEntityDescription", None)):
+    _sen.SensorEntityDescription = MagicMock(
+        side_effect=lambda **kw: type("Desc", (), kw)()
+    )
 
-# HA stubs needed by sensor.py
-sys.modules["homeassistant.const"].EntityCategory = MagicMock()
-
-
-class _Subscriptable:
-    def __class_getitem__(cls, item: Any) -> type:
-        return cls
-
-
-# SensorEntity and CoordinatorEntity base classes
-class _SensorEntityBase:
-    _attr_has_entity_name = False
-
-
-class _CoordinatorEntityBase(_Subscriptable):
-    def __init__(self, coordinator: Any) -> None:
-        self.coordinator = coordinator
-
-
-sys.modules["homeassistant.components.sensor"].SensorEntity = _SensorEntityBase
-sys.modules["homeassistant.components.sensor"].SensorEntityDescription = MagicMock(
-    side_effect=lambda **kw: type("Desc", (), kw)()
-)
-sys.modules["homeassistant.components.sensor"].SensorDeviceClass = MagicMock()
-sys.modules["homeassistant.components.sensor"].SensorStateClass = MagicMock()
-sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = (
-    _CoordinatorEntityBase
-)
-sys.modules["homeassistant.helpers.device_registry"].DeviceInfo = dict
-sys.modules["homeassistant.helpers.device_registry"].DeviceEntryType = MagicMock()
-
-# Now safe to import
 from custom_components.codex_proxy.sensor import (  # noqa: E402
     CodexChatModelCountSensor,
     CodexLastRefreshSensor,
@@ -93,24 +44,16 @@ def _make_coordinator(
     return coord
 
 
-def _make_entry(entry_id: str = "entry-1", title: str = "Codex Pool") -> MagicMock:
-    entry = MagicMock()
-    entry.entry_id = entry_id
-    entry.title = title
-    return entry
-
-
 def _make_count_sensor(
     chat_models: list[dict[str, Any]] | None = None,
     entry_id: str = "entry-1",
 ) -> CodexChatModelCountSensor:
+    from tests.ha_stubs import _CoordinatorEntity
     coord = _make_coordinator(chat_models=chat_models)
-    entry = _make_entry(entry_id=entry_id)
     s = object.__new__(CodexChatModelCountSensor)
-    _CoordinatorEntityBase.__init__(s, coord)
+    _CoordinatorEntity.__init__(s, coord)
     s._attr_unique_id = f"{entry_id}_chat_model_count"
     s._attr_device_info = {}
-    # Attach a minimal entity_description
     s.entity_description = type("Desc", (), {"key": "chat_model_count"})()
     return s
 
@@ -119,10 +62,10 @@ def _make_refresh_sensor(
     last_time: datetime | None = None,
     entry_id: str = "entry-1",
 ) -> CodexLastRefreshSensor:
+    from tests.ha_stubs import _CoordinatorEntity
     coord = _make_coordinator(last_update_success_time=last_time)
-    entry = _make_entry(entry_id=entry_id)
     s = object.__new__(CodexLastRefreshSensor)
-    _CoordinatorEntityBase.__init__(s, coord)
+    _CoordinatorEntity.__init__(s, coord)
     s._attr_unique_id = f"{entry_id}_last_model_refresh"
     s._attr_device_info = {}
     s.entity_description = type("Desc", (), {"key": "last_model_refresh"})()

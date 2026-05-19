@@ -122,6 +122,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "proxy_reachable": {
+        "name": "反代可达"
+      }
+    },
     "button": {
       "refresh_models": {
         "name": "立即刷新模型列表"

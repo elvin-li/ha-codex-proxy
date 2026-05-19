@@ -76,6 +76,10 @@ class _UpdateEntity(_Subscriptable):
     pass
 
 
+class _BinarySensorEntity:
+    pass
+
+
 class _ButtonEntity:
     pass
 
@@ -95,6 +99,7 @@ class _SensorEntity:
 _PLAIN_MOCKS = [
     "homeassistant",
     "homeassistant.components",
+    "homeassistant.components.binary_sensor",
     "homeassistant.components.button",
     "homeassistant.components.diagnostics",
     "homeassistant.components.openai_conversation",
@@ -153,7 +158,11 @@ _UPD_COMP = sys.modules["homeassistant.components.update"]
 if not isinstance(getattr(_UPD_COMP, "UpdateEntity", None), type):
     _UPD_COMP.UpdateEntity = _UpdateEntity
 
-# ButtonEntity / SelectEntity / SensorEntity
+# BinarySensorEntity / ButtonEntity / SelectEntity / SensorEntity
+_BIN = sys.modules["homeassistant.components.binary_sensor"]
+if not isinstance(getattr(_BIN, "BinarySensorEntity", None), type):
+    _BIN.BinarySensorEntity = _BinarySensorEntity
+
 _BTN = sys.modules["homeassistant.components.button"]
 if not isinstance(getattr(_BTN, "ButtonEntity", None), type):
     _BTN.ButtonEntity = _ButtonEntity
