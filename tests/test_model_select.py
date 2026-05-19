@@ -2,8 +2,13 @@
 
 Exercises the dropdown building logic: coordinator models, custom values,
 deduplication, and fallback when coordinator has no data.
+
+Note: ha_stubs already provides a real dict-based SelectOptionDict so
+option["value"] / option["label"] return plain strings in every test.
+No per-test patching is required.
 """
 
+# isort: skip_file
 from __future__ import annotations
 
 import os
@@ -16,22 +21,9 @@ from unittest.mock import MagicMock
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-from unittest.mock import patch  # noqa: E402
-
 import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
+
 from custom_components.codex_proxy.config_flow import _model_select_options  # noqa: E402
-
-
-# SelectOptionDict is a TypedDict — replace its binding inside config_flow so
-# opts[0]["value"] / opts[0]["label"] return real strings, not MagicMock.
-def _SelectOptionDict(**kwargs: Any) -> dict[str, Any]:  # type: ignore[override]
-    return dict(kwargs)
-
-
-_PATCH_SELECT_OPTION = patch(
-    "custom_components.codex_proxy.config_flow.SelectOptionDict",
-    side_effect=_SelectOptionDict,
-)
 from custom_components.codex_proxy.const import DEFAULT_MODEL  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -56,70 +48,59 @@ def _m(mid: str, display: str | None = None) -> dict[str, Any]:
 
 class TestModelSelectOptions:
     def test_none_coordinator_returns_default(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(None, None)
+        opts = _model_select_options(None, None)
         assert len(opts) == 1
         assert opts[0]["value"] == DEFAULT_MODEL
 
     def test_empty_coordinator_returns_default(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([]), None)
+        opts = _model_select_options(_coord([]), None)
         assert len(opts) == 1
         assert opts[0]["value"] == DEFAULT_MODEL
 
     def test_coordinator_models_listed(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.4")]), None)
+        opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.4")]), None)
         values = [o["value"] for o in opts]
         assert "gpt-5.5" in values
         assert "gpt-5.4" in values
 
     def test_current_model_prepended_if_not_in_coordinator(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5")]), "gpt-5.3-turbo")
+        opts = _model_select_options(_coord([_m("gpt-5.5")]), "gpt-5.3-turbo")
         assert opts[0]["value"] == "gpt-5.3-turbo"
 
     def test_current_model_not_duplicated_if_already_present(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.4")]), "gpt-5.5")
+        opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.4")]), "gpt-5.5")
         values = [o["value"] for o in opts]
         assert values.count("gpt-5.5") == 1
 
     def test_display_name_used_as_label(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5", "GPT-5.5 Preview")]), None)
+        opts = _model_select_options(_coord([_m("gpt-5.5", "GPT-5.5 Preview")]), None)
         gpt55 = next(o for o in opts if o["value"] == "gpt-5.5")
         assert gpt55["label"] == "GPT-5.5 Preview"
 
     def test_id_used_as_label_when_no_display_name(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5")]), None)
+        opts = _model_select_options(_coord([_m("gpt-5.5")]), None)
         assert opts[0]["label"] == "gpt-5.5"
 
     def test_null_display_name_falls_back_to_id(self) -> None:
         """Explicit None for display_name (not just absent key) must still fall
         back to the model id as label — tests the `or mid` branch."""
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(
-                _coord([{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": None}]),
-                None,
-            )
+        opts = _model_select_options(
+            _coord([{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": None}]),
+            None,
+        )
         assert opts[0]["label"] == "gpt-5.5"
 
     def test_deduplication_by_id(self) -> None:
         # Two entries with same id — should only appear once
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.5")]), None)
+        opts = _model_select_options(_coord([_m("gpt-5.5"), _m("gpt-5.5")]), None)
         values = [o["value"] for o in opts]
         assert values.count("gpt-5.5") == 1
 
     def test_none_current_model_no_prepend(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5")]), None)
+        opts = _model_select_options(_coord([_m("gpt-5.5")]), None)
         assert len(opts) == 1
 
     def test_empty_string_current_model_no_prepend(self) -> None:
-        with _PATCH_SELECT_OPTION:
-            opts = _model_select_options(_coord([_m("gpt-5.5")]), "")
+        opts = _model_select_options(_coord([_m("gpt-5.5")]), "")
         # Empty string is falsy — should not prepend
         assert len(opts) == 1

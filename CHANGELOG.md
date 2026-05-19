@@ -13,6 +13,28 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.34] – 2026-05-19
+
+### Changed (tests)
+
+- **`tests/ha_stubs.py`** — `SelectOptionDict` is now a real dict factory
+  (`_SelectOptionDict(**kwargs) → dict`), so `option["value"]` and
+  `option["label"]` return plain strings everywhere without any per-test
+  patching.
+- **`tests/test_model_select.py`** — Removed the now-redundant
+  `_PATCH_SELECT_OPTION` context manager and the local `_SelectOptionDict`
+  shim.  All ten tests call `_model_select_options` directly; ha_stubs
+  provides the real dict-backed `SelectOptionDict`.
+
+### Added (tests)
+
+- **`tests/test_conversation_entity.py`** — `test_device_info_sw_version_present`
+  added to both `TestCodexConversationEntity` and `TestCodexAITaskEntity`;
+  verifies that `entity_utils.build_codex_device_info` now populates
+  `sw_version` on subentry-level device info.
+
+---
+
 ## [0.2.33] – 2026-05-19
 
 ### Changed

@@ -71,6 +71,11 @@ class TestCodexConversationEntity:
         entity = CodexConversationEntity(entry, sub)
         assert entity._attr_device_info["model"] == "gpt-5.6"
 
+    def test_device_info_sw_version_present(self) -> None:
+        """sw_version must be included after entity_utils was updated to expose it."""
+        entity = CodexConversationEntity(_make_entry(), _make_subentry())
+        assert "sw_version" in entity._attr_device_info
+
 
 # ---------------------------------------------------------------------------
 # CodexAITaskEntity
@@ -93,6 +98,11 @@ class TestCodexAITaskEntity:
     def test_device_info_manufacturer_set(self) -> None:
         entity = CodexAITaskEntity(_make_entry(), _make_subentry())
         assert entity._attr_device_info["manufacturer"] == "OpenAI Codex Token Pool"
+
+    def test_device_info_sw_version_present(self) -> None:
+        """sw_version must be included (parity with conversation entity)."""
+        entity = CodexAITaskEntity(_make_entry(), _make_subentry())
+        assert "sw_version" in entity._attr_device_info
 
     def test_device_info_differs_between_entities(self) -> None:
         entity_a = CodexConversationEntity(_make_entry(), _make_subentry("sub-a"))
