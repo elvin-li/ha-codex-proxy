@@ -64,7 +64,7 @@ def _process_models(payload_data: list) -> list[dict[str, Any]]:
                 "id": mid,
                 "created": created,
                 "owned_by": str(m.get("owned_by") or ""),
-                "display_name": str(m.get("display_name") or mid),
+                "display_name": str((m.get("display_name") or "").strip() or mid),
             }
         )
     models.sort(key=lambda x: (-x["created"], x["id"]))
@@ -162,6 +162,20 @@ class TestModelProcessing:
         data = [{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": ""}]
         models = _process_models(data)
         assert models[0]["display_name"] == "gpt-5.5"
+
+    def test_whitespace_only_display_name_falls_back_to_id(self) -> None:
+        """A display_name that is whitespace-only (e.g. '   ') must fall back
+        to the model id after stripping — guards the `.strip() or mid` branch."""
+        data = [{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": "   "}]
+        models = _process_models(data)
+        assert models[0]["display_name"] == "gpt-5.5"
+
+    def test_display_name_surrounding_whitespace_stripped(self) -> None:
+        """Surrounding whitespace on a non-empty display_name must be stripped
+        so the dropdown doesn't show '  GPT 5.5  ' with padding."""
+        data = [{"id": "gpt-5.5", "created": 0, "owned_by": "", "display_name": "  GPT 5.5 Preview  "}]
+        models = _process_models(data)
+        assert models[0]["display_name"] == "GPT 5.5 Preview"
 
     def test_non_dict_entries_in_list_are_skipped(self) -> None:
         """Some non-standard proxies mix bare strings or other non-dict types

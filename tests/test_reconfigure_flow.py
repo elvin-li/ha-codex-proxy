@@ -270,3 +270,20 @@ class TestReconfigurePreservesInstallationId:
             await flow.async_step_reconfigure(_VALID_USER_INPUT)
 
         flow.async_update_reload_and_abort.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_api_key_whitespace_stripped_in_reconfigure(self) -> None:
+        """A padded api_key submitted via reconfigure must be stripped before
+        being stored — same guarantee as the main flow (v0.2.46 fix)."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+        padded_input = {**_VALID_USER_INPUT, CONF_API_KEY: "  sk-reconfigured  "}
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_reconfigure(padded_input)
+
+        passed_data = flow.async_update_reload_and_abort.call_args[1]["data"]
+        assert passed_data[CONF_API_KEY] == "sk-reconfigured"

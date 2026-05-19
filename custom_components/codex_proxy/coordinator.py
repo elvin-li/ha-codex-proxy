@@ -124,7 +124,10 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             # Transient error — sleep before next attempt (not after the last one)
             if attempt < COORDINATOR_MAX_RETRIES - 1:
-                delay = COORDINATOR_RETRY_DELAYS[min(attempt, len(COORDINATOR_RETRY_DELAYS) - 1)]
+                # The module-level assertion in const.py guarantees
+                # len(COORDINATOR_RETRY_DELAYS) == COORDINATOR_MAX_RETRIES - 1,
+                # so `attempt` is always a valid index here.
+                delay = COORDINATOR_RETRY_DELAYS[attempt]
                 _LOGGER.debug(
                     "Transient error on attempt %d/%d (%s) — retrying in %ds",
                     attempt + 1,
@@ -170,7 +173,9 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "id": mid,
                     "created": created,
                     "owned_by": str(m.get("owned_by") or ""),
-                    "display_name": str(m.get("display_name") or mid),
+                    # Strip surrounding whitespace before the falsy-fallback so a
+                    # proxy returning "  " (spaces only) still falls back to mid.
+                    "display_name": str((m.get("display_name") or "").strip() or mid),
                 }
             )
         models.sort(key=lambda x: (-x["created"], x["id"]))

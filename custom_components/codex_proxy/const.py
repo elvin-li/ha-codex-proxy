@@ -47,6 +47,10 @@ COORDINATOR_MAX_RETRIES = 3
 # surfaces any mismatch immediately at import time rather than hiding it.
 COORDINATOR_RETRY_DELAYS: tuple[int, ...] = (5, 30)
 
+# Enforce the invariant at import time: the retry loop in coordinator.py
+# directly indexes COORDINATOR_RETRY_DELAYS by `attempt` (0 .. MAX_RETRIES-2),
+# so the tuple must have exactly MAX_RETRIES-1 entries.  Any mismatch is caught
+# here rather than silently producing an IndexError at runtime.
 assert len(COORDINATOR_RETRY_DELAYS) == COORDINATOR_MAX_RETRIES - 1, (
     f"COORDINATOR_RETRY_DELAYS must have exactly {COORDINATOR_MAX_RETRIES - 1} "
     f"element(s) (one per inter-attempt sleep), but has {len(COORDINATOR_RETRY_DELAYS)}. "

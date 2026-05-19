@@ -13,6 +13,40 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.52] – 2026-05-19
+
+### Fixed
+
+- **`coordinator.py`** — ``display_name`` is now stripped of surrounding
+  whitespace before the falsy-fallback check:
+  ``str((m.get("display_name") or "").strip() or mid)``.  Previously a proxy
+  returning ``"  GPT 5.5  "`` would display with leading/trailing spaces in
+  the model dropdown; returning only whitespace (``"   "``) would not fall back
+  to the model id.  Both cases are now handled correctly.
+
+### Changed
+
+- **`coordinator.py`** — The retry delay lookup is simplified from
+  ``COORDINATOR_RETRY_DELAYS[min(attempt, len-1)]`` to the direct
+  ``COORDINATOR_RETRY_DELAYS[attempt]``.  The module-level assertion in
+  ``const.py`` already guarantees the two constants are in sync, making the
+  defensive ``min()`` a no-op.  Updated the comment in ``const.py`` to reflect
+  this contract.
+
+### Added (tests)
+
+- `test_coordinator.py` — ``test_whitespace_only_display_name_falls_back_to_id``:
+  a ``display_name`` of ``"   "`` (spaces only) must produce the model id as
+  the label.
+- `test_coordinator.py` — ``test_display_name_surrounding_whitespace_stripped``:
+  ``"  GPT 5.5 Preview  "`` must be stored as ``"GPT 5.5 Preview"``.
+- `test_reconfigure_flow.py` — ``test_api_key_whitespace_stripped_in_reconfigure``:
+  end-to-end guard that a padded api_key is stripped before being passed to
+  ``async_update_reload_and_abort`` (mirrors the main-flow guard added in
+  v0.2.50).
+
+---
+
 ## [0.2.51] – 2026-05-19
 
 ### Changed
