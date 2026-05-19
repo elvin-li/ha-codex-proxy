@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.63] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_setup_entry.py`** — `test_warning_logged_when_coordinator_refresh_fails`
+  added to `TestCoordinatorFailurePath`: patches `custom_components.codex_proxy._LOGGER`
+  and asserts that `_LOGGER.warning` is called exactly once, carrying the failure reason,
+  when `async_setup_entry`'s first-refresh catches an `UpdateFailed` exception.  Documents
+  the operator-facing invariant that a failed startup refresh surfaces a warning in HA
+  logs (useful for diagnosing transient proxy issues without enabling full DEBUG logging).
+
+---
+
 ## [0.2.62] – 2026-05-19
 
 ### Added (tests)

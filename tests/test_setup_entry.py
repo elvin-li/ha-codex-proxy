@@ -204,3 +204,27 @@ class TestCoordinatorFailurePath:
 
         assert result is True
         assert DATA_COORDINATOR in hass.data[DOMAIN]["entry-fail3"]
+
+    @pytest.mark.asyncio
+    async def test_warning_logged_when_coordinator_refresh_fails(self) -> None:
+        """When the coordinator's first refresh raises UpdateFailed or
+        httpx.HTTPError, ``async_setup_entry`` must emit exactly one
+        ``_LOGGER.warning`` call carrying the error so operators can diagnose
+        transient startup failures from HA logs without enabling full DEBUG."""
+        from unittest.mock import patch
+
+        entry = _make_entry(installation_id="iid-warn")
+        hass = _make_hass()
+        patcher, _ = _patch_coordinator(
+            first_refresh_side_effect=UpdateFailed("proxy unreachable")
+        )
+
+        with (
+            patcher,
+            patch("custom_components.codex_proxy._LOGGER") as mock_log,
+        ):
+            await async_setup_entry(hass, entry)
+
+        mock_log.warning.assert_called_once()
+        logged = str(mock_log.warning.call_args)
+        assert "proxy unreachable" in logged or "Initial model refresh failed" in logged
