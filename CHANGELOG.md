@@ -13,6 +13,23 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.76] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_reconfigure_flow.py`** — two new `TestReconfigurePreservesInstallationId`
+  tests that verify the probe and unique_id arguments during the reconfigure success path:
+  - `test_probe_called_with_new_credentials` — asserts `_probe_proxy` receives the
+    new api_key and new base_url (not the stale entry values). A regression where old
+    credentials were used for probing would accept a stale-but-still-valid token while
+    storing the new (potentially invalid) one, producing a false success.
+  - `test_unique_id_set_to_new_base_url` — asserts `async_set_unique_id` is called
+    with the new base_url so HA can detect and prevent duplicate entries pointing at
+    the same proxy URL. Without this call, two entries for the same proxy coexist
+    silently and create duplicate entities in every subentry.
+
+---
+
 ## [0.2.75] – 2026-05-19
 
 ### Added (tests)

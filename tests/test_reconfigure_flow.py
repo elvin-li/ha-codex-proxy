@@ -272,6 +272,51 @@ class TestReconfigurePreservesInstallationId:
         flow.async_update_reload_and_abort.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_probe_called_with_new_credentials(self) -> None:
+        """_probe_proxy must receive the NEW api_key and base_url, not the old ones.
+
+        A regression where the old entry data was used for probing would pass
+        the probe with stale-but-still-valid credentials, store the new (possibly
+        invalid) ones, and then fail at runtime.  This test verifies the probe
+        arguments use the user-supplied values from the reconfigure form."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ) as mock_probe:
+            await flow.async_step_reconfigure(_VALID_USER_INPUT)
+
+        mock_probe.assert_awaited_once()
+        probe_args = mock_probe.call_args[0]  # positional args
+        assert probe_args[1] == _NEW_API_KEY, (
+            f"probe received old api_key — expected {_NEW_API_KEY!r}, got {probe_args[1]!r}"
+        )
+        assert probe_args[2] == _NEW_URL, (
+            f"probe received old base_url — expected {_NEW_URL!r}, got {probe_args[2]!r}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_unique_id_set_to_new_base_url(self) -> None:
+        """async_set_unique_id must be called with the new base_url so HA can
+        detect and prevent duplicate entries pointing at the same proxy.
+
+        Without this call, two config entries configured for the same proxy URL
+        would coexist silently — both polling the same /v1/models endpoint and
+        creating duplicate entities in every subentry."""
+        entry = _make_entry()
+        flow = _make_flow(entry)
+
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_reconfigure(_VALID_USER_INPUT)
+
+        flow.async_set_unique_id.assert_awaited_once_with(_NEW_URL)
+
+    @pytest.mark.asyncio
     async def test_api_key_whitespace_stripped_in_reconfigure(self) -> None:
         """A padded api_key submitted via reconfigure must be stripped before
         being stored — same guarantee as the main flow (v0.2.46 fix)."""
