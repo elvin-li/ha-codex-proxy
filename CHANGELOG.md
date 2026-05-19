@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.97] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_platform_setup.py`** —
+  `TestBinarySensorSetup.test_binary_sensor_coordinator_reference` and
+  `TestSensorSetup.test_sensor_coordinator_reference` verify that both
+  entry-level coordinator entities reference `mock_coordinator` after setup.
+  Parity with `TestButtonSetup.test_button_coordinator_reference` which already
+  covered the button; the binary sensor and sensor classes were missing the
+  equivalent check.
+
+---
+
 ## [0.2.96] – 2026-05-19
 
 ### Added (tests)

@@ -75,6 +75,24 @@ class TestBinarySensorSetup:
 
         assert mock_entry.entry_id in added[0]._attr_unique_id
 
+    @pytest.mark.asyncio
+    async def test_binary_sensor_coordinator_reference(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """The binary sensor entity must reference the coordinator retrieved
+        from hass.data so it can read last_update_success during is_on.
+
+        Parity with TestButtonSetup.test_button_coordinator_reference —
+        both entry-level entities are wired to the coordinator at setup time;
+        this test pins that the binary sensor's reference is the same object."""
+        from custom_components.codex_proxy.binary_sensor import async_setup_entry
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        assert added[0].coordinator is mock_coordinator
+
 
 # ---------------------------------------------------------------------------
 # button platform
@@ -140,6 +158,24 @@ class TestSensorSetup:
 
         uids = [e._attr_unique_id for e in added]
         assert len(set(uids)) == 2
+
+    @pytest.mark.asyncio
+    async def test_sensor_coordinator_reference(self, mock_entry, mock_coordinator) -> None:
+        """Both sensor entities must reference the coordinator from hass.data
+        so native_value reads coordinator.chat_models / last_update_success_time.
+
+        Parity with TestButtonSetup.test_button_coordinator_reference —
+        all entry-level coordinator entities must be wired at setup time."""
+        from custom_components.codex_proxy.sensor import async_setup_entry
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        for entity in added:
+            assert entity.coordinator is mock_coordinator, (
+                f"{type(entity).__name__} coordinator is not mock_coordinator"
+            )
 
 
 # ---------------------------------------------------------------------------
