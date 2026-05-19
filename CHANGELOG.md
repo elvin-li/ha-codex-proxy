@@ -9,6 +9,14 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.174] - 2026-05-19
+### Security
+- `validate_base_url` now rejects URLs containing userinfo (`https://user:pass@host`). Pre-v0.2.174 the URL was accepted and the credentials silently flowed into the persisted `entry.data["base_url"]`, the coordinator's exception messages, the `_LOGGER.debug` line in `_probe_proxy`, the (unredacted) `entry_data` block of `async_get_config_entry_diagnostics`, and the `binary_sensor.proxy_reachable.last_error` state attribute. Token-pool proxies frequently document credentialed URLs in onboarding docs, so a user pasting from such a doc would unknowingly exfiltrate their password into HA's persistent storage and any downloadable diagnostics file routinely shared in bug reports. **Credentials belong in `CONF_API_KEY`, never in the URL.**
+
+### Tests
+- `tests/test_pure_helpers.py`: 3 new cases — `user:pass@host`, `token@host` (username only), and `user:@host` (empty password) all reject with `invalid_url`.
+- `tests/test_button.py`: removed two tautological tests flagged by the round-3 audit. `test_unique_id_uses_entry_id` asserted on `_make_button`'s manual `_attr_unique_id` assignment instead of the real `__init__` — the assertion would pass even if `CodexRefreshModelsButton.__init__` were stubbed out. `test_press_does_not_call_entry_reload` had no codepath that could ever call `async_reload` so the assertion held against an empty `async_press` too.
+
 ## [0.2.173] - 2026-05-19
 ### Fixed
 - `validate_base_url` now rejects URLs carrying a query string (`?key=value`) or fragment (`#anchor`). Either is almost always a copy-paste artefact (browser deep-link); leaving them in place corrupted the URL after `normalize_base_url` appended `/v1` — `https://host?x=1` became `https://host?x=1/v1` and the OpenAI SDK requested `https://host?x=1/v1/responses` (404 against any sane proxy).

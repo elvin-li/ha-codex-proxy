@@ -100,19 +100,17 @@ class TestClassAttributes:
 
 
 class TestRefreshModelsButton:
-    def test_unique_id_uses_entry_id(self) -> None:
-        btn = _make_button(entry_id="my-entry-42")
-        assert "my-entry-42" in btn._attr_unique_id
-
     def test_unique_id_exact_format(self) -> None:
         """unique_id must be '{entry_id}_refresh_models' exactly.
 
-        The suffix distinguishes this entity from other entry-level entities
-        (binary_sensor uses '_proxy_reachable').  Pinning the full format catches
-        a refactor that changes the separator or drops the suffix — the existing
-        substring test only verifies the entry_id is present, not the full shape.
-        This test builds via the real __init__ so a change in the constructor is
-        caught directly rather than by the helper's manual assignment."""
+        Builds via the real ``__init__`` so a change in the constructor is
+        caught directly.  Round-3 audit removed the prior
+        ``test_unique_id_uses_entry_id`` because it tested the test helper
+        (``_make_button`` *manually* assigned ``_attr_unique_id``) rather
+        than the production ``__init__`` — the assertion would have passed
+        even if ``CodexRefreshModelsButton.__init__`` were stubbed out.
+        This single exact-format test, which exercises the real ``__init__``,
+        supersedes it."""
         entry = MagicMock()
         entry.entry_id = "pin-entry-99"
         btn = object.__new__(CodexRefreshModelsButton)
@@ -124,17 +122,6 @@ class TestRefreshModelsButton:
         btn = _make_button()
         await btn.async_press()
         btn._test_coordinator.async_request_refresh.assert_awaited_once()
-
-    @pytest.mark.asyncio
-    async def test_press_does_not_call_entry_reload(self) -> None:
-        """Button should delegate throttling to coordinator, not reload entry."""
-        btn = _make_button()
-        # Don't overwrite btn.hass — _make_button installs a hass with the
-        # live-coordinator lookup wired up.  Snapshot config_entries off the
-        # existing hass so we can assert it was not touched.
-        config_entries = btn.hass.config_entries
-        await btn.async_press()
-        config_entries.async_reload.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_double_press_calls_refresh_twice(self) -> None:

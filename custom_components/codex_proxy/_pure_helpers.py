@@ -50,6 +50,19 @@ def validate_base_url(url: str) -> str | None:
       ``/v1`` — e.g. ``https://host.com?x=1`` would become
       ``https://host.com?x=1/v1`` and the OpenAI SDK would emit requests
       to ``https://host.com?x=1/v1/responses`` (404 against any sane proxy).
+    * URLs containing userinfo (``https://user:pass@host``).  Userinfo would
+      silently flow into the persisted ``entry.data["base_url"]``, the
+      coordinator's ``self._url`` exception messages, the debug log line in
+      ``_probe_proxy``, the (unredacted) ``entry_data`` block of
+      ``async_get_config_entry_diagnostics``, and the
+      ``binary_sensor.proxy_reachable.last_error`` state attribute.  Token-
+      pool proxies frequently document credentialed URLs in their onboarding
+      pages, so a user pasting from such a doc would unknowingly exfiltrate
+      their password into HA's persistent storage and downloadable
+      diagnostics file — both of which are routinely shared in bug reports.
+      The proxy's API key is supplied separately through ``CONF_API_KEY``;
+      embedding credentials in the URL is never the right approach for this
+      integration.
     """
     p = urlparse(url)
     if p.scheme not in ("http", "https"):
@@ -60,6 +73,12 @@ def validate_base_url(url: str) -> str | None:
         # Treat both as the same user-visible error to keep the strings.json
         # surface area minimal — the message tells users to drop the query
         # and fragment from the URL.
+        return "invalid_url"
+    if p.username is not None or p.password is not None:
+        # Same error key as query/fragment — both communicate "your URL has
+        # parts that don't belong in a base URL".  A dedicated translation
+        # key could be nicer UX but would require strings.json updates in
+        # three files for a corner case most users will never hit.
         return "invalid_url"
     return None
 

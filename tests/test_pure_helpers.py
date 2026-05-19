@@ -246,6 +246,40 @@ class TestValidateBaseUrl:
     def test_url_with_both_query_and_fragment_rejected(self) -> None:
         assert validate_base_url("https://proxy.example.com?x=1#y") == "invalid_url"
 
+    def test_url_with_userinfo_rejected(self) -> None:
+        """Round-3 audit Critical finding regression.
+
+        ``https://user:pass@proxy.example.com`` is technically a valid URL
+        but the userinfo part is a credential that would silently flow into:
+        - ``entry.data["base_url"]`` (persisted in core.config_entries)
+        - ``self._url`` in coordinator exception messages
+        - The debug log line ``Probing proxy at %s with model %s``
+        - The unredacted ``entry_data`` block of diagnostics downloads
+        - The ``binary_sensor.proxy_reachable.last_error`` state attribute
+
+        Token-pool proxies frequently document credentialed URLs in
+        onboarding pages, so a user pasting from such a doc would
+        unknowingly exfiltrate their password into HA's persistent storage
+        and any bug report that includes the downloadable diagnostics
+        file.  Reject upfront."""
+        assert validate_base_url("https://user:pass@proxy.example.com") == "invalid_url", (
+            "URLs with userinfo must be rejected — credentials in the URL "
+            "would silently flow into HA storage, logs, and diagnostics"
+        )
+
+    def test_url_with_username_only_rejected(self) -> None:
+        """A bare username (no password) is also userinfo — common in
+        proxies that use a single-token auth scheme embedded in the URL.
+        Must be rejected for the same reason as full user:pass."""
+        assert validate_base_url("https://token@proxy.example.com") == "invalid_url"
+
+    def test_url_with_empty_password_rejected(self) -> None:
+        """``https://user:@host`` is parsed as username=user, password=''.
+        urlparse exposes password as the empty string (not None) in this
+        case — verify the rejection still fires (we check ``is not None``,
+        not truthiness)."""
+        assert validate_base_url("https://user:@proxy.example.com") == "invalid_url"
+
 
 # ---------------------------------------------------------------------------
 # normalize_base_url
