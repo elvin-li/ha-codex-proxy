@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.126] - 2026-05-19
+### Tests
+- `test_entity_utils.py`: add `test_identifiers_exact_set_for_subentry` and `test_identifiers_exact_set_for_entry` — exact set equality on DeviceInfo identifiers for both builders, catching accidental extra identifiers the prior `in` checks would miss
+
 ## [0.2.125] - 2026-05-19
 ### Tests
 - `test_coordinator_properties.py`: add `test_dall_e_filter_preserves_remaining_chat_models` and `test_image_prefix_filter_preserves_remaining_chat_models` — exact list equality confirms filters are surgical

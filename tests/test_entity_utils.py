@@ -48,6 +48,22 @@ class TestBuildCodexDeviceInfo:
         # DeviceInfo is stubbed as dict; identifiers are passed as keyword arg
         assert (DOMAIN, "my-sub-123") in info["identifiers"]
 
+    def test_identifiers_exact_set_for_subentry(self) -> None:
+        """build_codex_device_info must produce exactly one identifier tuple
+        — (DOMAIN, subentry_id) — with no extras.
+
+        test_identifiers_contain_domain_and_subentry_id uses an ``in`` membership
+        check that passes even if the identifiers set contains extra tuples (e.g.
+        a legacy entry-level identifier leaking in after a refactor).  Exact set
+        equality catches accidental additions without relying on len checks."""
+        sub = _make_subentry(subentry_id="my-sub-123")
+        info = build_codex_device_info(sub, "chat_model")
+        expected = {(DOMAIN, "my-sub-123")}
+        assert info["identifiers"] == expected, (
+            f"Expected identifiers {expected!r}, got {info['identifiers']!r} — "
+            "build_codex_device_info must register exactly one (domain, subentry_id) identifier"
+        )
+
     def test_name_matches_subentry_title(self) -> None:
         sub = _make_subentry(title="My Codex Agent")
         info = build_codex_device_info(sub, "chat_model")
@@ -143,6 +159,21 @@ class TestBuildCodexEntryDeviceInfo:
         entry = _make_entry("my-entry-abc")
         info = build_codex_entry_device_info(entry)
         assert (DOMAIN, "my-entry-abc") in info["identifiers"]
+
+    def test_identifiers_exact_set_for_entry(self) -> None:
+        """build_codex_entry_device_info must produce exactly one identifier tuple
+        — (DOMAIN, entry_id) — with no extras.
+
+        Parity with TestBuildCodexDeviceInfo.test_identifiers_exact_set_for_subentry.
+        The ``in`` check in test_identifiers_contain_domain_and_entry_id passes even
+        if extra identifiers leak in; exact set equality here catches that regression."""
+        entry = _make_entry("my-entry-abc")
+        info = build_codex_entry_device_info(entry)
+        expected = {(DOMAIN, "my-entry-abc")}
+        assert info["identifiers"] == expected, (
+            f"Expected identifiers {expected!r}, got {info['identifiers']!r} — "
+            "build_codex_entry_device_info must register exactly one (domain, entry_id) identifier"
+        )
 
     def test_name_matches_entry_title(self) -> None:
         entry = _make_entry(title="Codex Proxy Test")
