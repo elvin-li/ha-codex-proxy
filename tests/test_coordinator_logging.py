@@ -87,6 +87,36 @@ class TestRetryLogging:
         assert "Transient" in debug_calls_str or "attempt" in debug_calls_str.lower()
 
     @pytest.mark.asyncio
+    async def test_retry_log_includes_error_type_for_5xx(self) -> None:
+        """The retry debug log must include the exception type name so operators
+        can distinguish HTTP 5xx transient failures from timeout transient failures
+        without enabling higher verbosity.
+
+        The retry format is 'Transient error on attempt N/M (ExcType) — retrying
+        in Xs'.  The existing test_debug_logged_on_transient_retry only checks
+        'Transient' or 'attempt' with OR; neither verifies the (%s) placeholder
+        is filled with the error class name.  A refactor dropping the type arg
+        would produce 'Transient error on attempt 1/3 () — retrying in 5s' — still
+        passing the existing test."""
+        coord = _make_coordinator()
+        fail = _make_response(503)
+        ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 1}]})
+        coord._http.get = AsyncMock(side_effect=[fail, ok])
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log,
+        ):
+            await coord._async_update_data()
+
+        debug_calls_str = " ".join(str(c) for c in mock_log.debug.call_args_list)
+        # For a 503, the error type is HTTPStatusError
+        assert "HTTPStatusError" in debug_calls_str, (
+            "Retry log must include the exception type (HTTPStatusError) so operators "
+            "can distinguish HTTP 5xx from timeout retries without extra verbosity"
+        )
+
+    @pytest.mark.asyncio
     async def test_debug_logged_on_timeout_retry(self) -> None:
         coord = _make_coordinator()
         ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 1}]})

@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.85] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_coordinator_logging.py`** — `TestRetryLogging.test_retry_log_includes_error_type_for_5xx`
+  pins that the retry debug log includes `HTTPStatusError` as the exception type name.
+  The retry format is `'Transient error on attempt N/M (ExcType) — retrying in Xs'`;
+  the existing test only checks `'Transient'` OR `'attempt'` and neither verifies the
+  `(%s)` placeholder is filled with the error class.  A refactor dropping the type arg
+  would silently remove the operator-visible error classification.
+
+---
+
 ## [0.2.84] – 2026-05-19
 
 ### Added (tests)
