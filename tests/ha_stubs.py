@@ -184,3 +184,34 @@ if not isinstance(getattr(_DR, "DeviceInfo", None), type):
 _CORE = sys.modules["homeassistant.core"]
 if not callable(getattr(_CORE, "callback", None)):
     _CORE.callback = lambda f: f
+
+# ---------------------------------------------------------------------------
+# Wire submodule attributes onto parent mocks.
+#
+# When code uses `from homeassistant.helpers import device_registry as dr`,
+# Python resolves it by looking up the `device_registry` ATTRIBUTE on the
+# `homeassistant.helpers` mock object — NOT via sys.modules.  Since
+# MagicMock.__getattr__ returns a fresh child mock for every attribute, that
+# child is a *different* object from sys.modules["homeassistant.helpers.device_registry"]
+# where we configured DeviceInfo = dict above.
+#
+# The fix: explicitly set the attribute on the parent so that the attribute-
+# lookup path and the sys.modules path both land on the same configured object.
+# ---------------------------------------------------------------------------
+_HELPERS = sys.modules["homeassistant.helpers"]
+_HELPERS.device_registry = sys.modules["homeassistant.helpers.device_registry"]
+_HELPERS.update_coordinator = sys.modules["homeassistant.helpers.update_coordinator"]
+_HELPERS.httpx_client = sys.modules["homeassistant.helpers.httpx_client"]
+_HELPERS.entity_platform = sys.modules["homeassistant.helpers.entity_platform"]
+_HELPERS.selector = sys.modules["homeassistant.helpers.selector"]
+
+_COMPONENTS = sys.modules["homeassistant.components"]
+_COMPONENTS.binary_sensor = sys.modules["homeassistant.components.binary_sensor"]
+_COMPONENTS.button = sys.modules["homeassistant.components.button"]
+_COMPONENTS.diagnostics = sys.modules["homeassistant.components.diagnostics"]
+_COMPONENTS.openai_conversation = sys.modules[
+    "homeassistant.components.openai_conversation"
+]
+_COMPONENTS.select = sys.modules["homeassistant.components.select"]
+_COMPONENTS.sensor = sys.modules["homeassistant.components.sensor"]
+_COMPONENTS.update = sys.modules["homeassistant.components.update"]

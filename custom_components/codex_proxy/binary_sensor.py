@@ -7,8 +7,14 @@ the reverse proxy is unreachable.
 
 The entity is **enabled by default** because proxy reachability is a primary
 health signal users want to monitor.
+
+``extra_state_attributes`` exposes ``last_checked`` (ISO-8601 string) for
+automations and template sensors that need the exact timestamp of the last
+successful poll.
 """
 from __future__ import annotations
+
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -64,3 +70,11 @@ class CodexProxyReachableSensor(
     def is_on(self) -> bool:
         """Return True when the last coordinator poll succeeded."""
         return bool(self.coordinator.last_update_success)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Expose last_checked timestamp so automations can use it directly."""
+        t = self.coordinator.last_update_success_time
+        if t is None:
+            return None
+        return {"last_checked": t.isoformat()}

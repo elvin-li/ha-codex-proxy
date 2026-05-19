@@ -8,61 +8,17 @@ from __future__ import annotations
 
 import sys
 import os
-import types
+import importlib
 from typing import Any
-from unittest.mock import MagicMock
 
 # ---------------------------------------------------------------------------
 # Bootstrap HA stubs before any codex_proxy import.
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
-
-_HA_MODULES = [
-    "homeassistant",
-    "homeassistant.components",
-    "homeassistant.components.openai_conversation",
-    "homeassistant.components.openai_conversation.const",
-    "homeassistant.config_entries",
-    "homeassistant.const",
-    "homeassistant.core",
-    "homeassistant.exceptions",
-    "homeassistant.helpers",
-    "homeassistant.helpers.device_registry",
-    "homeassistant.helpers.entity_platform",
-    "homeassistant.helpers.selector",
-    "homeassistant.helpers.httpx_client",
-    "homeassistant.helpers.update_coordinator",
-]
-for _mod in _HA_MODULES:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
-
-# Patch upstream const keys used by _enrich_subentry_data / _upstream_keys().
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_CHAT_MODEL = "chat_model"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_PROMPT = "prompt"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_REASONING_EFFORT = "reasoning_effort"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_STORE_RESPONSES = "store_responses"
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_SERVICE_TIER = "service_tier"
-sys.modules["homeassistant.const"].CONF_LLM_HASS_API = "llm_hass_api"
-
-# Stub openai and voluptuous so config_flow can be imported.
-for _mod in ["openai", "voluptuous"]:
-    if _mod not in sys.modules:
-        sys.modules[_mod] = MagicMock()
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 
 # Reset upstream key cache in case another test module already set it.
-import importlib
 if "custom_components.codex_proxy.config_flow" in sys.modules:
     sys.modules["custom_components.codex_proxy.config_flow"]._UPSTREAM_KEYS_CACHE = None
 

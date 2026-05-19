@@ -117,3 +117,63 @@ class TestMetadata:
 
     def test_has_entity_name_is_true(self) -> None:
         assert CodexProxyReachableSensor._attr_has_entity_name is True
+
+
+# ---------------------------------------------------------------------------
+# extra_state_attributes
+# ---------------------------------------------------------------------------
+
+
+class TestExtraStateAttributes:
+    def test_none_when_last_update_success_time_is_none(self) -> None:
+        from tests.ha_stubs import _CoordinatorEntity
+        from unittest.mock import MagicMock
+
+        coord = MagicMock()
+        coord.last_update_success = True
+        coord.last_update_success_time = None
+
+        s = object.__new__(CodexProxyReachableSensor)
+        _CoordinatorEntity.__init__(s, coord)
+        s._attr_unique_id = "e_proxy_reachable"
+        s._attr_device_info = {}
+
+        assert s.extra_state_attributes is None
+
+    def test_returns_isoformat_timestamp(self) -> None:
+        from datetime import datetime, timezone
+        from tests.ha_stubs import _CoordinatorEntity
+        from unittest.mock import MagicMock
+
+        ts = datetime(2026, 5, 19, 10, 30, 0, tzinfo=timezone.utc)
+        coord = MagicMock()
+        coord.last_update_success = True
+        coord.last_update_success_time = ts
+
+        s = object.__new__(CodexProxyReachableSensor)
+        _CoordinatorEntity.__init__(s, coord)
+        s._attr_unique_id = "e_proxy_reachable"
+        s._attr_device_info = {}
+
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert "last_checked" in attrs
+        assert attrs["last_checked"] == ts.isoformat()
+
+    def test_last_checked_is_string(self) -> None:
+        from datetime import datetime, timezone
+        from tests.ha_stubs import _CoordinatorEntity
+        from unittest.mock import MagicMock
+
+        ts = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        coord = MagicMock()
+        coord.last_update_success = False
+        coord.last_update_success_time = ts
+
+        s = object.__new__(CodexProxyReachableSensor)
+        _CoordinatorEntity.__init__(s, coord)
+        s._attr_unique_id = "e_proxy_reachable"
+        s._attr_device_info = {}
+
+        attrs = s.extra_state_attributes
+        assert isinstance(attrs["last_checked"], str)
