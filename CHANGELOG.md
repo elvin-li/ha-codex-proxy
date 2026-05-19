@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.140] - 2026-05-19
+### Tests
+- `test_update_entity.py`: add `TestReleaseSummary.test_up_to_date_exact_release_summary` — pins the up-to-date release_summary to exactly `"Already on the latest model from the proxy."`, replacing the substring check that passes for any message containing that phrase
+
 ## [0.2.139] - 2026-05-19
 ### Tests
 - `test_update_entity.py`: add `TestTitle.test_title_exact_format_with_different_subentry_titles` — pins title to exact `"Proxy model ({subentry.title})"` format for parametric titles, replacing substring checks that pass for any format containing the title

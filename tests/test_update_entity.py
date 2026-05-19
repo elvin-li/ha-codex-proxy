@@ -114,6 +114,21 @@ class TestReleaseSummary:
         entity = _make_entity("gpt-5.5", "gpt-5.5")
         assert "Already on the latest model" in entity.release_summary
 
+    def test_up_to_date_exact_release_summary(self) -> None:
+        """When installed == latest, release_summary must be exactly
+        'Already on the latest model from the proxy.'
+
+        test_up_to_date_says_already_on_latest_model uses a substring check —
+        it passes even if 'from the proxy.' is dropped or 'latest model' is
+        changed to 'latest version'.  Pinning the full sentence catches any
+        UX wording change before it reaches users, since the update card shows
+        this text verbatim in the Home Assistant device card."""
+        entity = _make_entity("gpt-5.5", "gpt-5.5")
+        assert entity.release_summary == "Already on the latest model from the proxy.", (
+            f"Expected 'Already on the latest model from the proxy.', "
+            f"got {entity.release_summary!r}"
+        )
+
     def test_update_available(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.6")
         summary = entity.release_summary
