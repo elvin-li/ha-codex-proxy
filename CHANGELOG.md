@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.162] - 2026-05-19
+### Tests
+- `test_migrate_entry.py`: add `TestMigrateEntryDebugLog.test_debug_log_format_string_exact` — pins `args[0]` of the migration debug call to the exact format string, closing the gap left by the version-arg test that never checked the template wording
+
 ## [0.2.161] - 2026-05-19
 ### Tests
 - `test_setup_entry.py`: add `TestCoordinatorRefreshFails.test_warning_log_format_string_exact` — pins `args[0]` of the coordinator-failure warning to the exact format string "Initial model refresh failed: %s", closing the gap left by two substring checks that verified content but never the template structure

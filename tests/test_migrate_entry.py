@@ -125,3 +125,25 @@ class TestAsyncMigrateEntry:
             "the version must be passed dynamically to the debug log, not hardcoded in the "
             "format string, so version bumps are reflected automatically"
         )
+
+    @pytest.mark.asyncio
+    async def test_debug_log_format_string_exact(self) -> None:
+        """args[0] of the migrate debug call must be the exact format string.
+
+        test_debug_log_version_passed_as_format_arg pins args[1] (the version)
+        but never checks args[0] — the template itself.  If the wording changed
+        to e.g. 'Entry migration from version %s' the positional-arg test still
+        passes while the operator-visible log text changes silently."""
+        from unittest.mock import patch
+
+        hass = _make_hass()
+        entry = _make_entry(version=42)
+
+        with patch("custom_components.codex_proxy._LOGGER") as mock_logger:
+            await async_migrate_entry(hass, entry)
+
+        fmt = mock_logger.debug.call_args.args[0]
+        assert fmt == "Migrating Codex Token Pool config entry from version %s", (
+            f"Expected format string "
+            f"'Migrating Codex Token Pool config entry from version %s', got {fmt!r}"
+        )
