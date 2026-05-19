@@ -40,6 +40,10 @@ MODEL_REFRESH_INTERVAL = timedelta(hours=6)
 PROBE_TIMEOUT_S = 10.0
 COORDINATOR_TIMEOUT_S = 15.0
 COORDINATOR_MAX_RETRIES = 3
+# len(COORDINATOR_RETRY_DELAYS) must equal COORDINATOR_MAX_RETRIES - 1.
+# The retry loop uses index min(attempt, len-1) to select the sleep delay;
+# if these two constants drift, extra retries silently reuse the last delay
+# rather than raising a clear error.
 COORDINATOR_RETRY_DELAYS: tuple[int, ...] = (5, 30)
 
 # Model IDs starting with any of these prefixes are image-only and excluded

@@ -1,8 +1,8 @@
 """Tests for CodexModelCoordinator.__init__ attribute wiring.
 
-Verifies that _api_key, _base_url, _installation_id, and _http are set
-correctly from the config entry and hass. Uses the ha_stubs DataUpdateCoordinator
-so the actual __init__ code path is exercised (not bypassed via object.__new__).
+Verifies that _url, _headers, and _http are set correctly from the config entry
+and hass. Uses the ha_stubs DataUpdateCoordinator so the actual __init__ code
+path is exercised (not bypassed via object.__new__).
 """
 
 from __future__ import annotations
@@ -16,6 +16,9 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402
 from custom_components.codex_proxy.const import (  # noqa: E402
+    CODEX_OPENAI_BETA,
+    CODEX_ORIGINATOR,
+    CODEX_USER_AGENT,
     CONF_API_KEY,
     CONF_BASE_URL,
     MODEL_REFRESH_INTERVAL,
@@ -60,23 +63,39 @@ def _make_coordinator(
 
 
 class TestCoordinatorInit:
-    def test_api_key_stored(self) -> None:
-        coord = _make_coordinator(api_key="sk-secret")
-        assert coord._api_key == "sk-secret"
-
-    def test_base_url_stored(self) -> None:
+    def test_url_built_from_base_url(self) -> None:
         coord = _make_coordinator(base_url="https://proxy.example.com")
-        assert coord._base_url == "https://proxy.example.com"
+        assert coord._url == "https://proxy.example.com/v1/models"
 
-    def test_base_url_trailing_slash_stripped(self) -> None:
+    def test_url_trailing_slash_stripped(self) -> None:
         coord = _make_coordinator(base_url="https://proxy.example.com/")
-        assert not coord._base_url.endswith("/")
-        assert coord._base_url == "https://proxy.example.com"
+        assert coord._url == "https://proxy.example.com/v1/models"
+        assert "//" not in coord._url.replace("https://", "")
 
-    def test_installation_id_stored(self) -> None:
+    def test_authorization_header_built_from_api_key(self) -> None:
+        coord = _make_coordinator(api_key="sk-secret")
+        assert coord._headers["Authorization"] == "Bearer sk-secret"
+
+    def test_installation_id_in_header(self) -> None:
         iid = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
         coord = _make_coordinator(installation_id=iid)
-        assert coord._installation_id == iid
+        assert coord._headers["x-codex-installation-id"] == iid
+
+    def test_user_agent_header(self) -> None:
+        coord = _make_coordinator()
+        assert coord._headers["User-Agent"] == CODEX_USER_AGENT
+
+    def test_openai_beta_header(self) -> None:
+        coord = _make_coordinator()
+        assert coord._headers["OpenAI-Beta"] == CODEX_OPENAI_BETA
+
+    def test_originator_header(self) -> None:
+        coord = _make_coordinator()
+        assert coord._headers["originator"] == CODEX_ORIGINATOR
+
+    def test_accept_json_header(self) -> None:
+        coord = _make_coordinator()
+        assert coord._headers["Accept"] == "application/json"
 
     def test_http_client_set_from_hass(self) -> None:
         coord = _make_coordinator()

@@ -42,10 +42,17 @@ def _make_ok_response(models: list | None = None) -> MagicMock:
 
 
 def _make_coordinator(base_url: str = _BASE_URL) -> CodexModelCoordinator:
+    """Bypass __init__; pre-build _url and _headers as __init__ would."""
     coord = object.__new__(CodexModelCoordinator)
-    coord._api_key = _API_KEY
-    coord._base_url = base_url.rstrip("/")
-    coord._installation_id = _INSTALLATION_ID
+    coord._url = f"{base_url.rstrip('/')}/v1/models"
+    coord._headers = {
+        "Authorization": f"Bearer {_API_KEY}",
+        "User-Agent": CODEX_USER_AGENT,
+        "OpenAI-Beta": CODEX_OPENAI_BETA,
+        "originator": CODEX_ORIGINATOR,
+        "x-codex-installation-id": _INSTALLATION_ID,
+        "Accept": "application/json",
+    }
     coord._http = MagicMock()
     coord.logger = MagicMock()
     return coord

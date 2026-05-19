@@ -54,25 +54,27 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=f"{DOMAIN}_models_{entry.entry_id}",
             update_interval=MODEL_REFRESH_INTERVAL,
         )
-        self._api_key: str = entry.data[CONF_API_KEY]
-        self._base_url: str = entry.data[CONF_BASE_URL].rstrip("/")
-        self._installation_id = installation_id
+        api_key: str = entry.data[CONF_API_KEY]
+        base_url: str = entry.data[CONF_BASE_URL].rstrip("/")
         self._http: httpx.AsyncClient = get_async_client(hass)
-
-    async def _async_update_data(self) -> dict[str, Any]:
-        url = f"{self._base_url}/v1/models"
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
+        # Pre-build invariant request parts so _async_update_data stays lean.
+        self._url: str = f"{base_url}/v1/models"
+        self._headers: dict[str, str] = {
+            "Authorization": f"Bearer {api_key}",
             "User-Agent": CODEX_USER_AGENT,
             "OpenAI-Beta": CODEX_OPENAI_BETA,
             "originator": CODEX_ORIGINATOR,
-            "x-codex-installation-id": self._installation_id,
+            "x-codex-installation-id": installation_id,
             "Accept": "application/json",
         }
+
+    async def _async_update_data(self) -> dict[str, Any]:
         last_err: Exception | None = None
         for attempt in range(COORDINATOR_MAX_RETRIES):
             try:
-                r = await self._http.get(url, headers=headers, timeout=COORDINATOR_TIMEOUT_S)
+                r = await self._http.get(
+                    self._url, headers=self._headers, timeout=COORDINATOR_TIMEOUT_S
+                )
                 r.raise_for_status()
                 payload = r.json()
                 break  # success
@@ -80,16 +82,18 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if err.response.status_code < 500:
                     # Client error (4xx) — non-transient, fail immediately
                     raise UpdateFailed(
-                        f"Client error fetching {url}: HTTP {err.response.status_code}"
+                        f"Client error fetching {self._url}: HTTP {err.response.status_code}"
                     ) from err
                 last_err = err  # 5xx — fall through to retry logic below
             except httpx.TimeoutException as err:
                 last_err = err  # Transient — fall through to retry logic below
             except httpx.HTTPError as err:
                 # Non-transient (connection refused, DNS) — fail immediately
-                raise UpdateFailed(f"Failed to fetch {url}: {type(err).__name__}: {err}") from err
+                raise UpdateFailed(
+                    f"Failed to fetch {self._url}: {type(err).__name__}: {err}"
+                ) from err
             except ValueError as err:
-                raise UpdateFailed(f"Bad JSON from {url}: {err}") from err
+                raise UpdateFailed(f"Bad JSON from {self._url}: {err}") from err
 
             # Transient error — sleep before next attempt (not after the last one)
             if attempt < COORDINATOR_MAX_RETRIES - 1:
@@ -104,7 +108,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await asyncio.sleep(delay)
         else:
             raise UpdateFailed(
-                f"Failed to fetch {url} after {COORDINATOR_MAX_RETRIES} attempts"
+                f"Failed to fetch {self._url} after {COORDINATOR_MAX_RETRIES} attempts"
                 f" (last error: {type(last_err).__name__}: {last_err})"
             )
 
@@ -145,7 +149,7 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             _LOGGER.debug(
                 "Fetched %d models from %s (%d chat-capable after filtering)",
                 len(models),
-                url,
+                self._url,
                 chat_count,
             )
         return {"models": models}

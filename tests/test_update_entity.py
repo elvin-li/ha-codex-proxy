@@ -92,11 +92,11 @@ class TestVersionProperties:
 class TestReleaseSummary:
     def test_no_coordinator_data(self) -> None:
         entity = _make_entity("gpt-5.5", None)
-        assert "尚未" in entity.release_summary
+        assert "not yet available" in entity.release_summary
 
     def test_up_to_date(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.5")
-        assert "最新" in entity.release_summary
+        assert "latest" in entity.release_summary
 
     def test_update_available(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.6")
@@ -112,14 +112,14 @@ class TestReleaseSummary:
 
 class TestReleaseUrl:
     def test_none_when_no_latest(self) -> None:
+        """release_url is always None — proxy model IDs may not be OpenAI IDs."""
         entity = _make_entity("gpt-5.5", None)
         assert entity.release_url is None
 
-    def test_url_contains_model_id(self) -> None:
+    def test_always_none(self) -> None:
+        """release_url returns None even when a newer model is available."""
         entity = _make_entity("gpt-5.5", "gpt-5.6")
-        url = entity.release_url
-        assert url is not None
-        assert "gpt-5.6" in url
+        assert entity.release_url is None
 
 
 # ---------------------------------------------------------------------------
@@ -184,9 +184,9 @@ class TestAsyncInstall:
 
 
 class TestTitle:
-    def test_title_is_chinese_string(self) -> None:
+    def test_title_value(self) -> None:
         entity = _make_entity("gpt-5.5", "gpt-5.5")
-        assert entity.title == "Codex 号池模型"
+        assert entity.title == "Proxy chat model"
 
     def test_title_is_not_none(self) -> None:
         entity = _make_entity()

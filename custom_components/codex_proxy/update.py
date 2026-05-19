@@ -88,24 +88,30 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
 
     @property
     def title(self) -> str | None:
-        return "Codex 号池模型"
+        return "Proxy chat model"
 
     @property
     def release_summary(self) -> str | None:
         latest = self.coordinator.latest_chat_model_id
         installed = self.installed_version
         if not latest:
-            return "尚未从反代取得模型列表（首次刷新最长 6h，可手动 update_entity）。"
+            return (
+                "Model list not yet available "
+                "(first refresh runs within 6 hours; trigger manually via update_entity)."
+            )
         if latest == installed:
-            return "已经是反代上的最新模型。"
-        return f"反代发现新模型 {latest}（当前：{installed}）。点击安装可一键切换。"
+            return "Already on the latest model from the proxy."
+        return (
+            f"Proxy has a newer model available: {latest} "
+            f"(installed: {installed}). Click Install to switch."
+        )
 
     @property
     def release_url(self) -> str | None:
-        latest = self.coordinator.latest_chat_model_id
-        if not latest:
-            return None
-        return f"https://platform.openai.com/docs/models/{latest}"
+        # Proxy model IDs are not necessarily OpenAI model IDs, so we cannot
+        # construct a meaningful release-notes URL. Return None so the HA
+        # update card does not show a broken link.
+        return None
 
     async def async_install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
         """Switch the subentry's model to the requested (or latest) version

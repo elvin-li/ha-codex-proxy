@@ -19,6 +19,11 @@ import pytest
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
+from custom_components.codex_proxy.const import (  # noqa: E402
+    CODEX_OPENAI_BETA,
+    CODEX_ORIGINATOR,
+    CODEX_USER_AGENT,
+)
 from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -28,9 +33,15 @@ from custom_components.codex_proxy.coordinator import CodexModelCoordinator  # n
 
 def _make_coordinator() -> CodexModelCoordinator:
     coord = object.__new__(CodexModelCoordinator)
-    coord._api_key = "sk-test"
-    coord._base_url = "https://proxy.example.com"
-    coord._installation_id = "00000000-0000-0000-0000-000000000001"
+    coord._url = "https://proxy.example.com/v1/models"
+    coord._headers = {
+        "Authorization": "Bearer sk-test",
+        "User-Agent": CODEX_USER_AGENT,
+        "OpenAI-Beta": CODEX_OPENAI_BETA,
+        "originator": CODEX_ORIGINATOR,
+        "x-codex-installation-id": "00000000-0000-0000-0000-000000000001",
+        "Accept": "application/json",
+    }
     coord._http = MagicMock()
     coord.logger = MagicMock()
     return coord

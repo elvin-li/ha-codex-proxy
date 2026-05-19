@@ -1,4 +1,4 @@
-"""Tests for async_setup_entry, async_unload_entry, and _async_update_listener
+"""Tests for async_setup_entry and async_unload_entry
 in custom_components/codex_proxy/__init__.py.
 
 Runs without a full HA install — all HA modules are mocked via ha_stubs.
@@ -15,10 +15,7 @@ import pytest
 # Bootstrap HA stubs BEFORE any codex_proxy import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tests.ha_stubs  # noqa: F401, E402
-from custom_components.codex_proxy import (  # noqa: E402
-    _async_update_listener,
-    async_unload_entry,
-)
+from custom_components.codex_proxy import async_unload_entry  # noqa: E402
 from custom_components.codex_proxy.const import (  # noqa: E402
     CONF_INSTALLATION_ID,
     DATA_COORDINATOR,
@@ -108,30 +105,3 @@ class TestAsyncUnloadEntry:
         await async_unload_entry(hass, entry)
 
         hass.config_entries.async_unload_platforms.assert_awaited_once_with(entry, PLATFORMS)
-
-
-# ---------------------------------------------------------------------------
-# _async_update_listener
-# ---------------------------------------------------------------------------
-
-
-class TestAsyncUpdateListener:
-    @pytest.mark.asyncio
-    async def test_calls_async_reload_with_entry_id(self) -> None:
-        entry = _make_entry("entry-reload")
-        hass = MagicMock()
-        hass.config_entries.async_reload = AsyncMock()
-
-        await _async_update_listener(hass, entry)
-
-        hass.config_entries.async_reload.assert_awaited_once_with("entry-reload")
-
-    @pytest.mark.asyncio
-    async def test_reload_called_exactly_once(self) -> None:
-        entry = _make_entry("entry-once")
-        hass = MagicMock()
-        hass.config_entries.async_reload = AsyncMock()
-
-        await _async_update_listener(hass, entry)
-
-        assert hass.config_entries.async_reload.await_count == 1

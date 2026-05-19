@@ -13,6 +13,49 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.30] – 2026-05-19
+
+### Fixed
+
+- **`coordinator.py`** — `NameError` in debug log: after moving URL construction
+  into `__init__`, the `_LOGGER.debug` call inside `_async_update_data` still
+  referenced the now-deleted local variable `url`.  Fixed to use `self._url`.
+
+- **`coordinator.py`** — URL and headers are now pre-built in `__init__` as
+  `self._url` and `self._headers` instead of being reconstructed on every poll.
+  Removes three now-unused instance attributes (`_api_key`, `_base_url`,
+  `_installation_id`) from the coordinator.
+
+- **`update.py`** — `release_summary` and `title` properties now return English
+  strings instead of Chinese.  `release_url` always returns `None` (proxy model
+  IDs are not necessarily OpenAI model IDs, so a platform.openai.com URL would
+  be misleading).
+
+- **`__init__.py`** — Removed the dead `_async_update_listener` function and its
+  `entry.add_update_listener(…)` registration call.  The listener was never
+  reachable because no options flow exists; removing it eliminates a misleading
+  code path.
+
+- **`const.py`** — Added coupling comment documenting the invariant between
+  `COORDINATOR_MAX_RETRIES` and `COORDINATOR_RETRY_DELAYS`.
+
+### Changed (tests)
+
+- `test_coordinator_init.py` — updated to test `_url` and `_headers` instead of
+  the removed `_api_key`, `_base_url`, `_installation_id` attributes; added
+  coverage for all six header keys.
+- `test_coordinator_retry.py`, `test_coordinator_logging.py`,
+  `test_coordinator_request.py` — `_make_coordinator()` helpers updated to set
+  `coord._url` and `coord._headers` directly (matching the new `__init__`
+  contract) instead of the removed per-component attributes.
+- `test_setup_unload.py` — removed import and tests for the deleted
+  `_async_update_listener` function.
+- `test_update_entity.py` — updated `TestReleaseSummary`, `TestReleaseUrl`, and
+  `TestTitle` to match the new English strings and the `release_url = None`
+  policy.
+
+---
+
 ## [0.2.29] – 2026-05-19
 
 ### Fixed
