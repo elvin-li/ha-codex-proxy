@@ -326,6 +326,26 @@ class TestTitle:
         assert "Agent A" in entity_a.title
         assert "Agent B" in entity_b.title
 
+    def test_title_exact_format_with_different_subentry_titles(self) -> None:
+        """title must follow exactly 'Proxy model ({subentry.title})' for each subentry.
+
+        test_title_changes_with_subentry_title uses ``in`` substring checks —
+        'Agent A' anywhere in the title passes, including a hypothetical
+        'Agent A is configured'.  The existing test_title_format also uses the
+        default 'Test Agent' title; this test uses custom titles to confirm the
+        format string is parametric (not hardcoded) and both titles are
+        formatted identically."""
+        entity_a = _make_entity("gpt-5.5", "gpt-5.5")
+        entity_a._subentry = _make_subentry("gpt-5.5", title="Agent A")
+        entity_b = _make_entity("gpt-5.5", "gpt-5.5")
+        entity_b._subentry = _make_subentry("gpt-5.5", title="Agent B")
+        assert entity_a.title == "Proxy model (Agent A)", (
+            f"Expected 'Proxy model (Agent A)', got {entity_a.title!r}"
+        )
+        assert entity_b.title == "Proxy model (Agent B)", (
+            f"Expected 'Proxy model (Agent B)', got {entity_b.title!r}"
+        )
+
 
 class TestClassAttributes:
     def test_has_entity_name_is_true(self) -> None:

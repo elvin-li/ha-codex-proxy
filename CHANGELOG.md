@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.139] - 2026-05-19
+### Tests
+- `test_update_entity.py`: add `TestTitle.test_title_exact_format_with_different_subentry_titles` — pins title to exact `"Proxy model ({subentry.title})"` format for parametric titles, replacing substring checks that pass for any format containing the title
+
 ## [0.2.138] - 2026-05-19
 ### Tests
 - `test_button.py`: add `TestRefreshModelsButton.test_press_debug_log_exact_format_string` — pins the async_press debug log to exactly `"Manual /v1/models refresh requested"`, replacing the case-insensitive substring check
