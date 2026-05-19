@@ -132,6 +132,9 @@
           },
           "latest_model": {
             "name": "最新模型"
+          },
+          "last_error": {
+            "name": "上次错误"
           }
         }
       }

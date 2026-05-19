@@ -13,6 +13,32 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.55] – 2026-05-19
+
+### Added
+
+- **`binary_sensor.py`** — ``extra_state_attributes`` now includes a
+  ``last_error`` key when the most recent coordinator poll failed.  The value
+  is ``str(coordinator.last_exception)`` — the error message without a stack
+  trace.  This makes proxy failure reasons accessible from HA automations and
+  template sensors (e.g.
+  ``{{ state_attr('binary_sensor.proxy_reachable', 'last_error') }}``) without
+  requiring a full diagnostics download.  The attribute is absent when the last
+  poll succeeded.
+- **Translations** — ``last_error`` state-attribute name added to
+  ``strings.json``, ``translations/en.json`` ("Last error"), and
+  ``translations/zh-Hans.json`` ("上次错误").
+
+### Added (tests)
+
+- `test_binary_sensor.py` — 4 new tests in ``TestExtraStateAttributes``:
+  ``test_last_error_absent_when_no_exception``,
+  ``test_last_error_present_when_exception_set``,
+  ``test_last_error_is_string``,
+  ``test_none_when_only_exception_and_no_timestamp_or_model``.
+
+---
+
 ## [0.2.54] – 2026-05-19
 
 ### Changed (tests)

@@ -132,6 +132,9 @@
           },
           "latest_model": {
             "name": "Latest model"
+          },
+          "last_error": {
+            "name": "Last error"
           }
         }
       }

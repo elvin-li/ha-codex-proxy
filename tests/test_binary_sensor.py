@@ -40,6 +40,7 @@ def _make_sensor(
     coord.last_update_success = last_update_success
     # Explicit non-None timestamp so is_on exercises the post-poll branch.
     coord.last_update_success_time = datetime(2026, 1, 1, tzinfo=UTC)
+    coord.last_exception = None  # no error by default
 
     entry = MagicMock()
     entry.entry_id = entry_id
@@ -169,6 +170,7 @@ def _make_sensor_with_coord(
     last_update_success: bool = True,
     last_update_success_time=None,
     latest_chat_model_id=None,
+    last_exception=None,
 ) -> CodexProxyReachableSensor:
     from tests.ha_stubs import _CoordinatorEntity
 
@@ -176,6 +178,7 @@ def _make_sensor_with_coord(
     coord.last_update_success = last_update_success
     coord.last_update_success_time = last_update_success_time
     coord.latest_chat_model_id = latest_chat_model_id
+    coord.last_exception = last_exception
 
     s = object.__new__(CodexProxyReachableSensor)
     _CoordinatorEntity.__init__(s, coord)
@@ -256,3 +259,51 @@ class TestExtraStateAttributes:
         assert attrs is not None
         assert attrs["latest_model"] == "gpt-5.5"
         assert "last_checked" not in attrs
+
+    def test_last_error_absent_when_no_exception(self) -> None:
+        """last_error must not appear in attrs when the coordinator has no exception
+        (last poll succeeded or the proxy hasn't been polled yet)."""
+        from datetime import datetime
+
+        ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
+        s = _make_sensor_with_coord(
+            last_update_success=True,
+            last_update_success_time=ts,
+            last_exception=None,
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert "last_error" not in attrs
+
+    def test_last_error_present_when_exception_set(self) -> None:
+        """When the last poll failed (last_exception is set), last_error must
+        appear in attrs so automations can surface the failure reason."""
+        s = _make_sensor_with_coord(
+            last_exception=Exception("HTTP 503 from proxy"),
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert "last_error" in attrs
+        assert "503" in attrs["last_error"]
+
+    def test_last_error_is_string(self) -> None:
+        """last_error must be a string, not an Exception object, so HA can
+        serialise it to the state machine without raising a TypeError."""
+        s = _make_sensor_with_coord(
+            last_exception=Exception("connection refused"),
+        )
+        attrs = s.extra_state_attributes
+        assert isinstance(attrs["last_error"], str)
+
+    def test_none_when_only_exception_and_no_timestamp_or_model(self) -> None:
+        """If all three attributes are absent, extra_state_attributes returns None
+        even when last_exception is set (last_error alone would produce attrs)."""
+        s = _make_sensor_with_coord(
+            last_update_success_time=None,
+            latest_chat_model_id=None,
+            last_exception=Exception("never polled"),
+        )
+        # last_exception alone should produce a non-None attrs dict
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert attrs["last_error"] == "never polled"

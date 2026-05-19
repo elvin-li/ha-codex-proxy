@@ -89,4 +89,9 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
         latest = self.coordinator.latest_chat_model_id
         if latest is not None:
             attrs["latest_model"] = latest
+        last_exc = self.coordinator.last_exception
+        if last_exc is not None:
+            # Expose the error message so automations can surface the reason
+            # the proxy went down without requiring HA's diagnostics download.
+            attrs["last_error"] = str(last_exc)
         return attrs or None
