@@ -219,6 +219,30 @@ class TestEntryCreation:
         assert SUBENTRY_TYPE_AI_TASK in types
 
     @pytest.mark.asyncio
+    async def test_subentry_types_exact_set(self) -> None:
+        """async_create_entry must produce *exactly* one conversation subentry and
+        one ai_task_data subentry — no more, no less.
+
+        test_subentry_types_are_conversation_and_ai_task uses two ``in`` checks
+        which pass even if a third unexpected subentry type is accidentally added
+        (e.g. ``"light"`` from a misapplied copy-paste).  An extra subentry type
+        would silently create unwanted entities in the device registry.  Exact
+        set equality catches that before it reaches production."""
+        flow = _make_flow()
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_user(_VALID_INPUT)
+        subentries = flow.async_create_entry.call_args[1]["subentries"]
+        types = {s["subentry_type"] for s in subentries}
+        expected = {SUBENTRY_TYPE_CONVERSATION, SUBENTRY_TYPE_AI_TASK}
+        assert types == expected, (
+            f"Expected subentry types {expected}, got {types}. "
+            f"Unexpected: {types - expected}"
+        )
+
+    @pytest.mark.asyncio
     async def test_both_subentries_have_service_tier_none(self) -> None:
         """service_tier=None is critical — prevents proxy 502 errors."""
         flow = _make_flow()

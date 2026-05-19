@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.136] - 2026-05-19
+### Tests
+- `test_main_flow.py`: add `TestEntryCreation.test_subentry_types_exact_set` — exact set equality on created subentry types, catching unexpected extras missed by two independent `in` checks
+
 ## [0.2.135] - 2026-05-19
 ### Tests
 - `test_platform_setup.py`: add `TestBinarySensorSetup.test_entity_unique_id_exact_format` — pins binary sensor unique_id to exact `"<entry_id>_proxy_reachable"` format, replacing the `in` substring check that passes for any format containing the entry_id
