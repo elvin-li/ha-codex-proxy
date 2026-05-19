@@ -109,6 +109,38 @@ class TestPlatforms:
 
         assert Platform.SENSOR in PLATFORMS
 
+    def test_button_registered(self) -> None:
+        """Platform.BUTTON must appear in PLATFORMS — hosts the Refresh Models button."""
+        from homeassistant.const import Platform  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy import PLATFORMS
+
+        assert Platform.BUTTON in PLATFORMS
+
+    def test_ai_task_registered(self) -> None:
+        """Platform.AI_TASK must appear in PLATFORMS — hosts the AI Task entity."""
+        from homeassistant.const import Platform  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy import PLATFORMS
+
+        assert Platform.AI_TASK in PLATFORMS
+
+    def test_select_registered(self) -> None:
+        """Platform.SELECT must appear in PLATFORMS — hosts the model-select dropdown."""
+        from homeassistant.const import Platform  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy import PLATFORMS
+
+        assert Platform.SELECT in PLATFORMS
+
+    def test_update_registered(self) -> None:
+        """Platform.UPDATE must appear in PLATFORMS — hosts the model-update entity."""
+        from homeassistant.const import Platform  # type: ignore[attr-defined]
+
+        from custom_components.codex_proxy import PLATFORMS
+
+        assert Platform.UPDATE in PLATFORMS
+
 
 # ---------------------------------------------------------------------------
 # Constants sanity checks

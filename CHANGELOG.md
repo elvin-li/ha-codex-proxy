@@ -13,6 +13,23 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.70] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_init.py`** — four new `TestPlatforms` tests completing explicit
+  per-platform registration coverage:
+  - `test_button_registered` — `Platform.BUTTON` (Refresh Models button)
+  - `test_ai_task_registered` — `Platform.AI_TASK` (AI Task entity)
+  - `test_select_registered` — `Platform.SELECT` (model-select dropdown)
+  - `test_update_registered` — `Platform.UPDATE` (model-update entity)
+
+  Previously only `BINARY_SENSOR`, `CONVERSATION`, and `SENSOR` had explicit
+  registration tests; the other 4 could have been silently removed from `PLATFORMS`
+  without any test failing. 528 tests passing.
+
+---
+
 ## [0.2.69] – 2026-05-19
 
 ### Added (tests)
