@@ -530,3 +530,36 @@ class TestSuccessLogging:
         # The guard prevented any 'Fetched …' debug call.
         fetched_calls = [c for c in mock_log.debug.call_args_list if "Fetched" in str(c)]
         assert not fetched_calls, "debug() must not be called when isEnabledFor returns False"
+
+    @pytest.mark.asyncio
+    async def test_success_log_format_string_exact(self) -> None:
+        """args[0] of the 'Fetched' success debug call must be the exact format string.
+
+        test_success_log_format_string_starts_with_fetched checks only that
+        args[0].startswith('Fetched') — it passes if the remainder of the
+        template changes (e.g. 'Fetched %d models' without the URL or chat
+        count).  Pinning the full format string ensures operator documentation
+        that references 'Fetched %d models from %s (%d chat-capable after
+        filtering)' stays in sync with the actual emitted message."""
+        coord = _make_coordinator()
+        ok = _make_response(
+            200,
+            {"data": [{"id": "gpt-5.5", "created": 100}]},
+        )
+        coord._http.get = AsyncMock(return_value=ok)
+
+        with patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log:
+            mock_log.isEnabledFor.return_value = True
+            await coord._async_update_data()
+
+        fetched_calls = [
+            c
+            for c in mock_log.debug.call_args_list
+            if c.args and isinstance(c.args[0], str) and c.args[0].startswith("Fetched")
+        ]
+        assert fetched_calls, "Expected at least one 'Fetched' debug call"
+        fmt = fetched_calls[-1].args[0]
+        assert fmt == "Fetched %d models from %s (%d chat-capable after filtering)", (
+            f"Expected exact format string "
+            f"'Fetched %d models from %s (%d chat-capable after filtering)', got {fmt!r}"
+        )

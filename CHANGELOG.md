@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.163] - 2026-05-19
+### Tests
+- `test_coordinator_logging.py`: add `TestSuccessLogging.test_success_log_format_string_exact` — pins the 'Fetched' debug log to the exact format string "Fetched %d models from %s (%d chat-capable after filtering)", replacing the `startswith('Fetched')` prefix-only check
+
 ## [0.2.162] - 2026-05-19
 ### Tests
 - `test_migrate_entry.py`: add `TestMigrateEntryDebugLog.test_debug_log_format_string_exact` — pins `args[0]` of the migration debug call to the exact format string, closing the gap left by the version-arg test that never checked the template wording
