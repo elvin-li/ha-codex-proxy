@@ -290,6 +290,21 @@ class TestParseResultNamedAccess:
         result = _parse_toml_and_validate(_input())
         assert isinstance(result.store_responses, bool)
 
+    def test_store_responses_default_is_false(self) -> None:
+        """When no TOML is provided, store_responses must default to exactly
+        DEFAULT_STORE (False).
+
+        test_store_responses_attribute only checks the type; any bool value
+        passes.  Pinning it to False confirms the const-controlled default is
+        applied rather than accidentally defaulting to True (which would enable
+        response storage for every new subentry and increase inference cost)."""
+        result = _parse_toml_and_validate(_input())
+        assert result.store_responses is DEFAULT_STORE, (
+            f"store_responses must default to {DEFAULT_STORE!r} (DEFAULT_STORE), "
+            f"got {result.store_responses!r}"
+        )
+        assert result.store_responses is False  # explicit: DEFAULT_STORE == False
+
     def test_positional_unpacking_still_works(self) -> None:
         """NamedTuple is a tuple subclass — positional unpacking must not break."""
         errors, api_key, base_url, model, reasoning_effort, store_responses = (

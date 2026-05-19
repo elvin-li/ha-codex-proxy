@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.149] - 2026-05-19
+### Tests
+- `test_parse_toml_validate.py`: add `TestParseResultNamedAccess.test_store_responses_default_is_false` — pins `store_responses` default to exactly `False`, replacing the `isinstance(bool)` check that passes for either bool value
+
 ## [0.2.148] - 2026-05-19
 ### Tests
 - `test_coordinator_retry.py`: add `TestCoordinatorRetry.test_exhausted_retries_message_exact_format` — pins the full `UpdateFailed` message after retry exhaustion to exact format, replacing three independent substring checks
