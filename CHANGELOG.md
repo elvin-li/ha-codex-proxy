@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.168] - 2026-05-19
+### Tests
+- `test_const.py`: add `TestImageModelPrefixes.test_image_model_prefixes_exact_value` — pins `IMAGE_MODEL_ID_PREFIXES` to exactly `("gpt-image", "dall-e", "image-")`; the existing `any()`-with-`startswith` checks would pass even if extra prefixes were added or an existing prefix was over-specified
+
 ## [0.2.167] - 2026-05-19
 ### Tests
 - `test_translations.py`: add `test_config_step_keys_exact_set` — pins config.step to exactly `{"user", "reconfigure"}`; the individual presence tests only verify those two exist and would not catch a stray extra step or a rename that added one while removing another

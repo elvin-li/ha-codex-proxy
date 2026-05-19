@@ -262,6 +262,25 @@ class TestImageModelPrefixes:
             "All IMAGE_MODEL_ID_PREFIXES must be lowercase"
         )
 
+    def test_image_model_prefixes_exact_value(self) -> None:
+        """Pin IMAGE_MODEL_ID_PREFIXES to exactly ('gpt-image', 'dall-e', 'image-').
+
+        test_gpt_image_prefix_present / test_dall_e_prefix_present /
+        test_image_prefix_present each use ``any()`` checks that pass even if
+        extra prefixes are accidentally added (e.g. ``'tts-'`` from a typo) or
+        if an existing prefix is subtly over-specified (``'gpt-image-1'``
+        instead of ``'gpt-image'`` would still pass the startswith-style check
+        for input model IDs starting with the longer string).  A stray prefix
+        would silently filter unrelated chat models out of the dropdown, an
+        over-specific prefix would let image models slip through.  Exact tuple
+        equality catches both, and also pins ordering so the filter loop in
+        coordinator.py iterates in the documented order."""
+        assert IMAGE_MODEL_ID_PREFIXES == ("gpt-image", "dall-e", "image-"), (
+            f"IMAGE_MODEL_ID_PREFIXES must be ('gpt-image', 'dall-e', 'image-'), "
+            f"got {IMAGE_MODEL_ID_PREFIXES!r} — changing this alters which models "
+            "are filtered out of the chat-model dropdown"
+        )
+
 
 class TestCodexHeaders:
     def test_user_agent_contains_codex(self) -> None:
