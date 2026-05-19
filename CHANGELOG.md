@@ -7,6 +7,24 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.13] – 2026-05-19
+
+### Added (tests)
+
+- **`test_pure_helpers.py`** — 5 new tests:
+  - `test_integer_base_url_coerced_to_string` — a provider with a non-string
+    `base_url` (TOML allows integers) is coerced via `str()` rather than
+    crashing.
+  - `test_provider_missing_base_url_skipped` — a provider table with no
+    `base_url` key doesn't produce a `base_url` entry in the output.
+  - `test_ipv4_address_accepted` — `http://192.168.1.x:port` is valid.
+  - `test_ipv6_address_accepted` — `http://[::1]:8080` is valid.
+- **`test_button.py::TestRefreshModelsButton::test_press_emits_debug_log`**
+  (1 test) — `async_press` must emit exactly one `DEBUG` log so operators can
+  confirm the manual refresh was triggered.
+
+---
+
 ## [0.2.12] – 2026-05-19
 
 ### Added (tests)

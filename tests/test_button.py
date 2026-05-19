@@ -86,3 +86,14 @@ class TestRefreshModelsButton:
         await btn.async_press()
         await btn.async_press()
         assert btn._coordinator.async_request_refresh.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_press_emits_debug_log(self) -> None:
+        """async_press should emit exactly one DEBUG log so operators can confirm
+        the manual refresh was triggered."""
+        from unittest.mock import patch
+
+        btn = _make_button()
+        with patch("custom_components.codex_proxy.button._LOGGER") as mock_log:
+            await btn.async_press()
+        mock_log.debug.assert_called_once()

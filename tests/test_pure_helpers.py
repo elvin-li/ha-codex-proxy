@@ -91,6 +91,26 @@ base_url = "https://second.example.com"
         result = parse_codex_toml(toml)
         assert result["base_url"] == "https://first.example.com"
 
+    def test_integer_base_url_coerced_to_string(self) -> None:
+        """If a provider has a non-string base_url (TOML allows integers), it
+        must be str()-coerced rather than crashing."""
+        toml = """
+[model_providers.p]
+base_url = 42
+"""
+        result = parse_codex_toml(toml)
+        assert result["base_url"] == "42"
+
+    def test_provider_missing_base_url_skipped(self) -> None:
+        """A provider table without base_url must not produce a base_url key;
+        iteration continues to the next provider if any."""
+        toml = """
+[model_providers.no_url]
+api_key = "sk-xxx"
+"""
+        result = parse_codex_toml(toml)
+        assert "base_url" not in result
+
 
 # ---------------------------------------------------------------------------
 # validate_base_url
@@ -122,3 +142,11 @@ class TestValidateBaseUrl:
 
     def test_https_with_port(self) -> None:
         assert validate_base_url("https://example.com:9443") is None
+
+    def test_ipv4_address_accepted(self) -> None:
+        """Bare IP address hosts must be valid (common on local networks)."""
+        assert validate_base_url("http://192.168.1.100:11434") is None
+
+    def test_ipv6_address_accepted(self) -> None:
+        """IPv6 bracket notation must be accepted."""
+        assert validate_base_url("http://[::1]:8080") is None
