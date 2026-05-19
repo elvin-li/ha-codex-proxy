@@ -206,10 +206,40 @@ class TestChatModelFilter:
         assert all(m["id"] != "dall-e-3" for m in chat)
         assert any(m["id"] == "gpt-5.5" for m in chat)
 
+    def test_excludes_dall_e_prefix_exact_result(self) -> None:
+        """dall-e-3 filter must leave exactly ['gpt-5.5'] — not an empty list
+        or a list with unexpected extras.
+
+        test_excludes_dall_e_prefix uses ``all`` and ``any`` without checking
+        len; a filter that returned [] would pass the ``all`` check (vacuously
+        true) and fail the ``any`` check, but a filter returning [gpt-5.5,
+        dall-e-3] would pass both.  Exact list equality catches all of these
+        edge cases in a single assertion.  Mirrors the pattern in
+        test_coordinator_properties.py (v0.2.125)."""
+        models = _process_models([_make_model("dall-e-3"), _make_model("gpt-5.5")])
+        chat = _filter_chat(models)
+        ids = [m["id"] for m in chat]
+        assert ids == ["gpt-5.5"], (
+            f"Expected exactly ['gpt-5.5'] after dall-e filter, got {ids!r}"
+        )
+
     def test_excludes_image_prefix(self) -> None:
         models = _process_models([_make_model("image-alpha-001"), _make_model("gpt-5.5")])
         chat = _filter_chat(models)
         assert all(not m["id"].startswith("image-") for m in chat)
+
+    def test_excludes_image_prefix_exact_result(self) -> None:
+        """image-alpha-001 filter must leave exactly ['gpt-5.5'].
+
+        test_excludes_image_prefix uses only ``all(...)`` which is vacuously
+        True on an empty list — a filter that returns [] passes the assertion.
+        Exact list equality verifies the filter is surgical."""
+        models = _process_models([_make_model("image-alpha-001"), _make_model("gpt-5.5")])
+        chat = _filter_chat(models)
+        ids = [m["id"] for m in chat]
+        assert ids == ["gpt-5.5"], (
+            f"Expected exactly ['gpt-5.5'] after image- filter, got {ids!r}"
+        )
 
     def test_all_chat_models_pass_through(self) -> None:
         data = [_make_model(f"gpt-5.{i}", i) for i in range(5)]

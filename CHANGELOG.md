@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.130] - 2026-05-19
+### Tests
+- `test_coordinator.py`: add `TestChatModelFilter.test_excludes_dall_e_prefix_exact_result` and `test_excludes_image_prefix_exact_result` — exact list equality replaces vacuous `all/any` checks that pass on empty lists
+
 ## [0.2.129] - 2026-05-19
 ### Tests
 - `test_coordinator_retry.py`: add `TestCoordinatorSuccess.test_return_dict_has_exactly_models_key` — exact set equality on `_async_update_data` return dict keys, catching accidental extra keys the `in` check would miss
