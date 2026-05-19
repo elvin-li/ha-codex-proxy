@@ -160,6 +160,35 @@ class TestProbeProxySuccess:
         assert _MODEL in logged
 
     @pytest.mark.asyncio
+    async def test_debug_log_model_as_format_arg(self) -> None:
+        """The probe debug log must pass the model as a positional format argument
+        at index args[2].
+
+        test_debug_log_contains_model uses ``str(call_args)`` and checks that
+        ``_MODEL in logged``.  This passes even if the model string is somehow
+        embedded in the format string itself (i.e. hardcoded rather than supplied
+        as a ``%s`` argument), or if the arg is at a different index.
+
+        The log format is:
+          _LOGGER.debug("Probing proxy at %s with model %s", base_url, model)
+        Companion to test_debug_log_base_url_as_format_arg (v0.2.99) which pins
+        args[1] == base_url; this test pins args[2] == model for the same call."""
+        from unittest.mock import patch
+
+        with (
+            _patch_openai(),
+            patch("custom_components.codex_proxy.config_flow._LOGGER") as mock_log,
+        ):
+            await _probe_proxy(_make_hass(), _API_KEY, _BASE_URL, _MODEL)
+
+        call_args = mock_log.debug.call_args
+        assert call_args.args[2] == _MODEL, (
+            f"Expected model {_MODEL!r} at positional arg index 2, "
+            f"got {call_args.args[2]!r} — the probe debug log must supply the model "
+            "as a %s format argument, not hardcode it in the format string"
+        )
+
+    @pytest.mark.asyncio
     async def test_debug_log_base_url_as_format_arg(self) -> None:
         """The debug log must pass base_url as a positional format argument so
         the full URL appears verbatim in the rendered message.

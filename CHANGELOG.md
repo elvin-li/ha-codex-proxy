@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.123] - 2026-05-19
+### Tests
+- `test_probe_proxy.py`: add `TestProbeProxySuccess.test_debug_log_model_as_format_arg` — pins model at `args[2]`, complementing the base_url pin at `args[1]` added in v0.2.99
+
 ## [0.2.122] - 2026-05-19
 ### Tests
 - `test_subentry_flow.py`: add `TestAsyncStepReconfigure.test_update_and_abort_data_is_keyword_arg` — pins keyword calling convention for `async_update_and_abort`, replacing three OR-fallback patterns in the class
