@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import sys
 import os
-import types
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -19,66 +17,13 @@ import pytest
 # ---------------------------------------------------------------------------
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
+import tests.ha_stubs  # noqa: F401, E402  — must precede codex_proxy imports
 
-_HA_MODULES = [
-    "homeassistant",
-    "homeassistant.components",
-    "homeassistant.components.openai_conversation",
-    "homeassistant.components.openai_conversation.const",
-    "homeassistant.components.openai_conversation.conversation",
-    "homeassistant.components.openai_conversation.ai_task",
-    "homeassistant.components.update",
-    "homeassistant.config_entries",
-    "homeassistant.const",
-    "homeassistant.core",
-    "homeassistant.exceptions",
-    "homeassistant.helpers",
-    "homeassistant.helpers.device_registry",
-    "homeassistant.helpers.entity_platform",
-    "homeassistant.helpers.httpx_client",
-    "homeassistant.helpers.update_coordinator",
-]
-
-for _mod_name in _HA_MODULES:
-    if _mod_name not in sys.modules:
-        sys.modules[_mod_name] = MagicMock()
-
-# Patch specific attributes needed for imports to succeed
-sys.modules[
-    "homeassistant.components.openai_conversation.const"
-].CONF_CHAT_MODEL = "chat_model"
-class _Subscriptable:
-    """Base class whose subclasses support `Cls[X]` generic syntax."""
-    def __class_getitem__(cls, item: Any) -> type:
-        return cls
-
-
-class _UpdateEntityBase(_Subscriptable):
-    pass
-
-
-class _CoordinatorEntityBase(_Subscriptable):
-    def _handle_coordinator_update(self) -> None:
-        """Stub — real implementation notifies HA state machine."""
-
-
-class _DataUpdateCoordinatorBase(_Subscriptable):
-    pass
-
-
-sys.modules["homeassistant.components.update"].UpdateEntity = _UpdateEntityBase
-sys.modules["homeassistant.components.update"].UpdateEntityFeature = MagicMock()
-sys.modules["homeassistant.helpers.update_coordinator"].CoordinatorEntity = _CoordinatorEntityBase
-sys.modules["homeassistant.helpers.update_coordinator"].DataUpdateCoordinator = _DataUpdateCoordinatorBase
-sys.modules["homeassistant.helpers.update_coordinator"].UpdateFailed = Exception
-sys.modules["homeassistant.helpers.device_registry"].DeviceInfo = dict
-sys.modules["homeassistant.helpers.device_registry"].DeviceEntryType = MagicMock()
-sys.modules["homeassistant.const"].EntityCategory = MagicMock()
-sys.modules["homeassistant.core"].callback = lambda f: f
-
-# Now safe to import const and update
 from custom_components.codex_proxy.const import DEFAULT_MODEL  # noqa: E402
 from custom_components.codex_proxy.update import CodexModelUpdate  # noqa: E402
+
+# Alias for use in _make_entity
+_CoordinatorEntityBase = tests.ha_stubs._CoordinatorEntity
 
 
 # ---------------------------------------------------------------------------

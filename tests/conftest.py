@@ -41,10 +41,12 @@ class _FakeEntry:
         entry_id: str,
         data: dict[str, Any],
         subentries: dict[str, _FakeSubentry] | None = None,
+        title: str = "Codex 号池 (proxy.example.com)",
     ) -> None:
         self.entry_id = entry_id
         self.data = data
         self.subentries: dict[str, _FakeSubentry] = subentries or {}
+        self.title = title
 
 
 @pytest.fixture

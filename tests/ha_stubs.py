@@ -92,6 +92,15 @@ class _SensorEntity:
     pass
 
 
+class _SensorEntityDescription:
+    """Preserves all kwargs as attributes so entity.description.key works."""
+
+    def __init__(self, key: str, **kwargs: Any) -> None:
+        self.key = key
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
 # ---------------------------------------------------------------------------
 # Modules to stub as plain MagicMock (no special configuration needed)
 # ---------------------------------------------------------------------------
@@ -174,6 +183,8 @@ if not isinstance(getattr(_SEL, "SelectEntity", None), type):
 _SEN = sys.modules["homeassistant.components.sensor"]
 if not isinstance(getattr(_SEN, "SensorEntity", None), type):
     _SEN.SensorEntity = _SensorEntity
+if not isinstance(getattr(_SEN, "SensorEntityDescription", None), type):
+    _SEN.SensorEntityDescription = _SensorEntityDescription
 
 # DeviceInfo as dict (simplest stand-in that works with **kwargs and indexing)
 _DR = sys.modules["homeassistant.helpers.device_registry"]
