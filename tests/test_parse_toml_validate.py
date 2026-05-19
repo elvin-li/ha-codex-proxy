@@ -219,3 +219,80 @@ base_url = "https://from-toml.example.com"
             )
             assert not errors, f"unexpected error for effort={effort}: {errors}"
             assert reasoning_effort == effort
+
+
+# ---------------------------------------------------------------------------
+# Tests: api_key whitespace stripping
+# ---------------------------------------------------------------------------
+
+
+class TestApiKeyStripping:
+    def test_api_key_leading_whitespace_stripped(self) -> None:
+        """A key pasted with a leading space must be silently trimmed so the
+        user doesn't receive a cryptic 'invalid_auth' from the proxy."""
+        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="  sk-abc"))
+        assert api_key == "sk-abc"
+
+    def test_api_key_trailing_whitespace_stripped(self) -> None:
+        """Trailing whitespace (common when copy-pasting from a terminal) must
+        be stripped before the key is stored or used in the probe."""
+        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="sk-abc  "))
+        assert api_key == "sk-abc"
+
+    def test_api_key_surrounding_whitespace_stripped(self) -> None:
+        """Both leading and trailing whitespace stripped in one pass."""
+        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="  sk-abc  "))
+        assert api_key == "sk-abc"
+
+    def test_api_key_no_whitespace_unchanged(self) -> None:
+        """A key without whitespace is returned as-is — strip is a no-op."""
+        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key="sk-abc-123"))
+        assert api_key == "sk-abc-123"
+
+    def test_api_key_internal_whitespace_preserved(self) -> None:
+        """strip() must NOT remove internal spaces (unusual but possible in
+        custom proxy keys). Only leading/trailing whitespace is removed."""
+        _, api_key, _, _, _, _ = _parse_toml_and_validate(_input(api_key=" sk abc "))
+        assert api_key == "sk abc"
+
+
+# ---------------------------------------------------------------------------
+# Tests: _ParseResult NamedTuple named attribute access
+# ---------------------------------------------------------------------------
+
+
+class TestParseResultNamedAccess:
+    """Verify that callers can use named field access instead of positional
+    unpacking — guards the ``_ParseResult`` NamedTuple contract."""
+
+    def test_errors_attribute(self) -> None:
+        result = _parse_toml_and_validate(_input())
+        assert not result.errors
+
+    def test_api_key_attribute(self) -> None:
+        result = _parse_toml_and_validate(_input(api_key="sk-named"))
+        assert result.api_key == "sk-named"
+
+    def test_base_url_attribute(self) -> None:
+        result = _parse_toml_and_validate(_input(base_url="https://named.example.com"))
+        assert result.base_url == "https://named.example.com"
+
+    def test_model_attribute(self) -> None:
+        result = _parse_toml_and_validate(_input(model="gpt-named"))
+        assert result.model == "gpt-named"
+
+    def test_reasoning_effort_attribute(self) -> None:
+        result = _parse_toml_and_validate(_input())
+        assert result.reasoning_effort == DEFAULT_REASONING_EFFORT
+
+    def test_store_responses_attribute(self) -> None:
+        result = _parse_toml_and_validate(_input())
+        assert isinstance(result.store_responses, bool)
+
+    def test_positional_unpacking_still_works(self) -> None:
+        """NamedTuple is a tuple subclass — positional unpacking must not break."""
+        errors, api_key, base_url, model, reasoning_effort, store_responses = (
+            _parse_toml_and_validate(_input(api_key="sk-pos"))
+        )
+        assert api_key == "sk-pos"
+        assert isinstance(store_responses, bool)

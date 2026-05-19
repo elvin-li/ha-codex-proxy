@@ -13,6 +13,33 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.46] – 2026-05-19
+
+### Fixed
+
+- **`config_flow.py`** — `api_key` is now stripped of leading/trailing
+  whitespace before being used in the probe or stored in the config entry.
+  Previously, a user who accidentally pasted their API key with surrounding
+  spaces would receive a cryptic `invalid_auth` error.  `base_url` and `model`
+  were already stripped; `api_key` was the only field that was not.
+
+### Changed
+
+- **`config_flow.py`** — `_parse_toml_and_validate` now returns a
+  ``_ParseResult`` ``NamedTuple`` instead of a bare 6-tuple.  Existing callers
+  using positional unpacking work without any change (``NamedTuple`` is a
+  ``tuple`` subclass).  New callers can use named field access (``result.api_key``,
+  ``result.base_url``, etc.) for clearer, index-independent code.
+
+### Added (tests)
+
+- `test_parse_toml_validate.py` — `TestApiKeyStripping`: 5 tests covering
+  leading/trailing/surrounding whitespace stripping and no-op on clean keys.
+- `test_parse_toml_validate.py` — `TestParseResultNamedAccess`: 7 tests
+  verifying named attribute access and backward-compatible positional unpacking.
+
+---
+
 ## [0.2.45] – 2026-05-19
 
 ### Changed

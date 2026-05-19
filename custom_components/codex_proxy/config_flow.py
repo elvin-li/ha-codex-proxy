@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 import tomllib
-from typing import Any
+from typing import Any, NamedTuple
 
 import openai
 import voluptuous as vol
@@ -494,17 +494,40 @@ class AITaskSubentryFlowHandler(_LLMSubentryFlowHandlerBase):
 # ---------------------------------------------------------------------------
 
 
+class _ParseResult(NamedTuple):
+    """Structured result from :func:`_parse_toml_and_validate`.
+
+    Using a ``NamedTuple`` instead of a bare 6-tuple makes the return value
+    self-documenting and allows future callers to use named field access
+    (``result.api_key``) instead of memorising positional indices.  Existing
+    callers that use positional unpacking continue to work unchanged because
+    ``NamedTuple`` is a subclass of ``tuple``.
+    """
+
+    errors: dict[str, str]
+    api_key: str
+    base_url: str
+    model: str
+    reasoning_effort: str
+    store_responses: bool
+
+
 def _parse_toml_and_validate(
     user_input: dict[str, Any],
-) -> tuple[dict[str, str], str, str, str, str, bool]:
+) -> _ParseResult:
     """Extract, TOML-merge, and validate fields from form input.
 
-    Returns ``(errors, api_key, base_url, model, reasoning_effort,
-    store_responses)``.  If *errors* is non-empty the caller should re-show
-    the form without attempting a probe.
+    Returns a :class:`_ParseResult`.  If ``errors`` is non-empty the caller
+    should re-show the form without attempting a probe.  All string fields are
+    stripped of leading/trailing whitespace before validation so that a user
+    who accidentally pastes their API key or URL with surrounding spaces does
+    not receive a misleading authentication or URL-scheme error.
     """
     errors: dict[str, str] = {}
-    api_key: str = user_input[CONF_API_KEY]
+    # Strip api_key so a pasted key with surrounding whitespace doesn't produce
+    # a cryptic "invalid_auth" error — the same defensive stripping applied to
+    # base_url and model below.
+    api_key: str = (user_input.get(CONF_API_KEY) or "").strip()
     base_url: str = (user_input.get(CONF_BASE_URL) or "").strip().rstrip("/")
     model: str = (user_input.get("model") or "").strip() or DEFAULT_MODEL
     reasoning_effort: str = DEFAULT_REASONING_EFFORT
@@ -546,4 +569,11 @@ def _parse_toml_and_validate(
         if url_err:
             errors[CONF_BASE_URL] = url_err
 
-    return errors, api_key, base_url, model, reasoning_effort, store_responses
+    return _ParseResult(
+        errors=errors,
+        api_key=api_key,
+        base_url=base_url,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        store_responses=store_responses,
+    )
