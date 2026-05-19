@@ -149,6 +149,32 @@ class TestSensorSetup:
         assert CodexLastRefreshSensor in types
 
     @pytest.mark.asyncio
+    async def test_sensor_types_exact_set(self, mock_entry, mock_coordinator) -> None:
+        """The sensor platform must produce *exactly* one CodexChatModelCountSensor
+        and one CodexLastRefreshSensor — no more, no less.
+
+        test_setup_creates_two_sensors_per_entry uses two ``in`` checks which pass
+        even if a third unexpected sensor type is accidentally added (e.g. a
+        CodexDebugSensor left over from a refactor).  Exact set equality catches
+        that before the extra entity pollutes the device registry."""
+        from custom_components.codex_proxy.sensor import (
+            CodexChatModelCountSensor,
+            CodexLastRefreshSensor,
+            async_setup_entry,
+        )
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        add, added = _collecting_add_entities()
+        await async_setup_entry(hass, mock_entry, add)
+
+        types = {type(e) for e in added}
+        expected = {CodexChatModelCountSensor, CodexLastRefreshSensor}
+        assert types == expected, (
+            f"Expected sensor types {expected}, got {types}. "
+            f"Unexpected: {types - expected}"
+        )
+
+    @pytest.mark.asyncio
     async def test_sensor_unique_ids_are_distinct(self, mock_entry, mock_coordinator) -> None:
         from custom_components.codex_proxy.sensor import async_setup_entry
 

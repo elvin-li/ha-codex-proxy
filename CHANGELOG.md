@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.134] - 2026-05-19
+### Tests
+- `test_platform_setup.py`: add `TestSensorSetup.test_sensor_types_exact_set` — exact set equality on sensor entity types, catching unexpected extras missed by two independent `in` checks
+
 ## [0.2.133] - 2026-05-19
 ### Tests
 - `test_const.py`: add `TestDefaults.test_reasoning_efforts_exact_values` — exact tuple equality pins REASONING_EFFORTS to `("none", "medium", "high", "xhigh")`, catching accidental additions or renames missed by the four-`in` loop
