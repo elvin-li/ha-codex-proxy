@@ -76,6 +76,20 @@ class TestCodexConversationEntity:
         entity = CodexConversationEntity(_make_entry(), _make_subentry())
         assert "sw_version" in entity._attr_device_info
 
+    def test_device_info_entry_type_is_service(self) -> None:
+        """entry_type must be DeviceEntryType.SERVICE so HA categorises the
+        conversation subentry as a cloud service rather than a physical device.
+
+        build_codex_device_info already tests this at the builder level
+        (TestBuildCodexDeviceInfo.test_entry_type_is_service); this test pins
+        the invariant at the entity level so a refactor that swaps in a
+        different builder (one that omits entry_type) is caught here and not
+        just discovered when HA shows an area-picker for a network proxy."""
+        from homeassistant.helpers import device_registry as dr  # type: ignore[attr-defined]
+
+        entity = CodexConversationEntity(_make_entry(), _make_subentry())
+        assert entity._attr_device_info.get("entry_type") is dr.DeviceEntryType.SERVICE
+
 
 # ---------------------------------------------------------------------------
 # CodexAITaskEntity
@@ -116,6 +130,18 @@ class TestCodexAITaskEntity:
         sub = _make_subentry(chat_model="gpt-5.6")
         entity = CodexAITaskEntity(entry, sub)
         assert entity._attr_device_info["model"] == "gpt-5.6"
+
+    def test_device_info_entry_type_is_service(self) -> None:
+        """entry_type must be DeviceEntryType.SERVICE for the AI Task entity.
+
+        Parity with TestCodexConversationEntity.test_device_info_entry_type_is_service —
+        both entities use build_codex_device_info which sets entry_type=SERVICE,
+        but the entity-level test ensures a builder swap that drops entry_type
+        is caught for AI Task independently of the Conversation entity test."""
+        from homeassistant.helpers import device_registry as dr  # type: ignore[attr-defined]
+
+        entity = CodexAITaskEntity(_make_entry(), _make_subentry())
+        assert entity._attr_device_info.get("entry_type") is dr.DeviceEntryType.SERVICE
 
     def test_device_info_differs_between_entities(self) -> None:
         entity_a = CodexConversationEntity(_make_entry(), _make_subentry("sub-a"))

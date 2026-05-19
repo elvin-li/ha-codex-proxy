@@ -13,6 +13,20 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.92] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_conversation_entity.py`** — `TestCodexConversationEntity.test_device_info_entry_type_is_service`
+  and `TestCodexAITaskEntity.test_device_info_entry_type_is_service` verify
+  that both entity classes set `entry_type = DeviceEntryType.SERVICE` in their
+  `_attr_device_info`.  `build_codex_device_info` already has this test at the
+  builder level (v0.2.87); the entity-level tests catch a hypothetical refactor
+  that swaps in a different builder that omits `entry_type`, independently for
+  each entity class.
+
+---
+
 ## [0.2.91] – 2026-05-19
 
 ### Added (tests)
