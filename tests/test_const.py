@@ -117,6 +117,23 @@ class TestDefaults:
         for effort in ("none", "medium", "high", "xhigh"):
             assert effort in REASONING_EFFORTS
 
+    def test_reasoning_efforts_exact_values(self) -> None:
+        """Pin REASONING_EFFORTS to exactly ("none", "medium", "high", "xhigh").
+
+        test_reasoning_efforts_contains_expected_values uses four ``in`` checks
+        which pass even if extra efforts are accidentally added (e.g. ``"low"``
+        from a copy-paste) or existing ones renamed.  An extra value would add
+        a spurious option to the SelectSelector dropdown; a renamed value would
+        silently break any subentry that stored the old string.  Exact tuple
+        equality catches both in a single assertion, and also pins the order so
+        the UI dropdown is always presented low-to-high without relying on
+        definition order."""
+        assert REASONING_EFFORTS == ("none", "medium", "high", "xhigh"), (
+            f"REASONING_EFFORTS must be ('none', 'medium', 'high', 'xhigh'), "
+            f"got {REASONING_EFFORTS!r} — changing this alters the reasoning-effort "
+            "dropdown options for every subentry and may break stored configurations"
+        )
+
     def test_reasoning_efforts_is_tuple(self) -> None:
         """REASONING_EFFORTS must be a tuple, not a list.
 

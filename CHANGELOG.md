@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.133] - 2026-05-19
+### Tests
+- `test_const.py`: add `TestDefaults.test_reasoning_efforts_exact_values` — exact tuple equality pins REASONING_EFFORTS to `("none", "medium", "high", "xhigh")`, catching accidental additions or renames missed by the four-`in` loop
+
 ## [0.2.132] - 2026-05-19
 ### Tests
 - `test_const.py`: add `TestIntervals.test_coordinator_max_retries_exact_value` and `test_coordinator_retry_delays_exact_values` — exact equality pins the retry count to 3 and the delay tuple to (5, 30), replacing weak `> 0` and per-element type checks that would pass on any positive values
