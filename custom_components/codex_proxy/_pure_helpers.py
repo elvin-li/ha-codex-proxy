@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import tomllib
 from typing import Any
+from urllib.parse import urlparse
 
 
 def parse_codex_toml(text: str) -> dict[str, Any]:
@@ -37,8 +38,6 @@ def parse_codex_toml(text: str) -> dict[str, Any]:
 
 def validate_base_url(url: str) -> str | None:
     """Return an error key if *url* is not a valid http/https base URL."""
-    from urllib.parse import urlparse
-
     p = urlparse(url)
     if p.scheme not in ("http", "https"):
         return "invalid_url_scheme"

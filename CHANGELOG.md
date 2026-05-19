@@ -7,6 +7,29 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.11] – 2026-05-19
+
+### Changed
+
+- **`_pure_helpers.py`**: moved `from urllib.parse import urlparse` from inside
+  the `validate_base_url` function body to module-level — avoids a repeated
+  local import on every URL validation call and follows Python convention.
+
+### Added (tests)
+
+- **`TestUpstreamKeys`** in `test_enrich_subentry.py` (4 tests):
+  - `test_returns_dict_with_expected_keys` — verifies all 5 required keys
+    (`chat_model`, `prompt`, `reasoning_effort`, `store_responses`,
+    `service_tier`) are present in the returned dict.
+  - `test_all_values_are_non_empty_strings` — guards against a stale fallback
+    returning an empty or non-string value for any key.
+  - `test_second_call_returns_same_object` — the caching contract: two calls
+    must return the identical `dict` object (identity check with `is`).
+  - `test_cache_is_not_none_after_first_call` — `_UPSTREAM_KEYS_CACHE` is
+    populated after the first call.
+
+---
+
 ## [0.2.10] – 2026-05-19
 
 ### Fixed (lint)
