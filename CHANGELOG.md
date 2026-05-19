@@ -13,6 +13,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.103] – 2026-05-19
+
+### Added (tests)
+
+- **`tests/test_main_flow.py`** —
+  `TestUserStep.test_entry_title_exact_format` asserts the full entry title is
+  `"Codex 号池 (proxy.example.com)"` using exact equality.  The existing
+  `test_entry_title_includes_host` uses a substring check that passes even if
+  the format changes; the new test pins the `"Codex 号池 (<netloc>)"` pattern
+  so renames or format changes are caught immediately.
+
+---
+
 ## [0.2.102] – 2026-05-19
 
 ### Added (tests)

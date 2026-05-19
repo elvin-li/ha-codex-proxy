@@ -168,6 +168,32 @@ class TestEntryCreation:
         assert "proxy.example.com" in title
 
     @pytest.mark.asyncio
+    async def test_entry_title_exact_format(self) -> None:
+        """Entry title must follow the exact format 'Codex 号池 (<netloc>)'.
+
+        test_entry_title_includes_host uses a substring check that passes
+        even if the title format changes (e.g. 'Proxy proxy.example.com' or
+        'Codex proxy.example.com' without the parentheses would both pass).
+        The exact title is critical because it appears in the HA integrations
+        dashboard and in YAML snippets shared between users; a refactor that
+        changes the format silently breaks existing user documentation.
+
+        Expected: 'Codex 号池 (proxy.example.com)' for base_url
+        'https://proxy.example.com'."""
+        flow = _make_flow()
+        with patch(
+            "custom_components.codex_proxy.config_flow._probe_proxy",
+            new=AsyncMock(return_value={}),
+        ):
+            await flow.async_step_user(_VALID_INPUT)
+        title = flow.async_create_entry.call_args[1]["title"]
+        assert title == "Codex 号池 (proxy.example.com)", (
+            f"Entry title {title!r} does not match expected format "
+            "'Codex 号池 (proxy.example.com)' — the substring test "
+            "test_entry_title_includes_host would still pass with the wrong format"
+        )
+
+    @pytest.mark.asyncio
     async def test_creates_two_subentries(self) -> None:
         """Both conversation and ai_task_data subentries must be created."""
         flow = _make_flow()
