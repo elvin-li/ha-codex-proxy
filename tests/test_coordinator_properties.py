@@ -103,6 +103,22 @@ class TestChatModelsProperty:
         coord.data = {"status": "ok"}  # valid dict but no 'models' key
         assert coord.chat_models == []
 
+    def test_chat_models_returns_empty_when_models_value_is_dict(self) -> None:
+        """If data['models'] is a dict instead of a list (malformed payload),
+        chat_models must return [] rather than iterating over dict keys and
+        crashing with TypeError / AttributeError on m['id']."""
+        coord = object.__new__(CodexModelCoordinator)
+        coord.data = {"models": {"id": "gpt-5.5"}}  # dict, not list
+        assert coord.chat_models == []
+
+    def test_chat_models_returns_empty_when_models_value_is_string(self) -> None:
+        """A string value for data['models'] (another possible malformed payload)
+        must also degrade to [] — iterating over a string would yield characters
+        and then m['id'] on a character would raise TypeError."""
+        coord = object.__new__(CodexModelCoordinator)
+        coord.data = {"models": "gpt-5.5"}  # string, not list
+        assert coord.chat_models == []
+
 
 # ---------------------------------------------------------------------------
 # latest_chat_model_id property

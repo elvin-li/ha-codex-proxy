@@ -173,7 +173,7 @@ class TestTranslationKeyConsistency:
                         )
 
     def test_binary_sensor_state_attributes_documented(self) -> None:
-        """proxy_reachable exposes last_checked and latest_model via
+        """proxy_reachable exposes last_checked, latest_model, and last_error via
         extra_state_attributes; all translation files must document them so
         HA's UI renders proper labels in the More Info dialog."""
         for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
@@ -183,7 +183,7 @@ class TestTranslationKeyConsistency:
                 f"{fname} entity.binary_sensor.proxy_reachable missing state_attributes"
             )
             attrs = ps["state_attributes"]
-            for key in ("last_checked", "latest_model"):
+            for key in ("last_checked", "latest_model", "last_error"):
                 assert key in attrs, (
                     f"{fname} entity.binary_sensor.proxy_reachable.state_attributes "
                     f"missing {key!r}"

@@ -203,14 +203,23 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         Returns an empty list when:
 
         * ``self.data`` is ``None`` or ``{}`` (coordinator not yet populated), or
+        * ``self.data["models"]`` is not a ``list`` (defensive guard — should
+          never happen because ``_async_update_data`` always writes a list, but
+          guards against silent corruption or unexpected test fixtures), or
         * every model in ``self.data["models"]`` matches an
           ``IMAGE_MODEL_ID_PREFIXES`` prefix.
         """
         if not self.data:
             return []
+        models = self.data.get("models", [])
+        if not isinstance(models, list):
+            # Defensive: _async_update_data always writes a list, but an
+            # unexpected value (dict, string, etc.) would cause the list
+            # comprehension below to raise TypeError / AttributeError.
+            return []
         return [
             m
-            for m in self.data.get("models", [])
+            for m in models
             if not any(m["id"].startswith(p) for p in IMAGE_MODEL_ID_PREFIXES)
         ]
 

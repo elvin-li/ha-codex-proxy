@@ -13,6 +13,33 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.56] – 2026-05-19
+
+### Changed
+
+- **`coordinator.py`** — `chat_models` property now adds a defensive
+  `isinstance(models, list)` guard before the list comprehension.
+  `_async_update_data` always writes a proper list, but without the guard a
+  malformed payload that stored a `dict` or `str` in `data["models"]` would
+  silently iterate over dict keys / string characters and then crash with
+  `AttributeError` / `TypeError` on `m["id"]`.  The new guard degrades
+  gracefully to `[]` in that case.
+
+### Changed (tests)
+
+- `test_coordinator_properties.py` — 2 new tests added to
+  ``TestChatModelsProperty``:
+  ``test_chat_models_returns_empty_when_models_value_is_dict`` and
+  ``test_chat_models_returns_empty_when_models_value_is_string``.
+  Both verify the new defensive guard introduced above.
+- `test_translations.py` — ``test_binary_sensor_state_attributes_documented``
+  now also asserts that ``last_error`` is documented in all three translation
+  files (``strings.json``, ``en.json``, ``zh-Hans.json``).  The key was added
+  in v0.2.55 but the translation consistency test wasn't updated to reflect it,
+  so a future regression removing it from one file would have gone undetected.
+
+---
+
 ## [0.2.55] – 2026-05-19
 
 ### Added
