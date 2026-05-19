@@ -1,0 +1,86 @@
+"""Tests for translation file consistency.
+
+Verifies that strings.json, translations/en.json, and translations/zh-Hans.json
+all have the same top-level keys and that critical sections (config.error,
+entity) are present and non-empty. A mismatch here causes HA to render
+raw translation-key strings in the UI instead of human-readable text.
+"""
+from __future__ import annotations
+
+import json
+import os
+
+# Path to the integration root
+_INTEGRATION = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "custom_components",
+    "codex_proxy",
+)
+
+
+def _load(filename: str) -> dict:
+    with open(os.path.join(_INTEGRATION, filename), encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+
+class TestTranslationKeyConsistency:
+    def test_strings_and_en_have_same_top_level_keys(self) -> None:
+        strings = _load("strings.json")
+        en = _load("translations/en.json")
+        assert set(strings.keys()) == set(en.keys())
+
+    def test_strings_and_zh_have_same_top_level_keys(self) -> None:
+        strings = _load("strings.json")
+        zh = _load("translations/zh-Hans.json")
+        assert set(strings.keys()) == set(zh.keys())
+
+    def test_config_error_keys_consistent_across_all_files(self) -> None:
+        strings = _load("strings.json")
+        en = _load("translations/en.json")
+        zh = _load("translations/zh-Hans.json")
+
+        s_errors = set(strings["config"]["error"].keys())
+        e_errors = set(en["config"]["error"].keys())
+        z_errors = set(zh["config"]["error"].keys())
+
+        assert s_errors == e_errors, f"en.json missing keys: {s_errors - e_errors}"
+        assert s_errors == z_errors, f"zh-Hans.json missing keys: {s_errors - z_errors}"
+
+    def test_entity_section_present_in_all_files(self) -> None:
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            assert "entity" in data, f"{fname} missing 'entity' section"
+
+    def test_binary_sensor_proxy_reachable_in_all_files(self) -> None:
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            assert "binary_sensor" in data["entity"], f"{fname} missing entity.binary_sensor"
+            assert "proxy_reachable" in data["entity"]["binary_sensor"], (
+                f"{fname} missing entity.binary_sensor.proxy_reachable"
+            )
+
+    def test_config_step_user_present_in_all_files(self) -> None:
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            assert "user" in data["config"]["step"], (
+                f"{fname} missing config.step.user"
+            )
+
+    def test_config_step_reconfigure_present_in_all_files(self) -> None:
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            assert "reconfigure" in data["config"]["step"], (
+                f"{fname} missing config.step.reconfigure"
+            )
+
+    def test_no_empty_translation_values(self) -> None:
+        """Spot-check that key translation strings are non-empty."""
+        for fname in ("strings.json", "translations/en.json", "translations/zh-Hans.json"):
+            data = _load(fname)
+            for error_key, error_val in data["config"]["error"].items():
+                assert error_val, f"{fname} has empty string for config.error.{error_key}"
