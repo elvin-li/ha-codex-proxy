@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 import httpx
@@ -19,6 +20,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CODEX_OPENAI_BETA,
@@ -81,6 +83,15 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "x-codex-installation-id": installation_id,
             "Accept": "application/json",
         }
+        # ``DataUpdateCoordinator`` in current HA Core does not expose a
+        # last-success timestamp on the public API, so we track it locally.
+        # ``binary_sensor``, ``sensor.last_model_refresh``, and ``diagnostics``
+        # all read this attribute; it must exist on a freshly constructed
+        # coordinator (set to ``None`` until the first successful poll) so they
+        # can safely read it without ``AttributeError`` during the brief window
+        # between coordinator construction and the first ``_async_update_data``
+        # call.
+        self.last_update_success_time: datetime | None = None
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch ``/v1/models`` and return a normalised ``{"models": [...]}`` dict.
@@ -189,6 +200,11 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._url,
                 chat_count,
             )
+        # Mark the successful poll so binary_sensor / sensor / diagnostics can
+        # surface a "last refreshed" timestamp.  Use UTC so the value compares
+        # cleanly with any other tz-aware datetimes (HA stores everything in
+        # UTC internally; the UI converts to the user's tz at display time).
+        self.last_update_success_time = dt_util.utcnow()
         return {"models": models}
 
     @property

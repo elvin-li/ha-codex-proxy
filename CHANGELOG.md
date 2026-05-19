@@ -9,7 +9,13 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.2.169] - 2026-05-19
+## [0.2.170] - 2026-05-19
+### Fixed
+- `CodexModelCoordinator` now explicitly initialises and updates `last_update_success_time`. The base `DataUpdateCoordinator` in current HA Core does not expose this attribute, so `binary_sensor.proxy_reachable` was crashing with `AttributeError: 'CodexModelCoordinator' object has no attribute 'last_update_success_time'` when HA tried to add the entity at startup. The tests masked it because the `ha_stubs.DataUpdateCoordinator` stub pre-set the attribute; production HA didn't.
+### Tests
+- `tests/ha_stubs.py`: stub `homeassistant.util.dt.utcnow`/`now` to return real `datetime` objects so coordinator-level timestamp tracking can be exercised without MagicMock noise
+
+
 ### Changed
 - Apply `ruff format` across `custom_components/codex_proxy/` and `tests/` to satisfy the format-check step in CI. Pure whitespace/line-break normalisation; no behavioural changes
 

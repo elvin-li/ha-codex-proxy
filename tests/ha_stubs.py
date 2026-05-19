@@ -214,6 +214,8 @@ _PLAIN_MOCKS = [
     "homeassistant.helpers.httpx_client",
     "homeassistant.helpers.selector",
     "homeassistant.helpers.update_coordinator",
+    "homeassistant.util",
+    "homeassistant.util.dt",
     "openai",
     "voluptuous",
 ]
@@ -325,6 +327,22 @@ _HELPERS.update_coordinator = sys.modules["homeassistant.helpers.update_coordina
 _HELPERS.httpx_client = sys.modules["homeassistant.helpers.httpx_client"]
 _HELPERS.entity_platform = sys.modules["homeassistant.helpers.entity_platform"]
 _HELPERS.selector = sys.modules["homeassistant.helpers.selector"]
+
+# ---------------------------------------------------------------------------
+# homeassistant.util.dt — coordinator.py imports `dt_util.utcnow` to stamp
+# ``last_update_success_time``.  The auto-MagicMock attribute resolution would
+# return another MagicMock (not a datetime), which would silently survive most
+# tests but explode on any consumer that calls ``.isoformat()`` on the value.
+# Wire ``utcnow`` to the stdlib ``datetime.now(UTC)`` so the attribute behaves
+# like a real datetime in tests.
+# ---------------------------------------------------------------------------
+import datetime as _dt  # noqa: E402
+
+_UTIL = sys.modules["homeassistant.util"]
+_UTIL_DT = sys.modules["homeassistant.util.dt"]
+_UTIL.dt = _UTIL_DT
+_UTIL_DT.utcnow = lambda: _dt.datetime.now(_dt.UTC)
+_UTIL_DT.now = lambda tz=None: _dt.datetime.now(tz or _dt.UTC)
 
 
 # SelectOptionDict must produce real dicts so tests can inspect option values.
