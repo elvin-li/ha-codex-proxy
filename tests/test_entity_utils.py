@@ -91,6 +91,26 @@ class TestBuildCodexDeviceInfo:
         # Value is either a non-empty string (real run) or None (manifest read failed).
         assert info["sw_version"] is None or isinstance(info["sw_version"], str)
 
+    def test_sw_version_matches_manifest(self) -> None:
+        """sw_version must equal the version field in manifest.json exactly.
+
+        Parity test: TestBuildCodexEntryDeviceInfo already pins this invariant
+        for entry-level entities; this test closes the gap for subentry-level
+        entities created by build_codex_device_info."""
+        import json
+        import pathlib
+
+        manifest_path = (
+            pathlib.Path(__file__).parent.parent
+            / "custom_components"
+            / "codex_proxy"
+            / "manifest.json"
+        )
+        expected = json.loads(manifest_path.read_text()).get("version")
+        sub = _make_subentry()
+        info = build_codex_device_info(sub, "chat_model")
+        assert info["sw_version"] == expected
+
 
 # ---------------------------------------------------------------------------
 # build_codex_entry_device_info
@@ -165,11 +185,16 @@ class TestBuildCodexEntryDeviceInfo:
 
 class TestIntegrationVersion:
     def test_is_public_name(self) -> None:
-        """INTEGRATION_VERSION must be importable as a public symbol — other
-        modules (e.g. diagnostics.py) import it without underscore prefix."""
-        # The import at the top of this file already exercises this; this
-        # test documents the invariant explicitly.
-        assert INTEGRATION_VERSION is not None or INTEGRATION_VERSION is None  # always passes
+        """INTEGRATION_VERSION must be a non-None string in any checkout that
+        has a valid manifest.json.  The previous assertion here was a tautology
+        (``x is not None or x is None`` is always True); this replacement
+        verifies the manifest was actually read at import time so the HA device
+        card shows a real version string rather than the literal text 'None'."""
+        assert INTEGRATION_VERSION is not None, (
+            "INTEGRATION_VERSION is None — manifest.json failed to load at "
+            "import time; the HA device card would display 'None' as the "
+            "integration version instead of the real semver string."
+        )
 
     def test_is_string_or_none(self) -> None:
         """INTEGRATION_VERSION must be a string (real manifest) or None

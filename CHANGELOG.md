@@ -13,6 +13,22 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.68] – 2026-05-19
+
+### Changed / Added (tests)
+
+- **`tests/test_entity_utils.py`**:
+  - `TestIntegrationVersion.test_is_public_name` — replaced an always-true tautology
+    (`assert x is not None or x is None`) with `assert INTEGRATION_VERSION is not None`,
+    adding a meaningful failure message that explains what a `None` value means for the
+    HA device card.
+  - `TestBuildCodexDeviceInfo.test_sw_version_matches_manifest` — new test that pins
+    `sw_version` against `manifest.json` for subentry-level device info, closing the parity
+    gap with `TestBuildCodexEntryDeviceInfo.test_sw_version_matches_manifest` that already
+    did this for entry-level device info.
+
+---
+
 ## [0.2.67] – 2026-05-19
 
 ### Changed (tests)
