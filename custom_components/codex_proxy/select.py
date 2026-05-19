@@ -46,12 +46,13 @@ async def async_setup_entry(
     coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
         DATA_COORDINATOR
     ]
-    entities = [
-        CodexModelSelectEntity(coordinator, entry, subentry)
-        for subentry in entry.subentries.values()
-        if subentry.subentry_type in LLM_BEARING_SUBENTRY_TYPES
-    ]
-    async_add_entities(entities)
+    for subentry in entry.subentries.values():
+        if subentry.subentry_type not in LLM_BEARING_SUBENTRY_TYPES:
+            continue
+        async_add_entities(
+            [CodexModelSelectEntity(coordinator, entry, subentry)],
+            config_subentry_id=subentry.subentry_id,
+        )
 
 
 class CodexModelSelectEntity(

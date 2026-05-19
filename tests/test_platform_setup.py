@@ -212,6 +212,26 @@ class TestSelectSetup:
         # Still only 2 (the LLM subentries), not 3
         assert len(added) == 2
 
+    @pytest.mark.asyncio
+    async def test_select_config_subentry_id_passed(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """async_add_entities must be called with the correct config_subentry_id
+        for each select entity so HA auto-removes it when the subentry is deleted."""
+        from custom_components.codex_proxy.select import async_setup_entry
+
+        calls: list[str | None] = []
+
+        def _add(entities, config_subentry_id: str | None = None) -> None:
+            calls.append(config_subentry_id)
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        await async_setup_entry(hass, mock_entry, _add)
+
+        # Each of the 2 LLM subentries must have been registered with its own id
+        assert None not in calls, "config_subentry_id must never be None for select"
+        assert set(calls) == {"sub-conv-1", "sub-task-1"}
+
 
 # ---------------------------------------------------------------------------
 # update platform
@@ -268,6 +288,25 @@ class TestUpdateSetup:
         await async_setup_entry(hass, mock_entry, add)
 
         assert len(added) == 2
+
+    @pytest.mark.asyncio
+    async def test_update_config_subentry_id_passed(
+        self, mock_entry, mock_coordinator
+    ) -> None:
+        """async_add_entities must be called with the correct config_subentry_id
+        for each update entity so HA auto-removes it when the subentry is deleted."""
+        from custom_components.codex_proxy.update import async_setup_entry
+
+        calls: list[str | None] = []
+
+        def _add(entities, config_subentry_id: str | None = None) -> None:
+            calls.append(config_subentry_id)
+
+        hass = _make_hass(mock_entry, mock_coordinator)
+        await async_setup_entry(hass, mock_entry, _add)
+
+        assert None not in calls, "config_subentry_id must never be None for update"
+        assert set(calls) == {"sub-conv-1", "sub-task-1"}
 
 
 # ---------------------------------------------------------------------------

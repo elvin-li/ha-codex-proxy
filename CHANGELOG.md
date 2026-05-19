@@ -7,6 +7,26 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.9] – 2026-05-19
+
+### Fixed
+
+- **`select.py` missing `config_subentry_id`** — `async_setup_entry` was calling
+  `async_add_entities(entities)` once for all subentry entities without passing
+  `config_subentry_id`. This meant HA could not automatically remove a select
+  entity when its parent subentry was deleted. Changed to a per-subentry loop
+  matching the pattern used in `update.py`, `conversation.py`, and `ai_task.py`.
+
+### Added
+
+- **`test_platform_setup.py::TestSelectSetup::test_select_config_subentry_id_passed`**
+  (1 test) — regression guard verifying that both LLM subentries are registered
+  with their correct `config_subentry_id` (never `None`).
+- **`test_platform_setup.py::TestUpdateSetup::test_update_config_subentry_id_passed`**
+  (1 test) — same coverage for the update platform.
+
+---
+
 ## [0.2.8] – 2026-05-19
 
 ### Added
