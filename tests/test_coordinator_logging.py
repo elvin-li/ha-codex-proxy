@@ -201,6 +201,44 @@ class TestRetryLogging:
         )
 
     @pytest.mark.asyncio
+    async def test_retry_log_error_type_arg_exact_for_timeout(self) -> None:
+        """args[3] of the timeout retry debug call must be exactly 'TimeoutException'.
+
+        test_retry_log_includes_error_type_for_timeout checks the combined
+        str(call_args_list) for 'TimeoutException' — a substring match that
+        passes even if the error type is 'httpx.TimeoutException' (prefixed) or
+        'SomeOtherTimeoutException' (just happens to contain the substring).
+        Checking args[3] directly pins that the (%s) placeholder resolves to the
+        bare class name 'TimeoutException', matching the format string
+        'Transient error on attempt %d/%d (%s) — retrying in %ds'."""
+        coord = _make_coordinator()
+        ok = _make_response(200, {"data": [{"id": "gpt-5.5", "created": 1}]})
+        coord._http.get = AsyncMock(
+            side_effect=[
+                httpx.TimeoutException("timed out"),
+                ok,
+            ]
+        )
+
+        with (
+            patch("custom_components.codex_proxy.coordinator.asyncio.sleep", new=AsyncMock()),
+            patch("custom_components.codex_proxy.coordinator._LOGGER") as mock_log,
+        ):
+            await coord._async_update_data()
+
+        retry_calls = [
+            c
+            for c in mock_log.debug.call_args_list
+            if c.args and isinstance(c.args[0], str) and c.args[0].startswith("Transient")
+        ]
+        assert retry_calls, "Expected at least one retry debug call starting with 'Transient'"
+        err_type_arg = retry_calls[0].args[3]
+        assert err_type_arg == "TimeoutException", (
+            f"Expected error-type arg 'TimeoutException' at args[3], got {err_type_arg!r} — "
+            "the format arg must be type(last_err).__name__ (bare class name)"
+        )
+
+    @pytest.mark.asyncio
     async def test_sleep_delay_passed_to_logger(self) -> None:
         """The retry log message should include the sleep delay."""
         coord = _make_coordinator()

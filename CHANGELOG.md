@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.158] - 2026-05-19
+### Tests
+- `test_coordinator_logging.py`: add `TestRetryLogging.test_retry_log_error_type_arg_exact_for_timeout` — pins `args[3]` of the timeout retry debug call to exactly `"TimeoutException"`, replacing a combined-string `in` check
+
 ## [0.2.157] - 2026-05-19
 ### Tests
 - `test_binary_sensor.py`: add `TestExtraStateAttributes.test_last_error_exact_value_from_exception_str` — pins `last_error` to the exact `str(exception)` value, replacing a substring `"503" in` check that passed for any string containing "503"
