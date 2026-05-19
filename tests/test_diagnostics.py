@@ -226,3 +226,45 @@ class TestDiagnosticsSubentries:
         result = await async_get_config_entry_diagnostics(hass, entry)
 
         assert result["subentries"][0]["data"]["chat_model"] == "gpt-5.5"
+
+
+class TestDiagnosticsEdgeCases:
+    @pytest.mark.asyncio
+    async def test_models_empty_when_coordinator_data_is_none(self) -> None:
+        """When coordinator.data is None (initial state before first poll),
+        the models list in diagnostics should be [] rather than crashing."""
+        coord = _make_coordinator()
+        coord.data = None  # override the default non-None data
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["models"] == []
+
+    @pytest.mark.asyncio
+    async def test_last_update_success_false_reported(self) -> None:
+        """A failed coordinator poll is reported as last_update_success=False."""
+        coord = _make_coordinator(last_success=False, latest_id=None)
+        entry = _make_entry()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["coordinator"]["last_update_success"] is False
+
+    @pytest.mark.asyncio
+    async def test_installation_id_not_redacted(self) -> None:
+        """Installation ID is not sensitive — it should appear verbatim."""
+        entry = _make_entry()
+        entry.data = {
+            "api_key": _API_KEY,
+            "base_url": _BASE_URL,
+            "codex_installation_id": _INSTALLATION_ID,
+        }
+        coord = _make_coordinator()
+        hass = _make_hass(coord, entry.entry_id)
+
+        result = await async_get_config_entry_diagnostics(hass, entry)
+
+        assert result["entry_data"]["codex_installation_id"] == _INSTALLATION_ID
