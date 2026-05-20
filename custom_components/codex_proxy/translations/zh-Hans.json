@@ -40,7 +40,7 @@
       "bad_toml": "TOML 解析失败，请检查格式。",
       "required": "必填。",
       "invalid_url_scheme": "URL 必须以 http:// 或 https:// 开头。",
-      "invalid_url": "请输入包含协议头的完整 URL（例如 https://your-proxy.example.com）。",
+      "invalid_url": "请输入仅含协议和主机的基础 URL，不要带查询串（?x=1）、锚点（#section）或凭证（user:pass@）。例如：https://your-proxy.example.com",
       "toml_no_base_url": "TOML 解析成功但未找到 base_url，请手动填写反代地址。",
       "rate_limited": "反代返回 HTTP 429 — API 配额已耗尽，请稍后重试。"
     },
@@ -129,6 +129,9 @@
         "state_attributes": {
           "last_checked": {
             "name": "上次检测时间"
+          },
+          "last_success": {
+            "name": "上次成功时间"
           },
           "latest_model": {
             "name": "最新模型"

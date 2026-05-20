@@ -80,24 +80,33 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose last_checked, latest_model, and last_error for automations.
+        """Expose last_checked, last_success, latest_model, and last_error.
 
-        * ``last_checked`` — ISO-8601 string of the most recent **successful**
-          ``/v1/models`` poll; absent until the first successful poll.
-        * ``latest_model`` — id of the newest chat-capable model known to the
-          coordinator; absent until the first successful poll.
+        * ``last_checked`` — ISO-8601 of the most recent poll *attempt*
+          (success or failure).  Answers "when did the coordinator last try?"
+          Absent until the first poll attempt completes.
+        * ``last_success`` — ISO-8601 of the most recent *successful* poll.
+          Answers "when was the proxy last known good?"  Absent until the
+          first successful poll; lags ``last_checked`` once the proxy starts
+          failing.  Operators comparing the two timestamps can tell whether
+          the integration is actively retrying or stuck.
+        * ``latest_model`` — id of the newest chat-capable model known to
+          the coordinator; absent until the first successful poll.
         * ``last_error`` — ``str(coordinator.last_exception)`` when the most
           recent poll failed; absent when the proxy is healthy.  Enables
           automations to surface the failure reason via
           ``{{ state_attr('binary_sensor.proxy_reachable', 'last_error') }}``
           without requiring a full diagnostics download.
 
-        Returns ``None`` (no attributes) when none of the three have data yet.
+        Returns ``None`` (no attributes) when none of the four have data yet.
         """
         attrs: dict[str, Any] = {}
-        t = self.coordinator.last_update_success_time
-        if t is not None:
-            attrs["last_checked"] = t.isoformat()
+        attempt = self.coordinator.last_update_attempt_time
+        if attempt is not None:
+            attrs["last_checked"] = attempt.isoformat()
+        success = self.coordinator.last_update_success_time
+        if success is not None:
+            attrs["last_success"] = success.isoformat()
         latest = self.coordinator.latest_chat_model_id
         if latest is not None:
             attrs["latest_model"] = latest

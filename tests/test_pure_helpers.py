@@ -340,3 +340,28 @@ class TestNormalizeBaseUrl:
         once = normalize_base_url("https://proxy.example.com")
         twice = normalize_base_url(once)
         assert once == twice, f"normalize_base_url is not idempotent: {once!r} != {twice!r}"
+
+    def test_bare_hostname_v1_not_mistaken_for_path(self) -> None:
+        """Round-4 audit regression: ``https://v1`` has ``v1`` as the
+        HOSTNAME, not a path segment.
+
+        The pre-v0.2.175 implementation did ``url.rstrip("/").rsplit("/", 1)``
+        on the raw URL string — for ``https://v1`` that returns
+        ``["https:", "", "v1"]`` and last == "v1", so the URL was treated as
+        already-normalised and returned unchanged.  The coordinator would
+        then build ``https://v1/models`` instead of ``https://v1/v1/models``,
+        and a strict proxy would 404.
+
+        Vanishingly unlikely in practice (who names their server ``v1``?)
+        but a real correctness bug.  The fix parses the URL with urlparse
+        and looks only at the path component."""
+        assert normalize_base_url("https://v1") == "https://v1/v1", (
+            "A URL whose HOST is 'v1' must still get /v1 appended — only a "
+            "PATH ending in /v1 should be left alone"
+        )
+
+    def test_bare_hostname_with_trailing_slash_v1_handled(self) -> None:
+        """Edge case companion to test_bare_hostname_v1_not_mistaken_for_path
+        — ``https://v1/`` (trailing slash) should also normalise to
+        ``https://v1/v1``."""
+        assert normalize_base_url("https://v1/") == "https://v1/v1"

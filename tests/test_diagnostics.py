@@ -69,10 +69,17 @@ def _make_coordinator(
     models_data: list[dict[str, Any]] | None = None,
     update_interval: timedelta = timedelta(hours=6),
     last_exception: Exception | None = None,
+    last_attempt_time: datetime | None = None,
 ) -> MagicMock:
     coord = MagicMock()
     coord.last_update_success = last_success
     coord.last_update_success_time = last_time
+    # ``last_update_attempt_time`` (v0.2.175+) defaults to mirror the success
+    # time so tests written before the attempt/success split continue to work
+    # without modification.  Tests that need attempt != success pass both.
+    coord.last_update_attempt_time = (
+        last_attempt_time if last_attempt_time is not None else last_time
+    )
     coord.chat_models = chat_models or [{"id": "gpt-5.5"}]
     coord.latest_chat_model_id = latest_id
     coord.data = {"models": models_data or [{"id": "gpt-5.5"}]}
@@ -198,7 +205,8 @@ class TestDiagnosticsCoordinatorInfo:
         - No sensitive extra keys are added (e.g. raw headers with the API key)
 
         Expected keys: last_update_success, last_update_success_time,
-        chat_models_count, latest_chat_model, models, update_interval, last_error."""
+        last_update_attempt_time (v0.2.175+), chat_models_count,
+        latest_chat_model, models, update_interval, last_error."""
         coord = _make_coordinator()
         entry = _make_entry()
         hass = _make_hass(coord, entry.entry_id)
@@ -208,6 +216,7 @@ class TestDiagnosticsCoordinatorInfo:
         expected_keys = {
             "last_update_success",
             "last_update_success_time",
+            "last_update_attempt_time",
             "chat_models_count",
             "latest_chat_model",
             "models",

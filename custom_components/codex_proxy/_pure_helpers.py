@@ -114,9 +114,15 @@ def normalize_base_url(url: str) -> str:
     first.  This function does not raise; it always returns a string.
     """
     trimmed = url.rstrip("/")
-    # Treat the URL as already-normalised if the last path segment is "v1".
-    # Using rsplit avoids a false match on a path containing "v1" elsewhere
-    # (e.g. "https://proxy.example.com/v1beta/responses" would not match).
-    if trimmed.rsplit("/", 1)[-1] == "v1":
+    # Treat the URL as already-normalised iff the last segment **of the path**
+    # (not the whole URL string) is exactly ``"v1"``.  We must parse the URL
+    # before checking, otherwise an absurd-but-legal hostname like
+    # ``https://v1`` would match by accident: ``"https://v1".rsplit("/", 1)``
+    # returns ``["https:", "", "v1"]``, the last element is ``"v1"``, and the
+    # old shortcut would return the URL unchanged — the coordinator would then
+    # build ``https://v1/models`` (no ``/v1`` prefix) and strict proxies 404.
+    parsed = urlparse(trimmed)
+    path_tail = parsed.path.rsplit("/", 1)[-1] if parsed.path else ""
+    if path_tail == "v1":
         return trimmed
     return f"{trimmed}/v1"

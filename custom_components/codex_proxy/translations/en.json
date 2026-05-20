@@ -40,7 +40,7 @@
       "bad_toml": "Could not parse the pasted TOML.",
       "required": "Required.",
       "invalid_url_scheme": "URL must start with http:// or https://.",
-      "invalid_url": "Enter a valid URL including the scheme (e.g. https://your-proxy.example.com).",
+      "invalid_url": "Enter a base URL with scheme and host only — no query (?key=value), fragment (#anchor), or credentials (user:pass@). Example: https://your-proxy.example.com",
       "toml_no_base_url": "TOML parsed OK but no base_url was found. Enter the proxy URL manually.",
       "rate_limited": "The proxy returned HTTP 429 — your API quota is exhausted. Wait before retrying."
     },
@@ -129,6 +129,9 @@
         "state_attributes": {
           "last_checked": {
             "name": "Last checked"
+          },
+          "last_success": {
+            "name": "Last success"
           },
           "latest_model": {
             "name": "Latest model"

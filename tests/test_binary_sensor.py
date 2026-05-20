@@ -228,12 +228,30 @@ def _make_sensor_with_coord(
     last_update_success_time=None,
     latest_chat_model_id=None,
     last_exception=None,
+    last_update_attempt_time=None,
 ) -> CodexProxyReachableSensor:
+    """Build a sensor wired to a mocked coordinator.
+
+    The ``last_update_attempt_time`` parameter (v0.2.175+) defaults to
+    ``last_update_success_time`` for backwards compatibility with tests
+    written before the attempt/success split.  This lets old tests continue
+    to assert on ``last_checked`` (now derived from attempt time) using
+    only the ``last_update_success_time`` kwarg they already pass."""
     from tests.ha_stubs import _CoordinatorEntity
 
     coord = MagicMock()
     coord.last_update_success = last_update_success
     coord.last_update_success_time = last_update_success_time
+    # If the caller didn't override attempt time, mirror the success time so
+    # ``last_checked`` keeps the v0.2.174-and-earlier semantic that
+    # "last_checked == last_successful_poll" in the absence of any
+    # intervening failure.  Tests covering attempt/success divergence pass
+    # both kwargs explicitly.
+    coord.last_update_attempt_time = (
+        last_update_attempt_time
+        if last_update_attempt_time is not None
+        else last_update_success_time
+    )
     coord.latest_chat_model_id = latest_chat_model_id
     coord.last_exception = last_exception
 
@@ -313,15 +331,16 @@ class TestExtraStateAttributes:
         assert "latest_model" in attrs
 
     def test_attrs_exact_keys_after_successful_poll(self) -> None:
-        """extra_state_attributes must contain exactly {'last_checked', 'latest_model'}
-        after a successful poll with both timestamp and model available.
+        """extra_state_attributes must contain exactly
+        {'last_checked', 'last_success', 'latest_model'} after a successful
+        poll (v0.2.175+ added ``last_success`` as a separate semantic).
 
-        test_both_attributes_present_after_successful_poll uses ``in`` checks
-        for both keys but does not verify the complete set.  A refactor that
-        accidentally included an extra key (e.g. ``last_error: None`` leaking
-        through on a healthy coordinator) would silently pass the existing test
-        but would expose implementation details in the HA frontend attribute table.
-        Exact set equality prevents that."""
+        The previous expected set was {'last_checked', 'latest_model'} —
+        before v0.2.175 there was only one timestamp; now ``last_checked``
+        means "attempt time" and ``last_success`` means "success time".
+        A refactor that accidentally re-merged them, or dropped ``last_error``
+        suppression on a healthy coordinator, would slip past an ``in``-only
+        check but trips exact set equality."""
         from datetime import datetime
 
         ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
@@ -332,9 +351,40 @@ class TestExtraStateAttributes:
         )
         attrs = s.extra_state_attributes
         assert attrs is not None
-        assert set(attrs.keys()) == {"last_checked", "latest_model"}, (
+        expected = {"last_checked", "last_success", "latest_model"}
+        assert set(attrs.keys()) == expected, (
             f"Unexpected keys in extra_state_attributes: "
-            f"{set(attrs.keys()) - {'last_checked', 'latest_model'}}"
+            f"got {set(attrs.keys())!r}, expected {expected!r}"
+        )
+
+    def test_last_checked_diverges_from_last_success_after_failure(self) -> None:
+        """v0.2.175 split adds genuine observability value: after a failed
+        poll, ``last_checked`` advances to the failed-attempt time while
+        ``last_success`` stays at the last good poll.  Operators reading
+        the attribute table can immediately tell "the integration is
+        actively retrying (last_checked > last_success)" vs "the
+        integration is dead silent (last_checked == last_success)"."""
+        from datetime import datetime
+
+        success_ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
+        attempt_ts = datetime(2026, 5, 19, 12, 6, 0, tzinfo=UTC)  # 6 min later
+        s = _make_sensor_with_coord(
+            last_update_success=False,
+            last_update_success_time=success_ts,
+            last_update_attempt_time=attempt_ts,
+            last_exception=Exception("HTTP 503"),
+        )
+        attrs = s.extra_state_attributes
+        assert attrs is not None
+        assert attrs["last_checked"] == attempt_ts.isoformat(), (
+            "last_checked must follow the most recent attempt, not the last success"
+        )
+        assert attrs["last_success"] == success_ts.isoformat(), (
+            "last_success must stay pinned at the most recent successful poll"
+        )
+        assert attrs["last_checked"] > attrs["last_success"], (
+            "After a failure the attempt timestamp must be strictly newer "
+            "than the success timestamp"
         )
 
     def test_only_latest_model_when_no_timestamp(self) -> None:

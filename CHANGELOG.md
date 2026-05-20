@@ -9,6 +9,21 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.175] - 2026-05-20
+### Added
+- `coordinator.last_update_attempt_time` — set at the start of every `_async_update_data` call (success or failure). Lets `binary_sensor.proxy_reachable.last_checked` honestly answer "when did the coordinator last try?" rather than "when did it last succeed?". The success timestamp is now exposed as a separate `last_success` attribute and as `last_update_success_time` in diagnostics, so operators reading either surface can distinguish "actively retrying" (`last_checked > last_success`) from "idle between scheduled refreshes" (`last_checked == last_success`).
+
+### Fixed
+- `_pure_helpers.normalize_base_url` now parses the URL with `urlparse` and inspects only the path component for the trailing `/v1`. The previous string-level `rsplit("/", 1)` would treat the bare hostname `https://v1` as already-normalised, leaving the coordinator to request `https://v1/models` (no `/v1` prefix). Real bug; vanishingly rare in practice.
+- Reworded the `invalid_url` translation message in all three files (`strings.json`, `translations/en.json`, `translations/zh-Hans.json`). The pre-v0.2.175 wording said "Enter a valid URL including the scheme" — confusing for users who triggered the error by pasting a URL that *already had* a scheme but also carried a query string, fragment, or credentials (v0.2.173 / v0.2.174 added those rejection rules). New copy enumerates the actual rejection reasons.
+- `CHANGELOG.md`: the v0.2.169 (ruff format) and v0.2.170 (`last_update_success_time`) entries were missing their `## [version]` headers — they floated between unrelated versions. Added the correct headers.
+
+### Tests
+- `tests/test_pure_helpers.py`: 2 new cases pin the `https://v1` bare-hostname fix.
+- `tests/test_binary_sensor.py`: `test_attrs_exact_keys_after_successful_poll` now expects `{last_checked, last_success, latest_model}`; new test `test_last_checked_diverges_from_last_success_after_failure` pins the attempt-vs-success semantic split — after a 503 failure following a successful poll, `last_checked` must be strictly newer than `last_success`.
+- `tests/test_diagnostics.py`: `test_coordinator_section_exact_keys` now expects the new `last_update_attempt_time` key.
+- `_make_sensor_with_coord` / `_make_coordinator` helpers default `last_update_attempt_time` to mirror `last_update_success_time`, so the +30 existing tests continue to work without modification.
+
 ## [0.2.174] - 2026-05-19
 ### Security
 - `validate_base_url` now rejects URLs containing userinfo (`https://user:pass@host`). Pre-v0.2.174 the URL was accepted and the credentials silently flowed into the persisted `entry.data["base_url"]`, the coordinator's exception messages, the `_LOGGER.debug` line in `_probe_proxy`, the (unredacted) `entry_data` block of `async_get_config_entry_diagnostics`, and the `binary_sensor.proxy_reachable.last_error` state attribute. Token-pool proxies frequently document credentialed URLs in onboarding docs, so a user pasting from such a doc would unknowingly exfiltrate their password into HA's persistent storage and any downloadable diagnostics file routinely shared in bug reports. **Credentials belong in `CONF_API_KEY`, never in the URL.**
@@ -56,13 +71,13 @@ This project uses [Semantic Versioning](https://semver.org/).
 ### Tests
 - `tests/test_pure_helpers.py::TestNormalizeBaseUrl`: eight cases covering bare host, already-normalised, trailing slash on either form, vendor prefix `/api/v1`, `v1beta` (substring, not match), localhost with port, and idempotency
 
-
+## [0.2.170] - 2026-05-19
 ### Fixed
 - `CodexModelCoordinator` now explicitly initialises and updates `last_update_success_time`. The base `DataUpdateCoordinator` in current HA Core does not expose this attribute, so `binary_sensor.proxy_reachable` was crashing with `AttributeError: 'CodexModelCoordinator' object has no attribute 'last_update_success_time'` when HA tried to add the entity at startup. The tests masked it because the `ha_stubs.DataUpdateCoordinator` stub pre-set the attribute; production HA didn't.
 ### Tests
 - `tests/ha_stubs.py`: stub `homeassistant.util.dt.utcnow`/`now` to return real `datetime` objects so coordinator-level timestamp tracking can be exercised without MagicMock noise
 
-
+## [0.2.169] - 2026-05-19
 ### Changed
 - Apply `ruff format` across `custom_components/codex_proxy/` and `tests/` to satisfy the format-check step in CI. Pure whitespace/line-break normalisation; no behavioural changes
 

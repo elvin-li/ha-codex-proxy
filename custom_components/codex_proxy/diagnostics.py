@@ -32,6 +32,16 @@ async def async_get_config_entry_diagnostics(
             if coordinator.last_update_success_time
             else None
         ),
+        # ``last_update_attempt_time`` (added v0.2.175) is set at the START of
+        # every poll, so comparing it to ``last_update_success_time`` tells
+        # operators reading the diagnostics whether the coordinator is
+        # currently retrying after a failure (attempt > success) or simply
+        # idle between scheduled refreshes (attempt == success).
+        "last_update_attempt_time": (
+            coordinator.last_update_attempt_time.isoformat()
+            if coordinator.last_update_attempt_time
+            else None
+        ),
         # str() of a timedelta produces a human-readable form such as "6:00:00"
         # that is easy to copy into a bug report or compare with MODEL_REFRESH_INTERVAL.
         "update_interval": str(coordinator.update_interval),

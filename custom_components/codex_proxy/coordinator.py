@@ -102,6 +102,16 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # between coordinator construction and the first ``_async_update_data``
         # call.
         self.last_update_success_time: datetime | None = None
+        # ``last_update_attempt_time`` is updated at the START of every
+        # ``_async_update_data`` call (success or failure).  Without this,
+        # the ``last_checked`` attribute on ``binary_sensor.proxy_reachable``
+        # — and the corresponding field in diagnostics downloads — would
+        # report the time of the last *successful* poll forever after a
+        # failure, making it impossible for operators to tell when polling
+        # last actually happened.  Two timestamps with different semantics:
+        # ``_attempt_time`` for "did the coordinator try recently?",
+        # ``_success_time`` for "did anything succeed recently?".
+        self.last_update_attempt_time: datetime | None = None
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch ``/v1/models`` and return a normalised ``{"models": [...]}`` dict.
@@ -117,6 +127,12 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         The normalised model list is sorted by ``(-created, id)`` so it is
         deterministic even when multiple models share the same timestamp.
         """
+        # Record the attempt timestamp *before* any I/O so a network call that
+        # blocks for the full timeout still gets a "we tried" timestamp.  The
+        # success timestamp (set after the loop succeeds) is what semantically
+        # answers "is the proxy healthy"; this attempt timestamp answers
+        # "is the coordinator alive".
+        self.last_update_attempt_time = dt_util.utcnow()
         last_err: Exception | None = None
         for attempt in range(COORDINATOR_MAX_RETRIES):
             try:
