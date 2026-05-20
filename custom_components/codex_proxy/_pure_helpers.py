@@ -29,11 +29,23 @@ def parse_codex_toml(text: str) -> dict[str, Any]:
         # Codex CLI's disable_response_storage = true ↔ store_responses=False
         out["store_responses"] = not bool(cfg["disable_response_storage"])
     providers = cfg.get("model_providers")
+    # TOML allows two forms for "a collection of provider tables":
+    # - Named tables: ``[model_providers.mypool]`` → cfg["model_providers"] is dict
+    # - Array of tables: ``[[model_providers]]`` → cfg["model_providers"] is list
+    # Codex CLI uses the named-table form, but a user pasting from third-party
+    # docs or hand-rolling their TOML could end up with the array form.  Pre-
+    # v0.2.176 only the dict form was handled and the list form silently
+    # produced an empty result that surfaced as ``toml_no_base_url`` with no
+    # hint that the TOML structure itself was the issue.
+    iter_providers: list = []
     if isinstance(providers, dict):
-        for provider in providers.values():
-            if isinstance(provider, dict) and provider.get("base_url"):
-                out["base_url"] = str(provider["base_url"]).strip().rstrip("/")
-                break
+        iter_providers = list(providers.values())
+    elif isinstance(providers, list):
+        iter_providers = providers
+    for provider in iter_providers:
+        if isinstance(provider, dict) and provider.get("base_url"):
+            out["base_url"] = str(provider["base_url"]).strip().rstrip("/")
+            break
     return out
 
 

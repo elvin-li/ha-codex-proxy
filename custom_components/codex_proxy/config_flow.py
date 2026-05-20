@@ -512,9 +512,16 @@ class _LLMSubentryFlowHandlerBase(ConfigSubentryFlow):
                     keys["store_responses"],
                     default=bool(existing.get(keys["store_responses"], DEFAULT_STORE)),
                 ): BooleanSelector(),
+                # ``description={"suggested_value": ...}`` (rather than
+                # ``default=...``) pre-fills the field for visual
+                # convenience but still accepts an empty submission.  With
+                # the previous ``default=`` form, voluptuous re-applied the
+                # old value whenever the user blanked the field, making it
+                # impossible to clear a previously-set prompt through the
+                # reconfigure UI without typing whitespace as a workaround.
                 vol.Optional(
                     keys["prompt"],
-                    default=existing.get(keys["prompt"], DEFAULT_PROMPT),
+                    description={"suggested_value": existing.get(keys["prompt"], DEFAULT_PROMPT)},
                 ): TemplateSelector(),
             }
         )

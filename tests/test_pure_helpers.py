@@ -177,6 +177,44 @@ base_url = "  https://proxy.example.com  "
         result = parse_codex_toml(toml)
         assert "base_url" not in result
 
+    def test_array_of_tables_model_providers_form_accepted(self) -> None:
+        """Round-5 audit Finding #4 regression: TOML allows
+        ``[[model_providers]]`` (array of tables) as well as
+        ``[model_providers.named]`` (named tables).  Codex CLI uses named
+        tables but a user copying from third-party docs could end up with
+        the array form.  Pre-v0.2.176 the array form silently returned
+        an empty dict, surfacing as ``toml_no_base_url`` with no hint.
+        Now both forms produce the same base_url extraction."""
+        toml = """
+[[model_providers]]
+name = "mypool"
+base_url = "https://from-array.example.com"
+"""
+        result = parse_codex_toml(toml)
+        assert result.get("base_url") == "https://from-array.example.com", (
+            "Array-of-tables [[model_providers]] form must extract base_url "
+            "just like the named-table [model_providers.foo] form"
+        )
+
+    def test_array_of_tables_takes_first_provider_with_url(self) -> None:
+        """When the array form contains multiple providers, the first one
+        with a ``base_url`` wins — same semantics as the dict form's
+        first-value-wins iteration."""
+        toml = """
+[[model_providers]]
+name = "no_url"
+
+[[model_providers]]
+name = "first_with_url"
+base_url = "https://first.example.com"
+
+[[model_providers]]
+name = "second_with_url"
+base_url = "https://second.example.com"
+"""
+        result = parse_codex_toml(toml)
+        assert result.get("base_url") == "https://first.example.com"
+
     def test_reasoning_effort_with_whitespace_stripped(self) -> None:
         """model_reasoning_effort values with extra whitespace must be stripped
         (consistent with how model is handled).

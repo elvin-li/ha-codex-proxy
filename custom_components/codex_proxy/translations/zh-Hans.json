@@ -128,10 +128,10 @@
         "name": "反代可达",
         "state_attributes": {
           "last_checked": {
-            "name": "上次检测时间"
-          },
-          "last_success": {
             "name": "上次成功时间"
+          },
+          "last_attempt": {
+            "name": "上次尝试时间"
           },
           "latest_model": {
             "name": "最新模型"

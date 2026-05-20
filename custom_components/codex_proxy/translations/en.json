@@ -130,8 +130,8 @@
           "last_checked": {
             "name": "Last checked"
           },
-          "last_success": {
-            "name": "Last success"
+          "last_attempt": {
+            "name": "Last attempt"
           },
           "latest_model": {
             "name": "Latest model"

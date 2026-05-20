@@ -81,15 +81,25 @@ class TestManifestValidity:
         )
 
     def test_homeassistant_min_version_exact_value(self) -> None:
-        """homeassistant must be exactly '2024.10.0'.
+        """homeassistant must be exactly '2025.10.0'.
 
-        test_homeassistant_min_version_present only checks the format; a bump
-        to '2025.1.0' would pass the regex but raise the minimum HA version and
-        break users still on 2024.10.x without a deliberate compatibility review.
-        Exact equality makes such a bump an explicit, reviewable change."""
-        assert _load()["homeassistant"] == "2024.10.0", (
-            f"homeassistant min version must be '2024.10.0', got {_load()['homeassistant']!r} — "
-            "bumping this drops support for older HA versions without a compatibility review"
+        Round-5 audit Finding #1+#2 (v0.2.176): the integration imports
+        ``ConfigSubentryFlow`` / ``SubentryFlowResult`` / ``ConfigSubentry``
+        (introduced in HA 2025.3) and ``OpenAITaskEntity`` /
+        ``Platform.AI_TASK`` (introduced in HA 2025.10).  The pre-v0.2.176
+        manifest claimed ``2024.10.0`` as the minimum, which meant HA
+        installs between 2024.10 and 2025.10 would silently ``ImportError``
+        at platform setup time.  Bumping to 2025.10 reflects the actual
+        symbol provenance.
+
+        Exact equality (rather than a regex bound check) makes any future
+        bump an explicit, reviewable change — the same rationale as the
+        original pinning."""
+        assert _load()["homeassistant"] == "2025.10.0", (
+            f"homeassistant min version must be '2025.10.0', got {_load()['homeassistant']!r} — "
+            "bumping or lowering this changes the supported HA version range; verify "
+            "via 'docker exec homeassistant python3 -c \"from homeassistant.config_entries "
+            "import ConfigSubentryFlow\"' against the target version before changing"
         )
 
     def test_codeowners_is_list(self) -> None:

@@ -9,6 +9,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.176] - 2026-05-20
+### Fixed
+- **Manifest `homeassistant` minimum bumped from `2024.10.0` to `2025.10.0`** (round-5 audit Critical #1+#2). The integration imports `ConfigSubentryFlow` / `SubentryFlowResult` / `ConfigSubentry` (HA 2025.3+) at module load and `OpenAITaskEntity` / `Platform.AI_TASK` (HA 2025.10+) at platform setup. Pre-v0.2.176 the manifest claimed support for HA 2024.10+, so any user on HA 2024.10 through 2025.9 would hit `ImportError` at integration load. The new minimum reflects the actual symbol provenance.
+- **Reverted v0.2.175's `last_checked` semantic flip** (round-5 audit Minor #6). v0.2.175 redefined `binary_sensor.proxy_reachable.last_checked` from "last successful poll" to "last poll attempt" — silently breaking any user automation that read it as a health signal (e.g. "alert when no successful poll in 6h"). v0.2.176 restores the pre-v0.2.175 semantic. The new "when did the coordinator last try" attribute is now exposed as `last_attempt` instead of the briefly-released `last_success` name.
+- `_pure_helpers.parse_codex_toml` now accepts both `[model_providers.named]` (named tables) and `[[model_providers]]` (array of tables) — pre-v0.2.176 the array form silently produced an empty result that surfaced as `toml_no_base_url` with no hint that the TOML structure itself was the issue (round-5 audit Minor #4).
+- Reconfigure form's `prompt` field now uses `description={"suggested_value": ...}` rather than `default=` so users can blank out a previously-set system prompt without typing whitespace as a workaround (round-5 audit Minor #5).
+
+### Tests
+- `tests/test_manifest.py::test_homeassistant_min_version_exact_value` updated to pin `2025.10.0`. The assertion message now references the actual symbol-provenance reason (rather than the prior generic "compatibility review" rationale).
+- `tests/test_binary_sensor.py::test_attrs_exact_keys_after_successful_poll` updated to expect `{last_checked, last_attempt, latest_model}`. `test_last_checked_diverges_from_last_success_after_failure` renamed to `test_last_checked_preserves_backward_compat_semantic` and asserts `last_checked == success_ts`, `last_attempt == attempt_ts`, and `last_attempt > last_checked`.
+- `tests/test_pure_helpers.py`: 2 new cases pin the `[[model_providers]]` array-of-tables fix (basic case + first-with-url-wins iteration).
+
 ## [0.2.175] - 2026-05-20
 ### Added
 - `coordinator.last_update_attempt_time` — set at the start of every `_async_update_data` call (success or failure). Lets `binary_sensor.proxy_reachable.last_checked` honestly answer "when did the coordinator last try?" rather than "when did it last succeed?". The success timestamp is now exposed as a separate `last_success` attribute and as `last_update_success_time` in diagnostics, so operators reading either surface can distinguish "actively retrying" (`last_checked > last_success`) from "idle between scheduled refreshes" (`last_checked == last_success`).

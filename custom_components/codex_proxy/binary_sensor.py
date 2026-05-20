@@ -80,16 +80,25 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose last_checked, last_success, latest_model, and last_error.
+        """Expose last_checked, last_attempt, latest_model, and last_error.
 
-        * ``last_checked`` — ISO-8601 of the most recent poll *attempt*
-          (success or failure).  Answers "when did the coordinator last try?"
-          Absent until the first poll attempt completes.
-        * ``last_success`` — ISO-8601 of the most recent *successful* poll.
-          Answers "when was the proxy last known good?"  Absent until the
-          first successful poll; lags ``last_checked`` once the proxy starts
-          failing.  Operators comparing the two timestamps can tell whether
-          the integration is actively retrying or stuck.
+        ``last_checked`` keeps its pre-v0.2.175 meaning ("last *successful*
+        poll") for backward compatibility — flipping it to "last attempt"
+        in v0.2.175 silently broke any automation that read it as a health
+        signal (``{{ as_timestamp(state_attr(..., 'last_checked')) < now() - 21600 }}``
+        no longer fired when the proxy went down but kept retrying).
+        v0.2.176 reverts that flip and adds a separate ``last_attempt``
+        attribute for users who genuinely want the "when did the coordinator
+        last try" signal.
+
+        * ``last_checked`` — ISO-8601 of the most recent **successful** poll
+          (same semantics as v0.2.169-174).  Absent until the first
+          successful poll.
+        * ``last_attempt`` — ISO-8601 of the most recent poll *attempt*
+          (success or failure).  Lags ``last_checked`` once the proxy
+          starts failing — operators comparing the two can tell whether
+          the integration is actively retrying or stuck.  Absent until
+          the first poll attempt completes.
         * ``latest_model`` — id of the newest chat-capable model known to
           the coordinator; absent until the first successful poll.
         * ``last_error`` — ``str(coordinator.last_exception)`` when the most
@@ -101,12 +110,15 @@ class CodexProxyReachableSensor(CoordinatorEntity[CodexModelCoordinator], Binary
         Returns ``None`` (no attributes) when none of the four have data yet.
         """
         attrs: dict[str, Any] = {}
-        attempt = self.coordinator.last_update_attempt_time
-        if attempt is not None:
-            attrs["last_checked"] = attempt.isoformat()
+        # ``last_checked`` preserves the pre-v0.2.175 semantic — last
+        # *successful* poll — so user automations written against earlier
+        # versions continue to work after upgrade.  See class docstring.
         success = self.coordinator.last_update_success_time
         if success is not None:
-            attrs["last_success"] = success.isoformat()
+            attrs["last_checked"] = success.isoformat()
+        attempt = self.coordinator.last_update_attempt_time
+        if attempt is not None:
+            attrs["last_attempt"] = attempt.isoformat()
         latest = self.coordinator.latest_chat_model_id
         if latest is not None:
             attrs["latest_model"] = latest

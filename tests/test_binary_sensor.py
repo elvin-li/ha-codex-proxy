@@ -332,15 +332,15 @@ class TestExtraStateAttributes:
 
     def test_attrs_exact_keys_after_successful_poll(self) -> None:
         """extra_state_attributes must contain exactly
-        {'last_checked', 'last_success', 'latest_model'} after a successful
-        poll (v0.2.175+ added ``last_success`` as a separate semantic).
+        {'last_checked', 'last_attempt', 'latest_model'} after a successful
+        poll.
 
-        The previous expected set was {'last_checked', 'latest_model'} —
-        before v0.2.175 there was only one timestamp; now ``last_checked``
-        means "attempt time" and ``last_success`` means "success time".
-        A refactor that accidentally re-merged them, or dropped ``last_error``
-        suppression on a healthy coordinator, would slip past an ``in``-only
-        check but trips exact set equality."""
+        v0.2.176 reverted the v0.2.175 semantic flip of ``last_checked``
+        (backward-compat for user automations) and added ``last_attempt``
+        as the new "when did the coordinator last try" signal.  A refactor
+        that re-merged the two attributes or dropped the suppression of
+        ``last_error`` on a healthy coordinator would slip past an
+        ``in``-only check but trips exact set equality."""
         from datetime import datetime
 
         ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
@@ -351,19 +351,21 @@ class TestExtraStateAttributes:
         )
         attrs = s.extra_state_attributes
         assert attrs is not None
-        expected = {"last_checked", "last_success", "latest_model"}
+        expected = {"last_checked", "last_attempt", "latest_model"}
         assert set(attrs.keys()) == expected, (
             f"Unexpected keys in extra_state_attributes: "
             f"got {set(attrs.keys())!r}, expected {expected!r}"
         )
 
-    def test_last_checked_diverges_from_last_success_after_failure(self) -> None:
-        """v0.2.175 split adds genuine observability value: after a failed
-        poll, ``last_checked`` advances to the failed-attempt time while
-        ``last_success`` stays at the last good poll.  Operators reading
-        the attribute table can immediately tell "the integration is
-        actively retrying (last_checked > last_success)" vs "the
-        integration is dead silent (last_checked == last_success)"."""
+    def test_last_checked_preserves_backward_compat_semantic(self) -> None:
+        """``last_checked`` is the *success* timestamp — same semantic as
+        v0.2.169-174, restored in v0.2.176 after the v0.2.175 flip was
+        identified as a silent breaking change for user automations.
+
+        Before this change automations like ``{{ as_timestamp(state_attr(
+        'binary_sensor.proxy_reachable', 'last_checked')) < now() - 21600
+        }}`` (alert when no successful poll in 6h) silently broke because
+        ``last_checked`` advanced on every failed retry as well."""
         from datetime import datetime
 
         success_ts = datetime(2026, 5, 19, 12, 0, 0, tzinfo=UTC)
@@ -376,15 +378,19 @@ class TestExtraStateAttributes:
         )
         attrs = s.extra_state_attributes
         assert attrs is not None
-        assert attrs["last_checked"] == attempt_ts.isoformat(), (
-            "last_checked must follow the most recent attempt, not the last success"
+        assert attrs["last_checked"] == success_ts.isoformat(), (
+            "last_checked must report the most-recent SUCCESS timestamp "
+            "(backward-compat with pre-v0.2.175 automations).  If the "
+            "value follows the failed-attempt time instead, the v0.2.175 "
+            "semantic flip has re-leaked into a release."
         )
-        assert attrs["last_success"] == success_ts.isoformat(), (
-            "last_success must stay pinned at the most recent successful poll"
+        assert attrs["last_attempt"] == attempt_ts.isoformat(), (
+            "last_attempt must report the most-recent ATTEMPT timestamp"
         )
-        assert attrs["last_checked"] > attrs["last_success"], (
+        assert attrs["last_attempt"] > attrs["last_checked"], (
             "After a failure the attempt timestamp must be strictly newer "
-            "than the success timestamp"
+            "than the success timestamp — operators reading the attribute "
+            "table use this gap to detect 'actively retrying' state"
         )
 
     def test_only_latest_model_when_no_timestamp(self) -> None:
