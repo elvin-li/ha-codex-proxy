@@ -66,8 +66,10 @@ wire_api = "responses"
 1. 设置 → 设备与服务 → 添加集成 → 搜索 **Codex Token Pool**。
 2. 填写：
    - **API Key** — 反代发的 token（如 `sk-...`）
-   - **反代基础 URL** — 例如 `https://your-codex-pool.example.com`（不要加 `/v1`）
+   - **反代基础 URL** — 例如 `https://your-codex-pool.example.com`；带不带 `/v1` 都行（v0.2.171+ 会自动归一到 `/v1` 形式，因为 OpenAI SDK 拼路径时需要）
    - **默认模型** — 默认 `gpt-5.5`
+
+> **注意：** URL 里**不要带凭证**（如 `https://user:pass@host`），凭证应该写在 API Key 字段里。带 `userinfo` 的 URL 会被拒绝（v0.2.174+），因为 userinfo 会泄露到日志、诊断报告和实体状态属性中。同样，URL 里也不要带 `?query` 或 `#fragment`。
 
 提交后自动创建：
 - **Codex 号池对话** — 对话代理子代理
@@ -152,9 +154,15 @@ wire_api = "responses"
 | `cannot_connect` | 反代 URL 或 HA 出网有问题，`curl -v <base_url>/v1/models` 测试 |
 | `unknown_model` | 反代不识别该模型，换 `/v1/models` 里出现的 id |
 | `invalid_url_scheme` | URL 必须以 `http://` 或 `https://` 开头 |
+| `invalid_url` | URL 不能包含凭证（`user:pass@`）、查询串（`?x=1`）或锚点（`#section`）—— 凭证用 API Key 字段 |
 | `bad_toml` | 粘贴的 config.toml 格式有误，检查语法 |
 | `toml_no_base_url` | TOML 解析成功但没找到 `base_url`，手动填写反代地址 |
+| `rate_limited` | 反代返回 429，号池配额耗尽或单 token 限速；稍后重试或换 token |
+| `unknown` | 探测时遇到未分类异常（SSL、代理握手等），查 HA 日志 `custom_components.codex_proxy` |
 | 对话能开始但卡住 | 查 HA 日志 `custom_components.codex_proxy`；5xx 会自动重试 |
+| 对话"Unable to get response" + 日志 `Last content is not AssistantContent` | 反代严格要求 `/v1/responses`；v0.2.171+ 已自动归一，旧条目重启会被懒迁移；若仍报错，从「重新配置」走一遍 |
+| `setup_retry` 且实体 unavailable | 启动时反代不可达；v0.2.172+ 会兜底注册实体并周期重试，不再让整个条目卡住 |
+| 重新配置流程报 "already configured" | v0.2.172 之前的 bug，已修复；如还遇到，删除条目重建（会保留子代理子代理的内置默认值） |
 
 ### 反代独立 smoke test
 
