@@ -132,7 +132,7 @@ wire_api = "responses"
 
 | 实体 | 类型 | 说明 |
 |---|---|---|
-| `binary_sensor.codex_*_proxy_reachable` | 连通性诊断 | 反代可达时为 `on`，最近一次 `/v1/models` 拉取失败时为 `off`；`extra_state_attributes` 包含 `last_checked`（上次成功检查时间）和 `latest_model`（当前最新对话模型 ID） |
+| `binary_sensor.codex_*_proxy_reachable` | 连通性诊断 | 反代可达时为 `on`，最近一次 `/v1/models` 拉取失败时为 `off`；`extra_state_attributes` 包含 `last_checked`（上次尝试时间）、`last_success`（上次成功时间）、`latest_model`（当前最新对话模型 ID）、以及失败时的 `last_error` |
 | `button.codex_*_refresh_models` | 操作 | 立即触发一次 `/v1/models` 刷新，无需等待 6 小时周期 |
 | `update.codex_*_model_update` | 更新 | 反代出现新模型时显示 "有更新"，点安装即切换子代理模型 |
 
@@ -143,6 +143,34 @@ wire_api = "responses"
 | `sensor.codex_*_chat_model_count` | 传感器 | 反代当前可用对话模型数量 |
 | `sensor.codex_*_last_model_refresh` | 传感器 | 上次 `/v1/models` 成功刷新的时间戳 |
 | `select.codex_*_model_select` | 选择 | 从下拉直接切换子代理使用的模型（适合仪表盘操作） |
+
+### 自动化示例：反代失联告警
+
+利用 `last_checked` 和 `last_success` 的语义差，可以精确区分"反代正在重试"和"完全死了"。
+例如：超过 12 小时没有成功就推送通知。
+
+```yaml
+automation:
+  - alias: "Codex 反代失联超过 12 小时"
+    trigger:
+      - platform: template
+        value_template: >-
+          {% set ls = state_attr('binary_sensor.codex_hao_chi_proxy_reachable', 'last_success') %}
+          {{ ls is not none and
+             (now() - as_datetime(ls)).total_seconds() > 43200 }}
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "Codex 反代失联"
+          message: >-
+            反代已连续 {{
+              ((now() - as_datetime(state_attr('binary_sensor.codex_hao_chi_proxy_reachable', 'last_success'))).total_seconds() / 3600) | round(1)
+            }} 小时未成功。最近错误：{{
+              state_attr('binary_sensor.codex_hao_chi_proxy_reachable', 'last_error')
+            }}
+```
+
+要做"反代刚恢复"的告警，监听 `binary_sensor.*_proxy_reachable` 从 `off` → `on` 的 trigger 即可。
 
 ---
 
