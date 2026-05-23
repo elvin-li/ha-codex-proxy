@@ -132,7 +132,18 @@ class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEnt
     # ------------------------------------------------------------------
 
     async def async_select_option(self, option: str) -> None:
-        """Update the subentry's model and reload the config entry."""
+        """Update the subentry's model and reload the config entry.
+
+        The reload is scheduled via ``async_create_task`` rather than awaited
+        directly: ``async_reload`` tears down every platform attached to the
+        entry — *including this very select entity*.  Awaiting from inside
+        the entity that's being destroyed is a re-entrant pattern HA tolerates
+        today (the side-effect of ``async_update_subentry`` already landed
+        before the await), but explicitly documented as "not safe to await
+        from a teardown context" in HA Core.  Detaching the reload into a
+        background task keeps the entity's call frame independent of the
+        reload's lifecycle.
+        """
         old_model = self.current_option
         if option == old_model:
             return
@@ -145,7 +156,7 @@ class CodexModelSelectEntity(CoordinatorEntity[CodexModelCoordinator], SelectEnt
             old_model,
             option,
         )
-        await self.hass.config_entries.async_reload(self._entry.entry_id)
+        self.hass.async_create_task(self.hass.config_entries.async_reload(self._entry.entry_id))
 
     @callback
     def _handle_coordinator_update(self) -> None:

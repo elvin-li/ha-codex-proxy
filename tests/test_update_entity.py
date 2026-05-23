@@ -55,6 +55,15 @@ def _make_entity(
     entity.coordinator = _make_coordinator(latest)
     entity.hass = MagicMock()
     entity.hass.config_entries.async_reload = AsyncMock()
+
+    # v0.2.177+ schedules reload via async_create_task to avoid awaiting our
+    # own teardown.  The helper closes the coroutine returned by AsyncMock
+    # so the test runner doesn't emit "coroutine was never awaited" warnings.
+    def _swallow(coro):
+        coro.close()
+        return MagicMock()
+
+    entity.hass.async_create_task = MagicMock(side_effect=_swallow)
     return entity
 
 
@@ -252,10 +261,17 @@ class TestAsyncInstall:
 
     @pytest.mark.asyncio
     async def test_install_updates_subentry_and_reloads(self) -> None:
+        """v0.2.177 detaches the reload into ``hass.async_create_task`` to
+        avoid awaiting our own teardown (same rationale as
+        ``select.async_select_option``).  ``async_reload`` is still invoked
+        synchronously — to build the coroutine that gets passed to
+        ``async_create_task`` — so ``called_once_with`` is the right
+        assertion (not ``awaited_once_with``)."""
         entity = _make_entity("gpt-5.5", "gpt-5.6")
         await entity.async_install(version="gpt-5.6", backup=False)
         entity.hass.config_entries.async_update_subentry.assert_called_once()
-        entity.hass.config_entries.async_reload.assert_awaited_once_with("entry-1")
+        entity.hass.config_entries.async_reload.assert_called_once_with("entry-1")
+        entity.hass.async_create_task.assert_called_once()
         # Verify the correct data key is written into the subentry
         _, call_kwargs = entity.hass.config_entries.async_update_subentry.call_args
         new_data = call_kwargs.get("data", {})
@@ -268,7 +284,9 @@ class TestAsyncInstall:
         entity = _make_entity("gpt-5.5", "gpt-5.6")
         await entity.async_install(version=None, backup=False)
         entity.hass.config_entries.async_update_subentry.assert_called_once()
-        entity.hass.config_entries.async_reload.assert_awaited_once()
+        # Same assertion shape change as test_install_updates_subentry_and_reloads:
+        # reload is scheduled via async_create_task, not awaited inline.
+        entity.hass.config_entries.async_reload.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_install_noop_when_no_target_and_no_latest(self) -> None:

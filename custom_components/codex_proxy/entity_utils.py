@@ -25,12 +25,19 @@ def build_codex_device_info(subentry: ConfigSubentry, chat_model_key: str) -> dr
     Both conversation and AI-task entities use this so any future change
     only needs to happen in one place.  ``sw_version`` is populated from the
     manifest so the device card in HA always shows the installed version.
+
+    ``model`` collapses falsy ``chat_model`` values (``None`` or ``""``) to
+    ``DEFAULT_MODEL`` — consistency with ``select.current_option`` and
+    ``update.installed_version`` (both already handle this in v0.2.173+).
+    Without the ``or`` fallback, a subentry created via reconfigure with an
+    explicitly-blanked model field would surface as an empty model line in
+    HA's device card.
     """
     return dr.DeviceInfo(
         identifiers={(DOMAIN, subentry.subentry_id)},
         name=subentry.title,
         manufacturer="OpenAI Codex Token Pool",
-        model=subentry.data.get(chat_model_key, DEFAULT_MODEL),
+        model=subentry.data.get(chat_model_key) or DEFAULT_MODEL,
         entry_type=dr.DeviceEntryType.SERVICE,
         sw_version=INTEGRATION_VERSION,
     )

@@ -70,6 +70,15 @@ def _make_entity(
     entity._attr_device_info = {}
     entity.hass = MagicMock()
     entity.hass.config_entries.async_reload = AsyncMock()
+
+    # ``async_create_task`` is now used to schedule the reload (v0.2.177+);
+    # the wrapper closes the coroutine returned by ``async_reload`` so the
+    # test runner does not see a "coroutine was never awaited" warning.
+    def _swallow(coro):
+        coro.close()
+        return MagicMock()
+
+    entity.hass.async_create_task = MagicMock(side_effect=_swallow)
     return entity
 
 
@@ -188,9 +197,16 @@ class TestAsyncSelectOption:
 
     @pytest.mark.asyncio
     async def test_reloads_entry_on_change(self) -> None:
+        """v0.2.177 detaches the reload into ``hass.async_create_task`` so
+        we are not awaiting our own teardown from inside the entity.  The
+        reload call still happens — it's just scheduled, not awaited.
+        ``async_reload`` is invoked synchronously to build the coroutine
+        that gets passed to ``async_create_task``, so ``called_once_with``
+        is the right assertion (not ``awaited_once_with``)."""
         entity = _make_entity("gpt-5.5", ["gpt-5.5", "gpt-5.6"])
         await entity.async_select_option("gpt-5.6")
-        entity.hass.config_entries.async_reload.assert_awaited_once_with("entry-1")
+        entity.hass.config_entries.async_reload.assert_called_once_with("entry-1")
+        entity.hass.async_create_task.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_update_subentry_receives_new_model(self) -> None:

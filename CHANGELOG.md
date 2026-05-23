@@ -9,6 +9,19 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.177] - 2026-05-20
+### Fixed
+- `select.async_select_option` and `update.async_install` now schedule the post-mutation `async_reload` via `hass.async_create_task` instead of `await`-ing it directly (round-6 audit Finding #4). `async_reload` tears down every platform attached to the entry — *including the very entity that called it*. Awaiting one's own destruction is a re-entrant pattern HA tolerates today (the `async_update_subentry` side-effect lands before the await) but documents as "not safe to await from a teardown context". Detaching the reload into a background task keeps the calling entity's frame independent of the reload lifecycle without changing observable behaviour: the model swap and the reload still happen in order.
+- `entity_utils.build_codex_device_info` now collapses falsy (`None` or `""`) `chat_model` values to `DEFAULT_MODEL`, matching the `or DEFAULT_MODEL` defence added to `select.current_option` and `update.installed_version` in v0.2.173. Without this, a subentry whose `chat_model` was explicitly blanked via the reconfigure form would render an empty `model` line in HA's device card.
+
+### Audit verdict
+Round 6 was performance-focused. **No meaningful performance bottlenecks found.** The hot paths (`coordinator.chat_models` property, model-list filter loop, header dict re-use) all run at µs scale and only on coordinator-update cadence (6h). Test suite runs in <1s; slowest test is 20ms. The codebase is in genuinely good shape after five prior audit rounds and an attempt at micro-optimisation would add code complexity without measurable benefit.
+
+### Tests
+- `tests/test_select.py::test_reloads_entry_on_change` updated to assert `async_reload.assert_called_once_with(...)` plus `async_create_task.assert_called_once()` — the reload is invoked synchronously to build the coroutine but no longer awaited inline.
+- `tests/test_update_entity.py::test_install_updates_subentry_and_reloads` and `test_install_uses_latest_when_version_is_none`: same assertion-shape change.
+- `_make_entity` helpers in both files install a `_swallow` shim on `hass.async_create_task` that closes the coroutine to prevent "coroutine was never awaited" RuntimeWarnings during the test run.
+
 ## [0.2.176] - 2026-05-20
 ### Fixed
 - **Manifest `homeassistant` minimum bumped from `2024.10.0` to `2025.10.0`** (round-5 audit Critical #1+#2). The integration imports `ConfigSubentryFlow` / `SubentryFlowResult` / `ConfigSubentry` (HA 2025.3+) at module load and `OpenAITaskEntity` / `Platform.AI_TASK` (HA 2025.10+) at platform setup. Pre-v0.2.176 the manifest claimed support for HA 2024.10+, so any user on HA 2024.10 through 2025.9 would hit `ImportError` at integration load. The new minimum reflects the actual symbol provenance.

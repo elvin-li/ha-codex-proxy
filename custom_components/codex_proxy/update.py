@@ -134,7 +134,15 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
 
     async def async_install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
         """Switch the subentry's model to the requested (or latest) version
-        and reload the config entry."""
+        and reload the config entry.
+
+        The reload is scheduled via ``async_create_task`` rather than awaited
+        directly — same rationale as ``select.async_select_option``:
+        ``async_reload`` destroys this very entity, so awaiting from inside
+        it is re-entrant.  Detaching to a task keeps our call frame
+        independent of the reload's lifecycle while preserving the
+        observable effect (model swap + reload happen in order).
+        """
         target = version or self.coordinator.latest_chat_model_id
         if not target or target == self.installed_version:
             return
@@ -146,7 +154,7 @@ class CodexModelUpdate(CoordinatorEntity[CodexModelCoordinator], UpdateEntity):
         )
         new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: target}
         self.hass.config_entries.async_update_subentry(self._entry, self._subentry, data=new_data)
-        await self.hass.config_entries.async_reload(self._entry.entry_id)
+        self.hass.async_create_task(self.hass.config_entries.async_reload(self._entry.entry_id))
 
     @callback
     def _handle_coordinator_update(self) -> None:
