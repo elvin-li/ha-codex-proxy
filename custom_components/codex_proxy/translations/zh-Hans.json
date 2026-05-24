@@ -15,6 +15,14 @@
           "model": "初始模型 ID，安装后可在对话代理选项里随时切换。",
           "toml_config": "如果你已经在用 Codex CLI，把整段 config.toml 贴进来，base_url / model / 推理强度 / 存储开关会自动填好。"
         }
+      },
+      "reconfigure": {
+        "title": "更新 Codex 号池凭据",
+        "description": "轮换 API Key，或把本条目迁到其它反代地址。保存前会自动再探测一次反代。",
+        "data": {
+          "api_key": "API Key",
+          "base_url": "反代基础 URL"
+        }
       }
     },
     "error": {
@@ -26,7 +34,8 @@
       "required": "必填。"
     },
     "abort": {
-      "already_configured": "该反代已经配置过。"
+      "already_configured": "该反代已经配置过。",
+      "reconfigure_successful": "凭据已更新。"
     }
   },
   "config_subentries": {
@@ -43,11 +52,13 @@
             "chat_model": "模型",
             "reasoning_effort": "推理强度",
             "store_responses": "在反代上保留响应",
+            "llm_hass_api": "Home Assistant LLM API",
             "prompt": "系统提示词"
           },
           "data_description": {
             "store_responses": "关闭等同 Codex CLI 的 disable_response_storage = true。",
-            "reasoning_effort": "xhigh 为 Codex 支持的最高推理强度；medium 更快。"
+            "reasoning_effort": "xhigh 为 Codex 支持的最高推理强度；medium 更快。",
+            "llm_hass_api": "挂上 Home Assistant 的 LLM API（如 Assist），让本代理能读写并控制你的设备。"
           }
         },
         "reconfigure": {
@@ -56,6 +67,41 @@
             "chat_model": "模型",
             "reasoning_effort": "推理强度",
             "store_responses": "在反代上保留响应",
+            "llm_hass_api": "Home Assistant LLM API",
+            "prompt": "系统提示词"
+          }
+        }
+      }
+    },
+    "ai_task_data": {
+      "initiate_flow": {
+        "user": "新增 AI Task 代理",
+        "reconfigure": "调整 AI Task 代理"
+      },
+      "entry_type": "AI Task 代理",
+      "step": {
+        "user": {
+          "title": "新增 AI Task 代理",
+          "data": {
+            "chat_model": "模型",
+            "reasoning_effort": "推理强度",
+            "store_responses": "在反代上保留响应",
+            "llm_hass_api": "Home Assistant LLM API",
+            "prompt": "系统提示词"
+          },
+          "data_description": {
+            "store_responses": "关闭等同 Codex CLI 的 disable_response_storage = true。",
+            "reasoning_effort": "xhigh 为 Codex 支持的最高推理强度；medium 更快。",
+            "llm_hass_api": "挂上 Home Assistant 的 LLM API（如 Assist），让本 AI Task 代理能读写并控制你的设备。"
+          }
+        },
+        "reconfigure": {
+          "title": "调整 AI Task 代理",
+          "data": {
+            "chat_model": "模型",
+            "reasoning_effort": "推理强度",
+            "store_responses": "在反代上保留响应",
+            "llm_hass_api": "Home Assistant LLM API",
             "prompt": "系统提示词"
           }
         }

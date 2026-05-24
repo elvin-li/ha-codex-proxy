@@ -1,17 +1,16 @@
 """Update entity that surfaces newer chat models from the proxy.
 
 When the reverse proxy starts advertising a model newer than the one
-currently configured on a `conversation` or `ai_task_data` subentry
-(e.g. `gpt-5.6` shows up while we're still on `gpt-5.5`), this entity
-becomes "update available" and a one-click install rewrites the
-subentry data to the latest model and reloads the config entry.
+currently configured on a ``conversation`` or ``ai_task_data`` subentry
+(e.g. ``gpt-5.6`` shows up while we're still on ``gpt-5.5``), this entity
+becomes "update available" and a one-click install rewrites the subentry
+data to the latest model and reloads the config entry.
 
 One update entity per LLM-bearing subentry — both conversation agents
 and AI Task entities get tracked.
 """
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from homeassistant.components.openai_conversation.const import (
@@ -21,25 +20,16 @@ from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    DATA_COORDINATOR,
+    CONF_BASE_URL,
     DEFAULT_MODEL,
-    DOMAIN,
-    SUBENTRY_TYPE_AI_TASK,
-    SUBENTRY_TYPE_CONVERSATION,
+    LLM_BEARING_SUBENTRY_TYPES,
+    build_codex_device_info,
 )
 from .coordinator import CodexModelCoordinator
-
-_LOGGER = logging.getLogger(__name__)
-
-_LLM_BEARING_SUBENTRY_TYPES = (
-    SUBENTRY_TYPE_CONVERSATION,
-    SUBENTRY_TYPE_AI_TASK,
-)
 
 
 async def async_setup_entry(
@@ -48,11 +38,9 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Create one update entity per conversation/ai_task subentry."""
-    coordinator: CodexModelCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator: CodexModelCoordinator = entry.runtime_data.coordinator
     for subentry in entry.subentries.values():
-        if subentry.subentry_type not in _LLM_BEARING_SUBENTRY_TYPES:
+        if subentry.subentry_type not in LLM_BEARING_SUBENTRY_TYPES:
             continue
         async_add_entities(
             [CodexModelUpdate(coordinator, entry, subentry)],
@@ -80,9 +68,10 @@ class CodexModelUpdate(
         self._entry = entry
         self._subentry = subentry
         self._attr_unique_id = f"{subentry.subentry_id}_model_update"
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, subentry.subentry_id)},
-        )
+        # Reuse the same device row the conversation/ai_task entity already
+        # registered; we pass model=None so we don't fight that entity for
+        # the device's displayed model attribute.
+        self._attr_device_info = build_codex_device_info(subentry)
 
     @property
     def installed_version(self) -> str | None:
@@ -98,6 +87,14 @@ class CodexModelUpdate(
     @property
     def title(self) -> str | None:
         return "Codex 号池模型"
+
+    @property
+    def release_url(self) -> str | None:
+        """Link to the proxy's /v1/models endpoint, useful for inspection."""
+        base_url = self._entry.data.get(CONF_BASE_URL)
+        if not base_url:
+            return None
+        return f"{str(base_url).rstrip('/')}/v1/models"
 
     @property
     def release_summary(self) -> str | None:
