@@ -1,15 +1,13 @@
 """AI Task entity for the Codex Token Pool integration.
 
 Subclass of upstream
-`homeassistant.components.openai_conversation.ai_task.OpenAITaskEntity`,
+``homeassistant.components.openai_conversation.ai_task.OpenAITaskEntity``,
 so HA Core upgrades to AI Task data generation / image generation flow
 into this integration automatically.
 
-Override is just `device_info` (anchored under our DOMAIN).
+Override is just ``device_info`` (anchored under our DOMAIN).
 """
 from __future__ import annotations
-
-import logging
 
 from homeassistant.components.openai_conversation.ai_task import OpenAITaskEntity
 from homeassistant.components.openai_conversation.const import (
@@ -17,12 +15,9 @@ from homeassistant.components.openai_conversation.const import (
 )
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DEFAULT_MODEL, DOMAIN, SUBENTRY_TYPE_AI_TASK
-
-_LOGGER = logging.getLogger(__name__)
+from .const import DEFAULT_MODEL, SUBENTRY_TYPE_AI_TASK, build_codex_device_info
 
 
 class CodexAITaskEntity(OpenAITaskEntity):
@@ -30,12 +25,9 @@ class CodexAITaskEntity(OpenAITaskEntity):
 
     def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
         super().__init__(entry, subentry)
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, subentry.subentry_id)},
-            name=subentry.title,
-            manufacturer="OpenAI Codex Token Pool",
+        self._attr_device_info = build_codex_device_info(
+            subentry,
             model=subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL),
-            entry_type=dr.DeviceEntryType.SERVICE,
         )
 
 
@@ -44,7 +36,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Create one AI Task entity per `ai_task_data` subentry."""
+    """Create one AI Task entity per ``ai_task_data`` subentry."""
     for subentry in entry.subentries.values():
         if subentry.subentry_type != SUBENTRY_TYPE_AI_TASK:
             continue

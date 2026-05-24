@@ -1,8 +1,8 @@
 """Periodic /v1/models polling for the Codex Token Pool integration.
 
-We bypass `openai.AsyncOpenAI.models.list()` and call the endpoint with raw
+We bypass ``openai.AsyncOpenAI.models.list()`` and call the endpoint with raw
 httpx because the openai SDK 2.x cursor-page parser fails on this proxy's
-response (`'str' object has no attribute '_set_private_attributes'`).
+response (``'str' object has no attribute '_set_private_attributes'``).
 """
 from __future__ import annotations
 
@@ -18,13 +18,13 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .const import (
-    CODEX_OPENAI_BETA,
-    CODEX_ORIGINATOR,
-    CODEX_USER_AGENT,
     CONF_API_KEY,
     CONF_BASE_URL,
     DOMAIN,
     MODEL_REFRESH_INTERVAL,
+    MODEL_REFRESH_TIMEOUT_S,
+    build_codex_headers,
+    is_chat_model,
 )
 
 if TYPE_CHECKING:
@@ -55,16 +55,13 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         url = f"{self._base_url}/v1/models"
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
-            "User-Agent": CODEX_USER_AGENT,
-            "OpenAI-Beta": CODEX_OPENAI_BETA,
-            "originator": CODEX_ORIGINATOR,
-            "x-codex-installation-id": self._installation_id,
-            "Accept": "application/json",
-        }
+        headers = build_codex_headers(
+            self._installation_id, api_key=self._api_key
+        )
         try:
-            r = await self._http.get(url, headers=headers, timeout=15.0)
+            r = await self._http.get(
+                url, headers=headers, timeout=MODEL_REFRESH_TIMEOUT_S
+            )
             r.raise_for_status()
             payload = r.json()
         except httpx.HTTPError as err:
@@ -73,31 +70,29 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Bad JSON from /v1/models: {err}") from err
 
         models: list[dict[str, Any]] = []
-        for m in payload.get("data", []):
+        for m in payload.get("data", []) or []:
             mid = m.get("id")
             if not mid:
                 continue
             models.append(
                 {
-                    "id": mid,
+                    "id": str(mid),
                     "created": int(m.get("created") or 0),
                     "owned_by": str(m.get("owned_by") or ""),
                     "display_name": str(m.get("display_name") or mid),
                 }
             )
-        models.sort(key=lambda x: x["created"], reverse=True)
+        # Sort newest first; tie-break alphabetically so the dropdown is
+        # stable for proxies that don't populate ``created``.
+        models.sort(key=lambda x: (-x["created"], x["id"]))
         return {"models": models}
 
     @property
     def chat_models(self) -> list[dict[str, Any]]:
-        """Chat-capable models (filter out image-only), newest first."""
+        """Chat-capable models surfaced by the proxy, newest first."""
         if not self.data:
             return []
-        return [
-            m
-            for m in self.data.get("models", [])
-            if not m["id"].startswith("gpt-image")
-        ]
+        return [m for m in self.data.get("models", []) if is_chat_model(m)]
 
     @property
     def latest_chat_model_id(self) -> str | None:
