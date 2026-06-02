@@ -10,6 +10,7 @@ proxies. We only swap those two layers and inherit everything else
 (streaming, tool calls, reasoning, structured output, etc.) from upstream so
 that future Home Assistant releases automatically extend this integration.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,7 +21,6 @@ import openai
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.httpx_client import get_async_client
 
 from .const import (
@@ -49,6 +49,11 @@ PLATFORMS: list[Platform] = [
 type CodexConfigEntry = ConfigEntry["AsyncOpenAI"]
 
 
+# ---------------------------------------------------------------------------
+# Header utilities
+# ---------------------------------------------------------------------------
+
+
 def _build_codex_headers(installation_id: str) -> dict[str, str]:
     """Build the default headers that mimic a real Codex CLI request.
 
@@ -64,12 +69,18 @@ def _build_codex_headers(installation_id: str) -> dict[str, str]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Setup / teardown
+# ---------------------------------------------------------------------------
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bool:
     """Set up Codex Token Pool from a config entry."""
     api_key: str = entry.data[CONF_API_KEY]
     base_url: str = entry.data[CONF_BASE_URL]
 
-    installation_id = entry.data.get(CONF_INSTALLATION_ID)
+    # Ensure a stable installation-id is persisted across restarts.
+    installation_id: str = entry.data.get(CONF_INSTALLATION_ID, "")
     if not installation_id:
         installation_id = str(uuid.uuid4())
         hass.config_entries.async_update_entry(
@@ -90,11 +101,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> boo
     # (see coordinator.py for the raw httpx workaround we use instead).
     entry.runtime_data = client
 
+    # Start the periodic model-list coordinator (non-fatal if first refresh fails).
     coordinator = CodexModelCoordinator(hass, entry, installation_id)
     try:
         await coordinator.async_config_entry_first_refresh()
-    except Exception as err:  # noqa: BLE001 — coordinator failure is non-fatal
-        _LOGGER.warning("Initial model refresh failed: %s", err)
+    except Exception:  # noqa: BLE001 — coordinator failure is non-fatal
+        _LOGGER.warning(
+            "Initial model list refresh failed for %s; "
+            "will retry in %s",
+            base_url,
+            coordinator.update_interval,
+        )
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         DATA_COORDINATOR: coordinator,
@@ -109,8 +126,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: CodexConfigEntry) -> bo
     """Unload a Codex Token Pool config entry.
 
     We deliberately do NOT call `client.close()` — the AsyncOpenAI client
-    is wrapping HA's shared httpx client (`get_async_client(hass)`); closing
-    it would tear down HTTP I/O for every other integration.
+    wraps HA's shared httpx client (`get_async_client(hass)`); closing it
+    would tear down HTTP I/O for every other integration.
     """
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:

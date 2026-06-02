@@ -12,8 +12,8 @@
         },
         "data_description": {
           "base_url": "Root URL of the proxy. The integration will append /v1/responses automatically.",
-          "model": "Initial model id; you can switch later in the conversation agent options.",
-          "toml_config": "If you already use Codex CLI, paste the entire config.toml here and base_url, model, reasoning effort and store flag will be filled in for you."
+          "model": "Initial model ID; you can switch later in the conversation agent options.",
+          "toml_config": "If you already use Codex CLI, paste the entire config.toml here and base_url, model, reasoning effort, and store flag will be filled in for you."
         }
       }
     },
@@ -23,7 +23,7 @@
       "unknown_model": "The proxy does not recognize this model. Try gpt-5.5 or another value from /v1/models.",
       "unknown": "Unexpected error talking to the proxy.",
       "bad_toml": "Could not parse the pasted TOML.",
-      "required": "Required."
+      "required": "This field is required."
     },
     "abort": {
       "already_configured": "This proxy is already configured."
@@ -57,6 +57,10 @@
             "reasoning_effort": "Reasoning effort",
             "store_responses": "Store responses on the proxy",
             "prompt": "System prompt"
+          },
+          "data_description": {
+            "store_responses": "Off mirrors Codex CLI's disable_response_storage = true.",
+            "reasoning_effort": "xhigh = the deepest reasoning Codex supports; medium is faster."
           }
         }
       }

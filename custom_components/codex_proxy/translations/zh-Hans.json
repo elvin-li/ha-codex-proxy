@@ -23,7 +23,7 @@
       "unknown_model": "反代不识别该模型，可改用 gpt-5.5 或 /v1/models 列出的其它模型。",
       "unknown": "调用反代时出现未知错误。",
       "bad_toml": "TOML 解析失败，请检查格式。",
-      "required": "必填。"
+      "required": "必填项。"
     },
     "abort": {
       "already_configured": "该反代已经配置过。"
@@ -57,6 +57,10 @@
             "reasoning_effort": "推理强度",
             "store_responses": "在反代上保留响应",
             "prompt": "系统提示词"
+          },
+          "data_description": {
+            "store_responses": "关闭等同 Codex CLI 的 disable_response_storage = true。",
+            "reasoning_effort": "xhigh 为 Codex 支持的最高推理强度；medium 更快。"
           }
         }
       }

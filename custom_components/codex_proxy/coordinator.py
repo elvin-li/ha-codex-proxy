@@ -4,6 +4,7 @@ We bypass `openai.AsyncOpenAI.models.list()` and call the endpoint with raw
 httpx because the openai SDK 2.x cursor-page parser fails on this proxy's
 response (`'str' object has no attribute '_set_private_attributes'`).
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,6 +26,7 @@ from .const import (
     CONF_BASE_URL,
     DOMAIN,
     MODEL_REFRESH_INTERVAL,
+    MODELS_FETCH_TIMEOUT_S,
 )
 
 if TYPE_CHECKING:
@@ -34,44 +36,70 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Poll the proxy's /v1/models endpoint and surface the result."""
+    """Poll the proxy's /v1/models endpoint and surface the result.
+
+    Attributes
+    ----------
+    config_entry : ConfigEntry
+        The config entry this coordinator belongs to.  Exposed as a public
+        attribute so HA's coordinator infrastructure can link diagnostics.
+    """
+
+    config_entry: ConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
-        entry: "ConfigEntry",
+        entry: ConfigEntry,
         installation_id: str,
     ) -> None:
+        """Initialize the model coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name=f"{DOMAIN}_models_{entry.entry_id}",
             update_interval=MODEL_REFRESH_INTERVAL,
+            config_entry=entry,
         )
-        self._api_key: str = entry.data[CONF_API_KEY]
         self._base_url: str = entry.data[CONF_BASE_URL].rstrip("/")
-        self._installation_id = installation_id
-        self._http: httpx.AsyncClient = get_async_client(hass)
-
-    async def _async_update_data(self) -> dict[str, Any]:
-        url = f"{self._base_url}/v1/models"
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
+        self._headers: dict[str, str] = {
+            "Authorization": f"Bearer {entry.data[CONF_API_KEY]}",
             "User-Agent": CODEX_USER_AGENT,
             "OpenAI-Beta": CODEX_OPENAI_BETA,
             "originator": CODEX_ORIGINATOR,
-            "x-codex-installation-id": self._installation_id,
+            "x-codex-installation-id": installation_id,
             "Accept": "application/json",
         }
-        try:
-            r = await self._http.get(url, headers=headers, timeout=15.0)
-            r.raise_for_status()
-            payload = r.json()
-        except httpx.HTTPError as err:
-            raise UpdateFailed(f"Failed to fetch /v1/models: {err}") from err
-        except ValueError as err:
-            raise UpdateFailed(f"Bad JSON from /v1/models: {err}") from err
+        self._http: httpx.AsyncClient = get_async_client(hass)
 
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch models from the proxy."""
+        url = f"{self._base_url}/v1/models"
+        try:
+            response = await self._http.get(
+                url, headers=self._headers, timeout=MODELS_FETCH_TIMEOUT_S
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except httpx.TimeoutException as err:
+            raise UpdateFailed(
+                f"Timeout fetching {url} after {MODELS_FETCH_TIMEOUT_S}s"
+            ) from err
+        except httpx.HTTPStatusError as err:
+            raise UpdateFailed(
+                f"HTTP {err.response.status_code} from {url}"
+            ) from err
+        except httpx.HTTPError as err:
+            raise UpdateFailed(f"Failed to fetch {url}: {err}") from err
+        except ValueError as err:
+            raise UpdateFailed(f"Bad JSON from {url}: {err}") from err
+
+        models = self._parse_models(payload)
+        return {"models": models}
+
+    @staticmethod
+    def _parse_models(payload: dict[str, Any]) -> list[dict[str, Any]]:
+        """Extract and normalize model entries from the API response."""
         models: list[dict[str, Any]] = []
         for m in payload.get("data", []):
             mid = m.get("id")
@@ -86,11 +114,13 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
             )
         models.sort(key=lambda x: x["created"], reverse=True)
-        return {"models": models}
+        return models
+
+    # --- Public API ---
 
     @property
     def chat_models(self) -> list[dict[str, Any]]:
-        """Chat-capable models (filter out image-only), newest first."""
+        """Chat-capable models (excluding image-only), newest first."""
         if not self.data:
             return []
         return [
@@ -101,5 +131,6 @@ class CodexModelCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     @property
     def latest_chat_model_id(self) -> str | None:
+        """ID of the most recently created chat model, or None."""
         chat = self.chat_models
         return chat[0]["id"] if chat else None

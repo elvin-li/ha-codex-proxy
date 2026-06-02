@@ -7,6 +7,7 @@ into this integration automatically.
 
 Override is just `device_info` (anchored under our DOMAIN).
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,6 +30,7 @@ class CodexAITaskEntity(OpenAITaskEntity):
     """Drop-in subclass anchoring device_info onto our DOMAIN."""
 
     def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
+        """Initialize the Codex AI Task entity."""
         super().__init__(entry, subentry)
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, subentry.subentry_id)},
