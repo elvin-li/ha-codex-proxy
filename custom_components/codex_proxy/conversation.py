@@ -10,6 +10,7 @@ The only override is `device_info`, anchoring the device under our DOMAIN
 instead of upstream's, so HA's "Devices & Services" attributes the entity
 to Codex Token Pool, not OpenAI Conversation.
 """
+
 from __future__ import annotations
 
 import logging
@@ -34,6 +35,7 @@ class CodexConversationEntity(OpenAIConversationEntity):
     """Drop-in subclass anchoring device_info onto our DOMAIN."""
 
     def __init__(self, entry: ConfigEntry, subentry: ConfigSubentry) -> None:
+        """Initialize the Codex conversation entity."""
         super().__init__(entry, subentry)
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, subentry.subentry_id)},

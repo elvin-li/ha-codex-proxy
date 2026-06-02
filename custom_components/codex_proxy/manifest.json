@@ -1,14 +1,14 @@
 {
   "domain": "codex_proxy",
   "name": "Codex Token Pool",
-  "codeowners": [],
+  "codeowners": ["@elvin-li"],
   "config_flow": true,
   "after_dependencies": ["openai_conversation"],
   "dependencies": [],
   "documentation": "https://github.com/elvin-li/ha-codex-proxy",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/elvin-li/ha-codex-proxy/issues",
-  "requirements": [],
-  "version": "0.1.0",
+  "requirements": ["openai>=1.75.0"],
+  "version": "0.2.0",
   "integration_type": "service"
 }

@@ -9,10 +9,11 @@ subentry data to the latest model and reloads the config entry.
 One update entity per LLM-bearing subentry — both conversation agents
 and AI Task entities get tracked.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Final
 
 from homeassistant.components.openai_conversation.const import (
     CONF_CHAT_MODEL as UPSTREAM_CONF_CHAT_MODEL,
@@ -36,7 +37,7 @@ from .coordinator import CodexModelCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-_LLM_BEARING_SUBENTRY_TYPES = (
+_LLM_BEARING_SUBENTRY_TYPES: Final = (
     SUBENTRY_TYPE_CONVERSATION,
     SUBENTRY_TYPE_AI_TASK,
 )
@@ -76,6 +77,7 @@ class CodexModelUpdate(
         entry: ConfigEntry,
         subentry: ConfigSubentry,
     ) -> None:
+        """Initialize the model update entity."""
         super().__init__(coordinator)
         self._entry = entry
         self._subentry = subentry
@@ -84,12 +86,16 @@ class CodexModelUpdate(
             identifiers={(DOMAIN, subentry.subentry_id)},
         )
 
+    # --- UpdateEntity interface ---
+
     @property
     def installed_version(self) -> str | None:
+        """Currently configured model id."""
         return self._subentry.data.get(UPSTREAM_CONF_CHAT_MODEL, DEFAULT_MODEL)
 
     @property
     def latest_version(self) -> str | None:
+        """Latest model from the proxy, or installed_version if unknown."""
         # When the coordinator hasn't returned data yet (or proxy is down),
         # report installed_version so HA doesn't render "update available"
         # against a phantom None.
@@ -97,14 +103,19 @@ class CodexModelUpdate(
 
     @property
     def title(self) -> str | None:
+        """Human-readable title for the update card."""
         return "Codex 号池模型"
 
     @property
     def release_summary(self) -> str | None:
+        """Contextual description for the update card."""
         latest = self.coordinator.latest_chat_model_id
         installed = self.installed_version
         if not latest:
-            return "尚未从反代取得模型列表（首次刷新最长 6h，可手动 update_entity）。"
+            return (
+                "尚未从反代取得模型列表"
+                "（首次刷新最长 6h，可手动 update_entity）。"
+            )
         if latest == installed:
             return "已经是反代上的最新模型。"
         return (
@@ -115,21 +126,36 @@ class CodexModelUpdate(
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
-        """Switch the subentry's model to the requested (or latest) version
-        and reload the config entry."""
+        """Switch the subentry's model to the requested (or latest) version.
+
+        After updating the subentry data, reloads the config entry so
+        downstream entities pick up the change immediately.
+        """
         target = version or self.coordinator.latest_chat_model_id
         if not target or target == self.installed_version:
+            _LOGGER.debug(
+                "Model update skipped: target=%s, installed=%s",
+                target,
+                self.installed_version,
+            )
             return
+
         new_data = {**self._subentry.data, UPSTREAM_CONF_CHAT_MODEL: target}
         self.hass.config_entries.async_update_subentry(
             self._entry, self._subentry, data=new_data
         )
+        _LOGGER.info(
+            "Switched model from %s to %s; reloading entry",
+            self.installed_version,
+            target,
+        )
         await self.hass.config_entries.async_reload(self._entry.entry_id)
+
+    # --- Coordinator callback ---
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        # Re-read the subentry from the entry registry so installed_version
-        # reflects user changes that didn't come through this entity.
+        """Re-read the subentry so installed_version reflects external changes."""
         live = self._entry.subentries.get(self._subentry.subentry_id)
         if live is not None:
             self._subentry = live
